@@ -193,6 +193,9 @@ func _process(delta: float) -> void:
             soundscape.update_environment(voyage.boat_node.position,terrain,world,delta)
         return
     _update_camera(delta)
+    if SurvivorModels.merged_material != null:
+        SurvivorModels.merged_material.set_shader_parameter("camera_world_position",camera.global_position)
+        SurvivorModels.merged_material.set_shader_parameter("survivor_position",player.global_position)
     soundscape.set_frozen(paused())
     if paused():
         player.enabled = false
