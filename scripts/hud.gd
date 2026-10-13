@@ -70,6 +70,8 @@ var inventory_title_font: SystemFont
 var voyage_overlay: Control
 var voyage_status: Label
 var voyage_hint: Label
+var voyage_reef_label: Label
+var voyage_hull_bar: ProgressBar
 var voyage_progress: ProgressBar
 var shortcut_bar: HBoxContainer
 var shortcut_buttons: Array[Button] = []
@@ -503,7 +505,7 @@ func close_modal() -> void:
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
-    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nGodot 3D • v1.2 (cavernas, ambiente e navegação)")
+    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nGodot 3D • v1.3 (cavernas com ciclos de gás e navegação orientada)")
     if paused:
         panel_content.add_child(_button("Voltar ao jogo", func(): close_modal(); resume_requested.emit()))
         panel_content.add_child(_button("Salvar progresso", func(): save_requested.emit()))
@@ -1048,7 +1050,7 @@ func show_voyage() -> void:
     top.offset_left = -275
     top.offset_right = 275
     top.offset_top = 15
-    top.offset_bottom = 104
+    top.offset_bottom = 148
     voyage_overlay.add_child(top)
     var info := VBoxContainer.new()
     info.add_theme_constant_override("separation",4)
@@ -1061,6 +1063,18 @@ func show_voyage() -> void:
     voyage_progress.show_percentage = false
     voyage_progress.custom_minimum_size = Vector2(290,9)
     info.add_child(voyage_progress)
+    voyage_hull_bar = ProgressBar.new()
+    voyage_hull_bar.name = "HullIntegrity"
+    voyage_hull_bar.max_value = 100.0
+    voyage_hull_bar.value = 100.0
+    voyage_hull_bar.show_percentage = false
+    voyage_hull_bar.custom_minimum_size = Vector2(290,9)
+    info.add_child(voyage_hull_bar)
+    voyage_reef_label = _label("RECIFE À FRENTE • ajuste o rumo",15)
+    voyage_reef_label.name = "ReefWarning"
+    voyage_reef_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    voyage_reef_label.add_theme_color_override("font_color",BAG_GOLD)
+    info.add_child(voyage_reef_label)
     voyage_hint = _label("Evite os recifes • manobre com as setas",15)
     voyage_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     voyage_hint.add_theme_color_override("font_color",BAG_TEXT)
@@ -1085,6 +1099,9 @@ func update_voyage(voyage: SurvivorVoyage) -> void:
         return
     voyage_status.text = "CANAL SEGURO %d%% • CASCO %d%%" % [int(voyage.progress()*100.0),int(voyage.hull)]
     voyage_progress.value = voyage.progress()*100.0
+    voyage_hull_bar.value = voyage.hull
+    voyage_hull_bar.modulate = Color(1.0,0.50,0.40) if voyage.hull <= 40.0 else Color(0.55,0.90,0.66)
+    voyage_reef_label.text = voyage.reef_hint()
     voyage_hint.text = voyage.last_event if voyage.last_event != "" else "Manobre entre recifes com as setas."
 
 func hide_voyage() -> void:
@@ -1094,6 +1111,8 @@ func hide_voyage() -> void:
     voyage_overlay = null
     voyage_status = null
     voyage_hint = null
+    voyage_reef_label = null
+    voyage_hull_bar = null
     voyage_progress = null
 
 func show_end(victory: bool, elapsed: float) -> void:
