@@ -68,9 +68,9 @@ static func palm(parent: Node3D, variant: int) -> void:
     var tall := 7.1 + float(variant%4)*0.64
     var curve := Vector3(1.0,0.0,0.55)*(0.58+float(variant%3)*0.25)
     var trunk_color := Color(0.40,0.29,0.17)
-    for i in range(9):
-        var t := float(i)/9.0
-        var t2 := float(i+1)/9.0
+    for i in range(8):
+        var t := float(i)/8.0
+        var t2 := float(i+1)/8.0
         var a := Vector3(0,tall*t,0)+curve*t*t
         var b := Vector3(0,tall*t2,0)+curve*t2*t2
         beam(parent,a,b,0.40-t*0.18,trunk_color.lightened(float(i%3)*0.028))
@@ -91,15 +91,15 @@ static func palm(parent: Node3D, variant: int) -> void:
     var crown := Vector3(0,tall,0)+curve
     # Leaves are not planar broad triangles: 11 curved, serrated 3D fronds
     # with drooping side leaflets and per-frond tonal differences.
-    for frond in range(11):
-        var angle := float(frond)*TAU/11.0+float(variant)*0.22
+    for frond in range(9):
+        var angle := float(frond)*TAU/9.0+float(variant)*0.22
         var radial := Vector3(cos(angle),0,sin(angle))
         var side := Vector3(-sin(angle),0,cos(angle))
         var length := 4.15+float((frond+variant)%4)*0.34
         var vertices := PackedVector3Array()
-        for segment in range(10):
-            var t := float(segment)/10.0
-            var t2 := float(segment+1)/10.0
+        for segment in range(8):
+            var t := float(segment)/8.0
+            var t2 := float(segment+1)/8.0
             var a := crown+radial*t*length+Vector3.UP*(sin(t*PI)*0.62-t*t*2.08)
             var b := crown+radial*t2*length+Vector3.UP*(sin(t2*PI)*0.62-t2*t2*2.08)
             var w := sin(t*PI)*0.57
@@ -108,7 +108,7 @@ static func palm(parent: Node3D, variant: int) -> void:
                 a-side*w,b-side*w2,a+side*w,
                 a+side*w,b-side*w2,b+side*w2
             ]))
-            if segment > 0 and segment < 9:
+            if segment > 0 and segment < 7 and segment % 2 == 0:
                 for sign in [-1.0,1.0]:
                     var root := a+side*sign*w*0.48
                     var next_root := b+side*sign*w2*0.53
@@ -162,15 +162,15 @@ static func surface_family(color: Color) -> float:
 static func rock(parent: Node3D, variant: int, size: float = 1.0) -> void:
     # Fractured granite mass with strata and smaller weathered fragments.
     # No collision radius or resource yield changes.
-    for i in range(4):
+    for i in range(3):
         var width := (0.76 + float((variant+i)%3)*0.23)*size
         var tint := Color(0.37+float(i%3)*0.033,0.41+float(i%3)*0.026,0.39+float(i%2)*0.035)
         var chunk := stone(parent,width,variant+i,tint,
             Vector3((float(i)-1.5)*0.49*size,(0.41+float(i%2)*0.19)*size,float(i%3)*0.25*size),
             Vector3(1.23,0.70+float(i%2)*0.07,0.90))
         chunk.rotation_degrees = Vector3(i*14,variant*27+i*29,i*11)
-    for i in range(4):
-        var a := float(i)*TAU/4.0+float(variant)*0.33
+    for i in range(2):
+        var a := float(i)*TAU/2.0+float(variant)*0.33
         var pebble := stone(parent,(0.19+float(i%2)*0.07)*size,variant+30+i,
             Color(0.43+float(i%3)*0.032,0.45+float(i%2)*0.025,0.40),
             Vector3(cos(a)*1.38*size,0.17*size,sin(a)*0.95*size),
