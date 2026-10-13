@@ -1,0 +1,48 @@
+name: Archive selected original dressed MakeHuman B
+on:
+  push:
+    branches: [feat/hero-asset-comparison]
+    paths:
+      - .github/workflows/archive_selected_hero.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original binary is exactly approved clothed character
+        run: |
+          python3 tests/verify_makehuman_asset.py assets/characters/makehuman_survivor.glb
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          b=Path('assets/characters/makehuman_survivor.glb').read_bytes()
+          h=hashlib.sha1(b'blob '+str(len(b)).encode()+bytes([0])+b).hexdigest()
+          assert h=='95033d30a4b4bab4a4a0ce3eb176a4ce7d73d0b5',h
+          print('VERIFIED_DRESSED_HERO_GLB',len(b),h)
+          PY
+      - name: Package selected 3D model with license and choice record
+        run: |
+          mkdir -p /tmp/makehuman_B
+          cp assets/characters/makehuman_survivor.glb /tmp/makehuman_B/MakeHuman_B_Vestido_original.glb
+          cp docs/HERO_SELECTED_B.md /tmp/makehuman_B/LEIA_ME_ESCOLHA_B.md
+          cp docs/licenses/makehuman_survivor.md /tmp/makehuman_B/LICENCA_FONTE.md
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+          p=Path('/tmp/MakeHuman_B_Vestido_CC0_Original.zip')
+          with zipfile.ZipFile(p,'w',compression=zipfile.ZIP_DEFLATED) as out:
+              for x in Path('/tmp/makehuman_B').iterdir():
+                  out.write(x,arcname=x.name)
+          with zipfile.ZipFile(p) as archive:
+              assert archive.testzip() is None
+          print('HERO_ARCHIVE_READY',p.stat().st_size)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GPT-Survivor-MakeHuman-B-dressed-original-CC0
+          path: /tmp/MakeHuman_B_Vestido_CC0_Original.zip
+          retention-days: 21
