@@ -20,5 +20,7 @@ jobs:
         run: godot --headless --path . --editor --quit
       - name: Test survival and crafting state
         run: godot --headless --path . --script res://tests/test_survival.gd
+      - name: Test equipment, tools and save migration
+        run: godot --headless --path . --script res://tests/test_equipment.gd
       - name: Boot main scene (120 frames)
         run: godot --headless --path . --quit-after 120
