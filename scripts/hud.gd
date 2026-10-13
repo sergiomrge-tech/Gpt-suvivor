@@ -5,6 +5,8 @@ signal action_requested
 signal build_requested(kind: String)
 signal confirm_build_requested
 signal cancel_build_requested
+signal equipment_requested(kind: String)
+signal unequip_requested(slot: String)
 signal fishing_requested
 signal consume_requested
 signal save_requested
@@ -356,10 +358,10 @@ func show_inventory(tab: String = "items") -> void:
     if not is_playing or state == null: return
     inventory_tab = tab
     item_buttons.clear()
-    _new_modal("craft" if tab == "craft" else "inventory", "MOCHILA", "Recursos, ferramentas e construções. As ferramentas fabricadas são usadas automaticamente na coleta.")
+    _new_modal("craft" if tab == "craft" else "inventory", "MOCHILA", "Organize itens e equipe as ferramentas antes de usá-las na ilha.")
     var tabs := HBoxContainer.new()
     modal_top.add_child(tabs)
-    for entry in [["Itens", "items"], ["Construções", "craft"]]:
+    for entry in [["Itens", "items"], ["Equipar", "equipment"], ["Construções", "craft"]]:
         var tab_button := _button(entry[0],_inventory_tab_callback(entry[1]))
         tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         if tab == entry[1]:
@@ -367,7 +369,9 @@ func show_inventory(tab: String = "items") -> void:
         tabs.add_child(tab_button)
     var summary := _label("Madeira %d  •  Pedra %d  •  Fibra %d  •  Metal %d" % [state.inventory.wood,state.inventory.stone,state.inventory.fiber,state.inventory.metal],19)
     modal_top.add_child(summary)
-    if tab == "craft":
+    if tab == "equipment":
+        _equipment_panel()
+    elif tab == "craft":
         _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe"])
         _recipe_grid("Acampamento e bancada",["campfire","workbench","fishing_rod","house","dock","boat","meal"])
     else:
@@ -563,8 +567,8 @@ func _process(delta: float) -> void:
     activity_label.text = activity_name
     activity_progress.visible = activity_name != ""
     activity_progress.value = activity_fraction
-    fishing_button.visible = placement_kind != "" or state.owns("fishing_rod")
-    fishing_button.disabled = placement_kind == "" and not can_fish
+    fishing_button.visible = true
+    fishing_button.disabled = false
     action_button.disabled = target.is_empty() and placement_kind == ""
     objective_label.text = state.objective()
     var hour := fmod(8.0 + state.elapsed / SurvivalState.DAY_SECONDS * 24.0, 24.0)
