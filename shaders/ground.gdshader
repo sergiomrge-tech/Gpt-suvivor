@@ -7,6 +7,19 @@ varying vec3 world_normal;
 uniform float sea_level = -0.48;
 uniform float rain_amount = 0.0;
 uniform float surface_microdetail = 1.0;
+// CC0 Poly Haven 1K albedo/normal/roughness maps: B jungle dominates, A
+// coastal beaches and C steep rock faces. Loaded only when source exists.
+uniform bool real_pbr_assets_ready = false;
+uniform bool real_pbr_full_detail = true;
+uniform sampler2D pbr_sand_diff : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_jungle_diff : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_rock_diff : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_sand_normal : filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_jungle_normal : filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_rock_normal : filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_sand_rough : filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_jungle_rough : filter_linear_mipmap, repeat_enable;
+uniform sampler2D pbr_rock_rough : filter_linear_mipmap, repeat_enable;
 void vertex() {
     world_point = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
     world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);
@@ -79,6 +92,18 @@ void fragment() {
     }
     ground = mix(ground,stone,stone_fleck * (0.10 + sand_to_vegetation * 0.12));
     ground = mix(ground,stone,rock_exposure);
+    // Photographed materials replace the old flat colors without altering
+    // geometry, collision, trail masks, wave height or saved world locations.
+    vec2 pbr_uv = p * 0.19;
+    if (real_pbr_assets_ready) {
+        vec3 scanned_sand = texture(pbr_sand_diff,pbr_uv * 0.75).rgb;
+        vec3 scanned_jungle = texture(pbr_jungle_diff,pbr_uv).rgb;
+        vec3 scanned_rock = texture(pbr_rock_diff,pbr_uv * 0.65).rgb;
+        // Preserve the island palette to avoid fluorescent texture seams.
+        ground = mix(ground,scanned_sand,0.63 * (1.0-sand_to_vegetation));
+        ground = mix(ground,scanned_jungle,0.67 * sand_to_vegetation * (1.0-rock_exposure));
+        ground = mix(ground,scanned_rock,0.75 * rock_exposure);
+    }
     ground *= 0.967 + grain*0.066;
     float damp = rain_amount * (0.10 + macro * 0.085);
     ALBEDO = ground * (1.0-damp);
@@ -88,10 +113,24 @@ void fragment() {
     ROUGHNESS = mix(ROUGHNESS,0.90,gravel*0.45);
     ROUGHNESS = mix(ROUGHNESS,0.86,rock_exposure*0.50);
     ROUGHNESS = mix(ROUGHNESS,0.60,rain_amount*0.56);
+    if (real_pbr_assets_ready && real_pbr_full_detail) {
+        float sand_rough = texture(pbr_sand_rough,pbr_uv * 0.75).r;
+        float soil_rough = texture(pbr_jungle_rough,pbr_uv).r;
+        float rock_rough = texture(pbr_rock_rough,pbr_uv * 0.65).r;
+        float real_rough = mix(mix(sand_rough,soil_rough,sand_to_vegetation),rock_rough,rock_exposure);
+        ROUGHNESS = mix(ROUGHNESS,real_rough,0.38);
+        vec3 sand_n = texture(pbr_sand_normal,pbr_uv*0.75).rgb*2.0-1.0;
+        vec3 soil_n = texture(pbr_jungle_normal,pbr_uv).rgb*2.0-1.0;
+        vec3 cliff_n = texture(pbr_rock_normal,pbr_uv*0.65).rgb*2.0-1.0;
+        vec3 detail_n = mix(mix(sand_n,soil_n,sand_to_vegetation),cliff_n,rock_exposure);
+        // Respect the actual mesh slope; slight XY perturbation only.
+        vec3 pbr_world_normal = normalize(world_normal + vec3(detail_n.x,0.0,detail_n.y) * 0.12);
+        NORMAL = normalize(mat3(VIEW_MATRIX)*pbr_world_normal);
+    }
 
     // A small two-sample bump is reserved for the Complete mode.
     // No terrain vertex displacement, collision or saved coordinates change.
-    if (surface_microdetail > 0.5) {
+    if (surface_microdetail > 0.5 && !(real_pbr_assets_ready && real_pbr_full_detail)) {
         vec2 sample_uv = p / 1.85;
         vec2 gradient = vec2(
             texture(detail_noise,sample_uv+vec2(0.016,0.0)).b - fine.b,
