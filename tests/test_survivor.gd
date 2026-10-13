@@ -453,7 +453,7 @@ func run() -> void:
     var quick_taps := [""]
     game.hud.shortcut_requested.connect(func(kind: String): quick_taps[0] = kind)
     game.hud._activate_shortcut(1)
-    check(quick_taps[0] == "stone_pickaxe", "Second bottom tool button dispatches real pickaxe equipment instead of a decorative tap")
+    check(quick_taps[0] == "", "Quickbar does not activate behind the equipment modal")
     game.hud.update_shortcuts()
     check(game.hud.shortcut_buttons[1].disabled == false and game.hud.shortcut_buttons[0].disabled == false, "Owned axe and pickaxe shortcuts are touch enabled")
 
@@ -461,6 +461,8 @@ func run() -> void:
 
     game.hud.toggle_inventory()
     check(game.hud.modal_mode == "" and game.hud.joystick.active,"Backpack returns to compact HUD")
+    game.hud._activate_shortcut(1)
+    check(quick_taps[0] == "stone_pickaxe", "Second bottom tool button dispatches real pickaxe equipment instead of a decorative tap")
     game._quick_equip("stone_pickaxe")
     check(game.state.is_equipped("stone_pickaxe"),"Gameplay shortcut equipping updates authoritative utility slot")
     game._quick_equip("stone_axe")
