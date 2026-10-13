@@ -651,48 +651,93 @@ func set_rotation_visible(value: bool) -> void:
         rotate_button.visible = value
 
 func _equipment_panel() -> void:
-    panel_content.add_child(_label("EQUIPAMENTOS DO PERSONAGEM",23))
-    panel_content.add_child(_label("É preciso equipar a ferramenta correta. A vara fica na mão principal; machados, picaretas, lança e faca usam o espaço de ferramenta.",18))
+    panel_content.add_child(_bag_heading("ESPAÇOS EQUIPADOS",21))
     var slots := HBoxContainer.new()
-    slots.add_theme_constant_override("separation",14)
+    slots.add_theme_constant_override("separation",12)
     panel_content.add_child(slots)
     for entry in [["main_hand","MÃO PRINCIPAL"],["utility","FERRAMENTA"]]:
         var slot: String = entry[0]
         var container := PanelContainer.new()
         container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        container.add_theme_stylebox_override("panel",_style(Color(0.13,0.25,0.23)))
+        container.add_theme_stylebox_override("panel",_bag_style(BAG_PANEL))
         slots.add_child(container)
-        var body := VBoxContainer.new()
-        body.add_theme_constant_override("separation",10)
-        container.add_child(body)
-        body.add_child(_label(entry[1],20))
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation",12)
+        container.add_child(row)
         var held: String = str(state.equipment.get(slot,""))
-        var title: String = "VAZIO" if held == "" else str(SurvivalState.RECIPES[held].title)
-        body.add_child(_label(title,21))
+        var icon := TextureRect.new()
+        icon.texture = _icon(held) if held != "" else null
+        icon.custom_minimum_size = Vector2(70,68)
+        icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        row.add_child(icon)
+        var body := VBoxContainer.new()
+        body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        row.add_child(body)
+        body.add_child(_bag_heading(str(entry[1]),16))
+        var equipped_title := _label("VAZIO" if held == "" else str(SurvivalState.RECIPES[held].title),17)
+        equipped_title.add_theme_color_override("font_color",BAG_TEXT if held != "" else BAG_MUTED)
+        body.add_child(equipped_title)
         if held != "":
-            var icon := TextureRect.new()
-            icon.texture = _icon(held)
-            icon.custom_minimum_size = Vector2(0,54)
-            icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-            icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-            body.add_child(icon)
-            body.add_child(_button("Desequipar",_unequip_callback(slot)))
-    panel_content.add_child(_label("ESCOLHER FERRAMENTA",22))
+            var clear := _bag_button("DESEQUIPAR",_unequip_callback(slot))
+            clear.custom_minimum_size.y = 42
+            body.add_child(clear)
+    panel_content.add_child(_bag_heading("FERRAMENTAS DISPONÍVEIS",21))
     var choices := GridContainer.new()
-    choices.columns = 2
-    choices.add_theme_constant_override("h_separation",12)
+    choices.columns = 3
+    choices.add_theme_constant_override("h_separation",10)
     choices.add_theme_constant_override("v_separation",10)
     panel_content.add_child(choices)
     for kind in SurvivalState.TOOLS:
         var available: bool = state.owns(kind)
         var equipped: bool = state.is_equipped(kind)
-        var status: String = "EQUIPADO" if equipped else ("EQUIPAR" if available else "FABRICAR PRIMEIRO")
-        var button := _button("%s • %s" % [SurvivalState.RECIPES[kind].title,status],_equip_callback(kind))
-        button.custom_minimum_size = Vector2(0,65)
-        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        button.disabled = not available or equipped
-        choices.add_child(button)
-    panel_content.add_child(_label("Pesca: equipe a VARA DE PESCAR na mão principal; vá à praia ou ao cais e toque PESCAR. Explore as cavernas e abra relicários para aprimorar ferramentas na oficina. A lança de pedra permite caçar javalis.",18))
+        var card := PanelContainer.new()
+        card.add_theme_stylebox_override("panel",_bag_style(BAG_PANEL if available else Color(0.105,0.103,0.094,0.98),equipped))
+        card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        choices.add_child(card)
+        var contents := VBoxContainer.new()
+        contents.add_theme_constant_override("separation",4)
+        card.add_child(contents)
+        var top := HBoxContainer.new()
+        top.add_theme_constant_override("separation",8)
+        contents.add_child(top)
+        var tool_icon := TextureRect.new()
+        tool_icon.texture = _icon(kind)
+        tool_icon.custom_minimum_size = Vector2(55,55)
+        tool_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        tool_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        tool_icon.modulate = Color.WHITE if available else Color(0.47,0.46,0.42,1)
+        top.add_child(tool_icon)
+        var label := _label(str(SurvivalState.RECIPES[kind].title),17)
+        label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        top.add_child(label)
+        var status := _label("EQUIPADO" if equipped else ("DISPONÍVEL" if available else "NÃO CRIADO"),13)
+        status.add_theme_color_override("font_color",BAG_GREEN if equipped else (BAG_TEXT if available else BAG_MUTED))
+        contents.add_child(status)
+        var actions := HBoxContainer.new()
+        actions.add_theme_constant_override("separation",6)
+        contents.add_child(actions)
+        var compare := _bag_button("COMPARAR",_item_callback(kind))
+        compare.custom_minimum_size.y = 42
+        compare.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        actions.add_child(compare)
+        var equip := _bag_button("EQUIPAR",_equip_callback(kind),available and not equipped)
+        equip.custom_minimum_size.y = 42
+        equip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        equip.disabled = not available or equipped
+        actions.add_child(equip)
+    var comparison := PanelContainer.new()
+    comparison.add_theme_stylebox_override("panel",_bag_style(BAG_PANEL))
+    panel_content.add_child(comparison)
+    item_detail = _label("Selecione COMPARAR para ver a ferramenta e o rendimento real em relação ao equipamento atual.",16)
+    item_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    item_detail.custom_minimum_size.y = 70
+    comparison.add_child(item_detail)
+    var help := _label("Machados, picaretas, faca e lança compartilham o espaço Ferramenta. A vara de pesca utiliza Mão principal.",15)
+    help.add_theme_color_override("font_color",BAG_MUTED)
+    help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    panel_content.add_child(help)
 
 func _equip_callback(kind: String) -> Callable:
     return func(): equipment_requested.emit(kind)
