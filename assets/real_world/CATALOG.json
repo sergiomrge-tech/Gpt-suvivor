@@ -1,0 +1,304 @@
+{
+  "license": "CC0",
+  "items": [
+    {
+      "id": "airplane_propeller",
+      "title": "Avião monomotor, material real, base para destroços",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/single-engine-propeller-aircraft-d6091ef1",
+      "files": [
+        {
+          "path": "models/airplane_propeller.glb",
+          "size": 8061320,
+          "sha256": "87f0e5c74bddbbc4595377e57316298660c9b1d379e7d56a8443cecbe9d8d5d0"
+        }
+      ]
+    },
+    {
+      "id": "palm_detailed",
+      "title": "Palmeira 16 frondes/960 folíolos, fonte próxima",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/palm-detailed-a8777b8c",
+      "files": [
+        {
+          "path": "models/palm_detailed.glb",
+          "size": 832208,
+          "sha256": "8ce61a0f77a473e89802d19bc287728c9d71bb2edb3bb770bffc3e40e032bf35"
+        }
+      ]
+    },
+    {
+      "id": "palm_light",
+      "title": "Palmeira 16 frondes/480 folíolos, fonte LOD distante",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/palm-light-20c2a70c",
+      "files": [
+        {
+          "path": "models/palm_light.glb",
+          "size": 720852,
+          "sha256": "2ff5938a85ccfaa08ea193981ed11616ff85b9a0ccb3e0e501203f4d27838200"
+        }
+      ]
+    },
+    {
+      "id": "workbench_carpenter",
+      "title": "Bancada de carpinteiro",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/carpenter-workbench-carpentry-workbench-9855fae6",
+      "files": [
+        {
+          "path": "models/workbench_carpenter.glb",
+          "size": 1010268,
+          "sha256": "1674b0434d27fe150aeacad353df395702be2a2a1dde53c87094bd121d042d99"
+        }
+      ]
+    },
+    {
+      "id": "garden_shed",
+      "title": "Abrigo de referência, não uma estrutura automaticamente construída",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/garden-shed-2-x-3-m-original-exterior-model-80b9ac4b",
+      "files": [
+        {
+          "path": "models/garden_shed.glb",
+          "size": 1186432,
+          "sha256": "b43a1e1f139986c53ae77364b319d7e893a70e2fe1177adbcc119e00d0a6a62c"
+        }
+      ]
+    },
+    {
+      "id": "fern_02",
+      "title": "Fern 02",
+      "kind": "gltf",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/fern_02",
+      "files": [
+        {
+          "path": "models/polyhaven/fern_02/fern_02.gltf",
+          "size": 6899,
+          "sha256": "33974295ee19670af4877705fc7d91f33f42d6302f0d44a625e072271223031f"
+        },
+        {
+          "path": "models/polyhaven/fern_02/textures/fern_02_arm_1k.jpg",
+          "size": 280359,
+          "sha256": "ebfb5d76ce9cbdaec20bcd22dce9b755f0b1b8650ef29ca13555e3e6961025d7"
+        },
+        {
+          "path": "models/polyhaven/fern_02/textures/fern_02_diff_1k.jpg",
+          "size": 315705,
+          "sha256": "a828a6e7b4c01c826911e2eac4b3afc7457dab7b3b392a31c681ed88b7d50029"
+        },
+        {
+          "path": "models/polyhaven/fern_02/textures/fern_02_nor_gl_1k.jpg",
+          "size": 367222,
+          "sha256": "45bce132c6e96a0864bc89ab5da51361ab3f4afa83a6669ae499ab5ca811f621"
+        },
+        {
+          "path": "models/polyhaven/fern_02/fern_02.bin",
+          "size": 176176,
+          "sha256": "fe1abb762bcbbc7ad9e86925c8080437a62add257d9280e9142fdc85c226e64c"
+        }
+      ]
+    },
+    {
+      "id": "calathea_orbifolia_01",
+      "title": "Calathea Orbifolia 01",
+      "kind": "gltf",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/calathea_orbifolia_01",
+      "files": [
+        {
+          "path": "models/polyhaven/calathea_orbifolia_01/calathea_orbifolia_01.gltf",
+          "size": 9309,
+          "sha256": "399130c01bfff6b493f885652112c3c841c3814b024a3d3c87773e0c5ab4f156"
+        },
+        {
+          "path": "models/polyhaven/calathea_orbifolia_01/textures/calathea_orbifolia_01_arm_1k.jpg",
+          "size": 421555,
+          "sha256": "df4ea4dfc74a6965476200cffea69886ac26d3c089f356a7b69518149ef585e0"
+        },
+        {
+          "path": "models/polyhaven/calathea_orbifolia_01/textures/calathea_orbifolia_01_diff_1k.jpg",
+          "size": 455819,
+          "sha256": "a105a093d74317a3853319a06fdc78cad2a13e353962298d2094195720b9b4a0"
+        },
+        {
+          "path": "models/polyhaven/calathea_orbifolia_01/calathea_orbifolia_01.bin",
+          "size": 407968,
+          "sha256": "df1668bcb44914abac046217bbdae9867a3702198f7c374135f2b4456df8b038"
+        },
+        {
+          "path": "models/polyhaven/calathea_orbifolia_01/textures/calathea_orbifolia_01_nor_gl_1k.jpg",
+          "size": 581558,
+          "sha256": "52aac88c18bf42c369aad9b2b5e41dbe58b015ca2fac7ff6ed4cb21147cb49c8"
+        }
+      ]
+    },
+    {
+      "id": "pachira_aquatica_01",
+      "title": "Pachira Aquatica 01",
+      "kind": "gltf",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/pachira_aquatica_01",
+      "files": [
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/pachira_aquatica_01.gltf",
+          "size": 13730,
+          "sha256": "e73b77c0ffadd8b9fa686faabfecf37799123fe4bc756f816145a4f8c9f53364"
+        },
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/textures/pachira_aquatica_01_bark_nor_gl_1k.jpg",
+          "size": 723624,
+          "sha256": "389b0f8cc3e8bf4ee78ea12c367ff3003d69d8e83de8baf908e6f2e123d1e6a8"
+        },
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/textures/pachira_aquatica_01_leaves_nor_gl_1k.jpg",
+          "size": 490166,
+          "sha256": "3a442aa75df0e6f37bb7410f8ae09927b419d2dba202943cda40f52a7194804c"
+        },
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/textures/pachira_aquatica_01_leaves_diff_1k.jpg",
+          "size": 320484,
+          "sha256": "b3211c240dd2ea7913326e7f21f9db9d029ee487b5e59d58d0e10c8cc77d203f"
+        },
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/textures/pachira_aquatica_01_bark_arm_1k.jpg",
+          "size": 588614,
+          "sha256": "7c44f930e3a6c14acb9043e50d8244da7869f8937233c58276d1b3212a3a6960"
+        },
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/textures/pachira_aquatica_01_bark_diff_1k.jpg",
+          "size": 592488,
+          "sha256": "9ca175a1c105a3555c47626ebead36505c29482ea0018f4c6e9a5828ce6d7b25"
+        },
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/textures/pachira_aquatica_01_leaves_arm_1k.jpg",
+          "size": 372937,
+          "sha256": "42824afde27e7f0111a2e673f0a7cfe0b18bc21d2201b85d9737fce48c1016a3"
+        },
+        {
+          "path": "models/polyhaven/pachira_aquatica_01/pachira_aquatica_01.bin",
+          "size": 2036788,
+          "sha256": "a803777635a4744cc304bd936806242d8875430cc588295c9fa2792a64747c8e"
+        }
+      ]
+    },
+    {
+      "id": "aerial_beach_01",
+      "title": "Aerial Beach 01",
+      "kind": "pbr",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/aerial_beach_01",
+      "files": [
+        {
+          "path": "textures/aerial_beach_01/aerial_beach_01_diff.jpg",
+          "size": 115382,
+          "sha256": "5b849983d08fda1c6d28b95b55851c2227697598721b25ff2b85e57cf8b04fc4"
+        },
+        {
+          "path": "textures/aerial_beach_01/aerial_beach_01_nor_gl.jpg",
+          "size": 262878,
+          "sha256": "0133712fbe5de7389948150a6900a687707b93df4e6652b531b6e317b49737b3"
+        },
+        {
+          "path": "textures/aerial_beach_01/aerial_beach_01_rough.jpg",
+          "size": 155774,
+          "sha256": "1c5ed28fc47821fea601da5f8793462fc1aebe009ea72c272b9c32ce5eb27ccf"
+        }
+      ]
+    },
+    {
+      "id": "coast_sand_05",
+      "title": "Coast Sand 05",
+      "kind": "pbr",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/coast_sand_05",
+      "files": [
+        {
+          "path": "textures/coast_sand_05/coast_sand_05_diff.jpg",
+          "size": 874077,
+          "sha256": "3af6ab9fc565ece74fca08f4daf4ac903dd64e9370f1239176ec68f2f3dcdf6b"
+        },
+        {
+          "path": "textures/coast_sand_05/coast_sand_05_nor_gl.jpg",
+          "size": 1318765,
+          "sha256": "e5dcfe12c8dcdb36ff3b2b87d90d3ac11fbafb42fd1f873c7faf3f3e512a3bbf"
+        },
+        {
+          "path": "textures/coast_sand_05/coast_sand_05_rough.jpg",
+          "size": 394719,
+          "sha256": "a5baaa3be45bca2d6ac8ccf2c62b4c55f2b68b2fd8097d78fa8536afc60abcb5"
+        }
+      ]
+    },
+    {
+      "id": "coast_sand_rocks_02",
+      "title": "Coast Sand Rocks 02",
+      "kind": "pbr",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/coast_sand_rocks_02",
+      "files": [
+        {
+          "path": "textures/coast_sand_rocks_02/coast_sand_rocks_02_diff.jpg",
+          "size": 839184,
+          "sha256": "78eae8ce6209f79417a15ba863fe828f983c22f7e63a9ee3ef504a0062a05ea9"
+        },
+        {
+          "path": "textures/coast_sand_rocks_02/coast_sand_rocks_02_nor_gl.jpg",
+          "size": 1265458,
+          "sha256": "52776374a8f64aaa8334a87ef8484048baa6f689428a9f8b812004871417ef3e"
+        },
+        {
+          "path": "textures/coast_sand_rocks_02/coast_sand_rocks_02_rough.jpg",
+          "size": 627223,
+          "sha256": "02209fc6bb56673585fa29ab78f96651975317839292c31a96844ab7d90a413d"
+        }
+      ]
+    },
+    {
+      "id": "seaside_rock",
+      "title": "Seaside Rock",
+      "kind": "pbr",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/seaside_rock",
+      "files": [
+        {
+          "path": "textures/seaside_rock/seaside_rock_diff.jpg",
+          "size": 954872,
+          "sha256": "7e1f1ce252c30d36fe442fcc529183b87cad112d26f6f656705172128efd936e"
+        },
+        {
+          "path": "textures/seaside_rock/seaside_rock_nor_gl.jpg",
+          "size": 1158486,
+          "sha256": "a08c85d5c5b57484892ecfc0569512ecfd75d4e499a15bc142779aaf61d8d6a7"
+        },
+        {
+          "path": "textures/seaside_rock/seaside_rock_rough.jpg",
+          "size": 379230,
+          "sha256": "308e154e8b68c79e119609bfc6a724299b1454e52c68b90fa9f5814cff5b18dc"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    "https://www.innerscene.com/tools/library/",
+    "https://polyhaven.com/license"
+  ]
+}
