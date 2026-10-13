@@ -18,6 +18,9 @@ var biome_material: ShaderMaterial
 # Truly imported Poly Haven skinned-free plants (not procedural place-holders).
 var real_forest_nodes: Array[Node3D] = []
 var real_forest_counts := {"fern":0,"calathea":0,"pachira":0}
+# Real Poly Haven fern meshes batched in 48m sectors (not handmade foliage).
+var tropical_floor_batches: Array[Dictionary] = []
+var tropical_floor_count := 0
 
 func generate() -> void:
     var rng := RandomNumberGenerator.new()
@@ -64,6 +67,7 @@ func generate() -> void:
     _generate_surface_details()
     _generate_biome_habitats()
     _generate_imported_forest()
+    _generate_batched_cc0_understory()
     set_light_mode(light_mode)
 
 
@@ -217,6 +221,74 @@ func _generate_imported_forest() -> void:
                 placement.queue_free()
                 break
 
+# Dense B-sector foliage uses the untouched textured glTF meshes, not
+# another approximation of leaves. Instancing 450 specimens in chunks keeps
+# mobile draw calls tied to sectors rather than plant count. Original harvestable
+# trees, fern resources, paths and caves stay exactly where they were.
+func _generate_batched_cc0_understory() -> void:
+    tropical_floor_batches.clear()
+    tropical_floor_count = 0
+    if not SurvivorRealWorldAssets.available("fern"):
+        return
+    var template: Node3D = (load(SurvivorRealWorldAssets.SOURCES["fern"]) as PackedScene).instantiate() as Node3D
+    if template == null:
+        return
+    var source_meshes: Array[Mesh] = []
+    for node in template.find_children("*","MeshInstance3D",true,false):
+        var instance: MeshInstance3D = node as MeshInstance3D
+        if instance.mesh != null:
+            source_meshes.append(instance.mesh)
+        if source_meshes.size()>=2:
+            break
+    template.free()
+    if source_meshes.is_empty():
+        return
+    var forest_centers := [
+        Vector2(-55,72),Vector2(45,80),Vector2(66,-26),
+        Vector2(-45,-36),Vector2(14,-87),Vector2(-110,2),Vector2(52,-85)
+    ]
+    var rand := RandomNumberGenerator.new()
+    rand.seed = 981774
+    var buckets: Dictionary = {}
+    for i in range(680):
+        var center: Vector2 = forest_centers[i % forest_centers.size()]
+        var p := center+Vector2(rand.randf_range(-23.0,23.0),rand.randf_range(-23.0,23.0))
+        var h := terrain.height_at(p.x,p.y)
+        if not terrain.is_land(p.x,p.y) or h<6.0 or h>24.0 or _protected(p):
+            continue
+        var variant := i % source_meshes.size()
+        var sector := Vector2i(floori(p.x/CHUNK_SIZE),floori(p.y/CHUNK_SIZE))
+        var key := Vector3i(sector.x,sector.y,variant)
+        if not buckets.has(key):
+            buckets[key] = []
+        buckets[key].append({"position":Vector3(p.x,h+0.02,p.y),
+                "angle":rand.randf_range(0.0,TAU),
+                "scale":rand.randf_range(1.0,1.85)})
+        tropical_floor_count += 1
+    for key in buckets:
+        var entries: Array = buckets[key]
+        var mesh: Mesh = source_meshes[key.z]
+        var center := Vector3((float(key.x)+0.5)*CHUNK_SIZE,0.0,
+                              (float(key.y)+0.5)*CHUNK_SIZE)
+        var multi := MultiMesh.new()
+        multi.transform_format = MultiMesh.TRANSFORM_3D
+        multi.mesh = mesh
+        multi.instance_count = entries.size()
+        for i in range(entries.size()):
+            var entry: Dictionary = entries[i]
+            var sc: float = entry.scale
+            var mat := Basis(Vector3.UP,float(entry.angle)).scaled(Vector3.ONE*sc)
+            multi.set_instance_transform(i,Transform3D(mat,entry.position-center))
+        var node := MultiMeshInstance3D.new()
+        node.name = "PolyHavenB_TropicalUnderstory"
+        node.position = center
+        node.multimesh = multi
+        node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+        node.visibility_range_end = 53.0
+        node.visibility_range_end_margin = 8.0
+        add_child(node)
+        tropical_floor_batches.append({"node":node,"entries":entries,"family":key.z})
+
 func _protected(p: Vector2) -> bool:
     if world.trails != null and world.trails.distance_to(p)<2.2:
         return true
@@ -247,6 +319,14 @@ func _grass_mesh() -> ArrayMesh:
     return st.commit()
 
 func clear_area(pos: Vector3, radius: float) -> void:
+    for batch in tropical_floor_batches:
+        for i in range(batch.entries.size()):
+            var point: Vector3 = batch.entries[i].position
+            if Vector2(point.x-pos.x,point.z-pos.z).length_squared()<radius*radius:
+                var m: MultiMesh = batch.node.multimesh
+                var transform: Transform3D = m.get_instance_transform(i)
+                transform.basis = Basis.IDENTITY.scaled(Vector3.ZERO)
+                m.set_instance_transform(i,transform)
     for model in real_forest_nodes:
         if Vector2(model.position.x-pos.x,model.position.z-pos.z).length_squared() < radius*radius:
             model.visible = false
@@ -277,6 +357,9 @@ func set_light_mode(value: bool) -> void:
     for batch in biome_batches:
         batch.node.multimesh.visible_instance_count = maxi(1, batch.entries.size() / 3) if value else -1
     # Hide medium-distance photogrammetric plant duplicates on budget phones.
+    for batch in tropical_floor_batches:
+        var m: MultiMesh = batch.node.multimesh
+        m.visible_instance_count = maxi(1,batch.entries.size()/4) if value else -1
     for i in range(real_forest_nodes.size()):
         if value and i % 3 != 0:
             real_forest_nodes[i].visible = false
