@@ -127,6 +127,13 @@ func _build_resource_visual(root: Node3D, kind: String) -> void:
         "driftwood":
             _segment(root, Vector3(-1.7, 0.37, 0.0), Vector3(1.5, 0.44, 0.0), 0.33, COLORS["wood"])
             _segment(root, Vector3(-0.4, 0.48, 0), Vector3(0.2, 1.2, 0.65), 0.12, COLORS["trunk"])
+        "fiber_bundle":
+            for i in range(5):
+                var a: float = float(i) * TAU / 5.0
+                _segment(root, Vector3(sin(a) * 0.55, 0.08, cos(a) * 0.55), Vector3(sin(a) * 0.55, 0.60, cos(a) * 0.55), 0.08, COLORS["fiber"])
+        "pebbles":
+            for i in range(4):
+                _sphere(root, 0.27, COLORS["rock"], Vector3(float(i % 2) * 0.5 - 0.25, 0.17, float(i / 2) * 0.45 - 0.20))
         "berry":
             _sphere(root, 1.0, Color(0.17, 0.48, 0.24), Vector3(0.0, 0.9, 0.0), Vector3(1.1, 0.72, 1.1))
             for i in range(5):
@@ -189,11 +196,17 @@ func reset_world() -> void:
     _scatter("tree", 34, 15.0, 173.0)
     _scatter("rock", 54, 30.0, 185.0)
     _scatter("driftwood", 32, 140.0, 210.0, true)
+    _scatter("fiber_bundle", 35, 135.0, 210.0, true)
+    _scatter("pebbles", 35, 130.0, 210.0, true)
     _scatter("berry", 26, 30.0, 175.0)
     _scatter("spring", 8, 15.0, 149.0)
     # Materiais garantidos no começo da aventura.
     _spawn_resource("driftwood", 137.0, 4.0)
-    _spawn_resource("rock", 143.0, 5.0)
+    _spawn_resource("driftwood", 135.0, -3.0)
+    _spawn_resource("fiber_bundle", 141.0, 3.0)
+    _spawn_resource("fiber_bundle", 135.0, 6.0)
+    _spawn_resource("pebbles", 143.0, 5.0)
+    _spawn_resource("pebbles", 136.0, -5.0)
     _spawn_resource("berry", 138.0, -6.0)
 
 func nearest_resource(player_pos: Vector3, radius: float = 5.2) -> Node3D:
@@ -214,7 +227,9 @@ func resource_title(kind: String) -> String:
     match kind:
         "palm": return "Coqueiro"
         "tree": return "Árvore"
-        "rock": return "Pedras"
+        "rock": return "Rocha (picareta)"
+        "pebbles": return "Pedras soltas"
+        "fiber_bundle": return "Fibras no chão"
         "driftwood": return "Madeira na praia"
         "berry": return "Arbusto de frutas"
         "spring": return "Fonte de água doce"
@@ -230,6 +245,8 @@ func harvest(resource: Node3D) -> Dictionary:
         "tree": loot = {"wood": 4, "fiber": 1}
         "rock": loot = {"stone": 3}
         "driftwood": loot = {"wood": 3}
+        "fiber_bundle": loot = {"fiber": 3}
+        "pebbles": loot = {"stone": 2}
         "berry": loot = {"fruit": 3}
         "spring": loot = {"water": 3}
     resource.hide()
@@ -307,7 +324,7 @@ func restore(data: Dictionary) -> void:
             if not (entry is Dictionary):
                 continue
             var kind: String = str(entry.get("kind", ""))
-            if not SurvivorState.RECIPES.has(kind) or kind == "spear":
+            if not SurvivorState.BUILDING_RECIPES.has(kind):
                 continue
             var x: float = clampf(float(entry.get("x", 0.0)), -210.0, 210.0)
             var z: float = clampf(float(entry.get("z", 0.0)), -210.0, 210.0)
