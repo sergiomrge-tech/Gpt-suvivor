@@ -296,6 +296,19 @@ func run() -> void:
     for entry in game.world.resources:
         if entry.kind=="tree": trees+=1
     check(trees>=10,"Harvestable broadleaf trees generated in forest groups")
+
+    var detailed_canopy := false
+    for resource in game.world.resources:
+        if resource.kind != "tree":
+            continue
+        for leaf_node in resource.node.get_children():
+            if leaf_node is MeshInstance3D:
+                var canopy_mesh: Mesh = leaf_node.mesh
+                var packed_vertices: PackedVector3Array = canopy_mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+                detailed_canopy = packed_vertices.size() > 500
+                break
+        break
+    check(detailed_canopy, "Harvestable broadleaf crowns are now branched leaf geometry, not five solid green boulders")
     check(game.world.discoverables.size()==5,"Unique clues available at crash site and caves")
     check(game.soundscape.streams.size()==17 and game.soundscape.voices.size()==7,"Original ambience and pooled positional effect voices loaded")
     check(game.soundscape.streams.sea.loop_mode==AudioStreamWAV.LOOP_FORWARD,"Sea ambience loops natively")
