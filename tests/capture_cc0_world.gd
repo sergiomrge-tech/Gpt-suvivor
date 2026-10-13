@@ -79,7 +79,7 @@ func capture_biomes() -> void:
     await shot("08_forest_moss_roots")
     await travel(Vector2(-8,164),12.0)
     await shot("09_authored_aircraft_crash")
-    var bench := game.world.add_structure({"kind":"workbench","x":1.0,"z":147.0,"rotation":0.0})
+    game.world.add_structure({"kind":"workbench","x":1.0,"z":147.0,"rotation":0.0})
     await travel(Vector2(0,151),10.0)
     await shot("10_real_carpentry_workbench")
     await travel(Vector2(-25,142),13.0)
