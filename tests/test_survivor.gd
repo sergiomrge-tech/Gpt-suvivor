@@ -138,6 +138,64 @@ func run() -> void:
     await process_frame
     check(game.playing and game.player.enabled, "New survival starts")
     check(game.world.walkable(game.player.position, game.player.position), "Spawn is unobstructed")
+    game.capture_mode = true
+    check(not game.state.owns("stone_axe") and not game.state.owns("stone_pickaxe") and not game.state.owns("stone_knife"),"New survival starts without free tools")
+    var uncut: Dictionary = game.world.resources[0]
+    game.world.harvest(uncut)
+    check(game.state.inventory.wood == 0 and uncut.node.visible,"Direct tree harvesting rejects missing axe without depleting resource")
+    game.player.position = uncut.position+Vector3(0,0,float(uncut.radius)+0.8)
+    game.action_cooldown = 0
+    game.interact()
+    check(not game.player.is_busy() and game.pending_work.is_empty(),"Interaction cannot conjure an axe before it is crafted")
+    var unmined: Dictionary = game.world.resources[10]
+    game.world.harvest(unmined)
+    check(game.state.inventory.stone == 0 and unmined.node.visible,"Rocks require a pickaxe in the authoritative harvest path")
+    var starting_logs := 0
+    var starting_stones := 0
+    for entry in game.world.resources:
+        if str(entry.id).begins_with("start_log_") or str(entry.id).begins_with("start_pebble_") or entry.id == "start_hand_fiber":
+            check(game.terrain.is_land(entry.position.x,entry.position.z) and game.world.walkable(entry.position,entry.position),"Bootstrap pickup lies on accessible land: " + str(entry.id))
+            game.world.harvest(entry)
+            if entry.kind == "loose_log": starting_logs += 1
+            if entry.kind == "loose_stone": starting_stones += 1
+    check(starting_logs == 6 and starting_stones == 6 and game.state.inventory.wood == 18 and game.state.inventory.stone == 12 and game.state.inventory.fiber == 5,"Loose beach resources supply all basic tools without a workstation")
+    var craft_before: Dictionary = game.state.inventory.duplicate(true)
+    game.select_recipe("stone_axe")
+    check(game.player.action_kind == "handcraft" and not game.player.tools.hammer.visible,"Stone tools use a handcraft animation without an invented hammer")
+    game.interact()
+    check(game.state.inventory == craft_before and not game.state.owns("stone_axe"),"Cancelling before craft contact spends and grants nothing")
+    for kind in ["stone_axe","stone_pickaxe","stone_knife"]:
+        game.select_recipe(kind)
+        check(not game.state.owns(kind),"Tool is not granted before contact: " + kind)
+        game.player.enabled = true
+        game.player._physics_process(0.7)
+        check(game.state.owns(kind),"Tool crafted from real loose resources: " + kind)
+        var paid: Dictionary = game.state.inventory.duplicate(true)
+        game.player._physics_process(0.8)
+        game.select_recipe(kind)
+        check(game.state.inventory == paid and game.selected_recipe == "","Duplicate tool request cannot spend again or create a structure")
+    check(game.state.inventory.wood == 11 and game.state.inventory.stone == 5 and game.state.inventory.fiber == 0,"Basic tools consume exact wood, stone and fiber costs")
+    var knife_fiber: Dictionary = game.world.resources[11]
+    var fiber_before: int = game.state.inventory.fiber
+    game.world.harvest(knife_fiber)
+    check(game.state.inventory.fiber == fiber_before+8,"Crafted knife improves fiber gathering from five to eight")
+    var tools_saved := SurvivalState.from_data(game.state.to_data())
+    check(tools_saved != null and tools_saved.owns("stone_axe") and tools_saved.owns("stone_knife") and tools_saved.owns("stone_pickaxe"),"Crafted tools survive save round-trip")
+    var legacy: Dictionary = game.state.to_data().duplicate(true)
+    legacy.version = 1
+    for key in ["stone_axe","stone_pickaxe","stone_knife"]: legacy.inventory.erase(key)
+    var migrated := SurvivalState.from_data(legacy)
+    check(migrated != null and migrated.inventory.wood == game.state.inventory.wood and migrated.owns("stone_axe") == false,"v0.4 saves migrate without loss or gifting tools")
+    legacy.buildings.append({"kind":"stone_axe","x":0.0,"z":170.0})
+    check(SurvivalState.from_data(legacy) == null,"Tools cannot masquerade as saved structures")
+    var old_zoom: float = game.camera_distance
+    game.change_zoom(-100)
+    check(game.camera_distance == 12 and game.hud.zoom_in_button.disabled,"Mobile zoom reaches closer view and clamps minimum")
+    game.change_zoom(100)
+    check(game.camera_distance == 48 and game.hud.zoom_out_button.disabled,"Zoom clamps farthest view")
+    game.change_zoom(old_zoom-48)
+    check(game.hud.joystick.size == Vector2(220,220) and game.hud.joystick.offset_left == 100 and SurvivorJoystick.RADIUS == 88,"Joystick is larger and moved inward from the corner")
+    game.capture_mode = false
     var sample: Dictionary = game.world.resources[0]
     var wood_before: int = game.state.inventory.wood
     game.world.harvest(sample)
@@ -180,9 +238,14 @@ func run() -> void:
     game.resume_game()
     check(not game.soundscape.frozen,"Resume releases paused audio dispatch")
     game.hud.toggle_inventory()
-    check(game.hud.inventory_panel.visible and game.hud.joystick.active,"Expanded backpack does not disable movement")
+    await process_frame
+    await process_frame
+    check(game.hud.panel.get_rect().end.y <= game.hud.root.size.y and game.hud.panel.get_rect().end.x <= game.hud.root.size.x,"Inventory stays inside the viewport after wrapped-label layout")
+    game.hud._item_callback("stone_axe").call()
+    check(game.hud.item_detail.text.contains("Machado de pedra") and game.hud.item_detail.text.contains("árvores"),"Inventory item selection shows quantity and actual tool function")
+    check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 11,"Inventory grid opens with tool slots and blocks movement")
     game.hud.toggle_inventory()
-    check(not game.hud.inventory_panel.visible,"Backpack returns to compact HUD")
+    check(game.hud.modal_mode == "" and game.hud.joystick.active,"Backpack returns to compact HUD")
     var found_entry: Dictionary = game.world.discoverables[0]
     var discovery_wood: int = game.state.inventory.wood
     var found: Dictionary=game.world.discover(found_entry)
@@ -325,6 +388,7 @@ func run() -> void:
     game.hud.action_button._input(action_touch)
     check(taps[0] == 1, "Dragging a button cancels its tap for scrolling")
     game.hud.show_crafting()
+    check(game.hud.build_buttons.has("stone_axe") and game.hud.build_buttons.has("stone_knife") and game.hud.build_buttons.has("stone_pickaxe"),"Inventory construction tab contains all basic tool recipes")
     action_touch.pressed = true
     game.hud.action_button._input(action_touch)
     action_touch.pressed = false

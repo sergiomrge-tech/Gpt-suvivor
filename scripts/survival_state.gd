@@ -1,11 +1,15 @@
 extends RefCounted
 class_name SurvivalState
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
+const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "fishing_rod"]
 const DAY_SECONDS := 1200.0
 const START_POSITION := Vector3(0.0, 0.0, 170.0)
 const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado"}
 const RECIPES := {
+    "stone_knife": {"title": "Faca de pedra", "cost": {"wood": 1, "stone": 2, "fiber": 1}, "requires": [], "description": "Feita à mão. Corta fibras: coleta 8 em vez de 5."},
+    "stone_axe": {"title": "Machado de pedra", "cost": {"wood": 3, "stone": 2, "fiber": 2}, "requires": [], "description": "Feito à mão. Necessário para cortar árvores e coqueiros."},
+    "stone_pickaxe": {"title": "Picareta de pedra", "cost": {"wood": 3, "stone": 3, "fiber": 2}, "requires": [], "description": "Feita à mão. Necessária para extrair pedra das rochas."},
     "campfire": {"title": "Fogueira", "cost": {"wood": 10, "stone": 6}, "requires": [], "description": "Asse peixes e ilumine o acampamento."},
     "workbench": {"title": "Bancada", "cost": {"wood": 16, "stone": 8}, "requires": ["campfire"], "description": "Libera ferramentas e construção avançada."},
     "fishing_rod": {"title": "Vara de pesca", "cost": {"wood": 6, "fiber": 8}, "requires": ["workbench"], "description": "Pesque na costa ou no cais."},
@@ -14,7 +18,7 @@ const RECIPES := {
     "boat": {"title": "Barco de fuga", "cost": {"wood": 60, "fiber": 20, "metal": 8}, "requires": ["house", "dock", "fishing_rod"], "description": "Construa junto ao cais e parta da ilha."},
     "meal": {"title": "Assar peixe", "cost": {"raw_fish": 1}, "requires": ["campfire"], "description": "Prepare na fogueira. Recupera 38 de fome."}
 }
-var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "fishing_rod": 0}
+var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "fishing_rod": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0}
 var buildings: Array[Dictionary] = []
 var harvested: Dictionary = {}
 var discoveries: Dictionary = {}
@@ -32,9 +36,22 @@ func has_structure(kind: String) -> bool:
     return false
 
 func owns(kind: String) -> bool:
-    if kind == "fishing_rod":
+    if kind in TOOLS:
         return int(inventory.get(kind, 0)) > 0
     return has_structure(kind)
+
+func harvest_error(kind: String) -> String:
+    if kind in ["palm", "tree"] and not owns("stone_axe"):
+        return "Precisa de machado de pedra. Pegue troncos, pedras soltas e fibras; abra Mochila → Construções."
+    if kind == "rock" and not owns("stone_pickaxe"):
+        return "Precisa de picareta de pedra. Fabrique em Mochila → Construções."
+    return ""
+
+func craft_tool(kind: String) -> bool:
+    if not kind in TOOLS or not pay_recipe(kind):
+        return false
+    add_item(kind, 1)
+    return true
 
 func recipe_error(kind: String) -> String:
     if not RECIPES.has(kind):
@@ -87,6 +104,10 @@ func advance(delta: float) -> void:
 func objective() -> String:
     if escaped:
         return "Você sobreviveu e deixou a ilha!"
+    if not owns("stone_axe"):
+        return "Pegue troncos, pedras soltas e fibras. Mochila → Construções → Machado de pedra."
+    if not owns("stone_pickaxe"):
+        return "Fabrique a picareta na mochila para extrair pedra das rochas."
     if not owns("campfire"):
         return "1/6 • Reúna 10 madeiras e 6 pedras. Construa uma fogueira."
     if not owns("workbench"):
@@ -105,7 +126,7 @@ func to_data() -> Dictionary:
     return {"version": SAVE_VERSION, "inventory": inventory, "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
 
 static func from_data(data: Dictionary) -> SurvivalState:
-    if int(data.get("version", 0)) != SAVE_VERSION:
+    if int(data.get("version", 0)) not in [1, SAVE_VERSION]:
         return null
     var state := SurvivalState.new()
     var inv = data.get("inventory", {})
@@ -135,7 +156,7 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not entry is Dictionary or not RECIPES.has(str(entry.get("kind", ""))):
             return null
         var kind := str(entry.kind)
-        if kind in ["meal", "fishing_rod"] or state.has_structure(kind):
+        if kind == "meal" or kind in TOOLS or state.has_structure(kind):
             return null
         for axis in ["x", "z"]:
             var value = entry.get(axis)

@@ -1,7 +1,9 @@
 config_version=5
 
 [application]
+config/version="0.4.1"
 config/name="GPT Survivor"
+config/icon="res://assets/icons/icon.svg"
 run/main_scene="res://scenes/main.tscn"
 config/description="Aventura de sobrevivencia em ilha tropical 3D"
 config/features=PackedStringArray("4.4", "GL Compatibility")
@@ -21,6 +23,7 @@ pointing/emulate_mouse_from_touch=false
 common/physics_ticks_per_second=60
 
 [rendering]
+textures/vram_compression/import_etc2_astc=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/default_filters/use_nearest_mipmap_filter=false

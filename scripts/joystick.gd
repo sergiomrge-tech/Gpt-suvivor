@@ -4,11 +4,11 @@ class_name SurvivorJoystick
 var value := Vector2.ZERO
 var finger := -1
 var active := false
-const RADIUS := 66.0
+const RADIUS := 88.0
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
-    custom_minimum_size = Vector2(170, 170)
+    custom_minimum_size = Vector2(220, 220)
 
 func reset() -> void:
     finger = -1
@@ -50,4 +50,4 @@ func _draw() -> void:
     var center := size * 0.5
     draw_circle(center, RADIUS, Color(0.03, 0.1, 0.13, 0.38))
     draw_arc(center, RADIUS, 0, TAU, 64, Color(0.76, 0.87, 0.8, 0.58), 2, true)
-    draw_circle(center + value * RADIUS * 0.63, 24, Color(0.73, 0.82, 0.65, 0.65))
+    draw_circle(center + value * RADIUS * 0.63, 32, Color(0.73, 0.82, 0.65, 0.72))

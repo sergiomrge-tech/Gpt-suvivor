@@ -1,3 +1,19 @@
+# Checkpoint — 13/10/2026 — v0.4.1
+
+## Autorização de publicação
+
+Em 13/10/2026, Sergio autorizou permanentemente a publicação das atualizações deste projeto no GitHub: “Sempre pode publicar”. Prosseguir com commits e publicação das branches de desenvolvimento no repositório `sergiomrge-tech/Gpt-suvivor` sem repetir pedidos de confirmação. Manter chaves de assinatura, senhas e credenciais fora do repositório.
+
+Base remota `22e5805aa08c50cbc139b36761075ed99aa58c25` em `prototype-v0.4-integrated`. Revisão em `prototype-v0.4.1-crafting`; main preservada.
+
+Pedido do Sergio implementado: grade de inventário inspirada na organização da referência enviada (ícones originais e modelo real do jogo), aba Construções com faca/machado/picareta feitos à mão; árvore/coqueiro exigem machado e rocha exige picareta; troncos e pedras soltas coletáveis à mão na praia e pela ilha. Faca aumenta rendimento da fibra. Novas ferramentas são pagas/concedidas no contato, cancelamento anterior não cobra. Ferramentas não usam slots de estruturas.
+
+Save v2 aceita v1 e mantém campos antigos/IDs de recursos; a geração das novas coletas usa seed separado e IDs próprios. Ferramentas não são concedidas gratuitamente na migração. Saves existentes continuam a partida; não desinstalar para atualizar. Zoom 12–48 com botões +/− e persistência; joystick raio 88 e área 220×220, afastado da borda.
+
+Validação: 141 testes nativos, 13 auditorias de áudio e sete capturas reais em Godot Linux. APK ARM64 versão 401/0.4.1 com mesma chave privada da v0.4.0. Chave/senha ficam fora do repositório e dos entregáveis. Android físico permanece pendente para esta revisão.
+
+## Histórico anterior
+
 # Checkpoint — 13/10/2026 — v0.4.0
 
 Projeto: GPT Survivor / Ilha: Último Voo. Repositório: https://github.com/sergiomrge-tech/Gpt-suvivor. Branch desta entrega: `prototype-v0.4-integrated`.

@@ -15,6 +15,8 @@ var action_cooldown := 0.0
 var fishing_remaining := 0.0
 var autosave_clock := 0.0
 var camera_distance := 29.0
+const MIN_ZOOM_DISTANCE := 12.0
+const MAX_ZOOM_DISTANCE := 48.0
 var _saved_state: SurvivalState
 var departure_tween: Tween
 var light_visuals := false
@@ -52,10 +54,15 @@ func _ready() -> void:
     hud.quality_requested.connect(toggle_quality)
     hud.sound_requested.connect(toggle_sound)
     hud.journal_requested.connect(func(): hud.show_journal())
+    hud.zoom_requested.connect(change_zoom)
     var settings := ConfigFile.new()
     if settings.load("user://visual.cfg") == OK:
         light_visuals = bool(settings.get_value("graphics", "light", false))
         muted = bool(settings.get_value("audio","muted",false))
+        var saved_zoom = settings.get_value("camera","distance",29.0)
+        if (saved_zoom is float or saved_zoom is int) and is_finite(float(saved_zoom)):
+            camera_distance = clampf(float(saved_zoom),MIN_ZOOM_DISTANCE,MAX_ZOOM_DISTANCE)
+    hud.update_zoom(camera_distance)
     hud.light_visuals = light_visuals
     hud.muted = muted
     soundscape.set_muted(muted)
@@ -121,7 +128,7 @@ func start_game(load_save: bool) -> void:
     else:
         if not load_save:
             save_game(false)
-        hud.toast("Você acordou na praia. O primeiro passo é a fogueira.")
+        hud.toast("Pegue troncos e pedras no chão. Fabrique ferramentas em Mochila → Construções.",5)
 
 func pause_game() -> void:
     if not playing:
@@ -157,7 +164,7 @@ func _process(delta: float) -> void:
     SurvivorModels.merged_material.set_shader_parameter("survivor_position",player.position)
     hud.can_fish = terrain.is_shore(player.position.x,player.position.z) or not world.near_structure(player.position,"dock",8).is_empty()
     if player.is_busy():
-        hud.activity_name = {"chop":"Cortando madeira","mine":"Extraindo pedra","gather":"Coletando","search":"Investigando","fish":"Pescando","build":"Construindo","craft":"Fabricando","cook":"Preparando alimento","eat":"Comendo","rest":"Descansando","drink":"Bebendo água"}.get(player.action_kind,"")
+        hud.activity_name = {"chop":"Cortando madeira","mine":"Extraindo pedra","gather":"Coletando","search":"Investigando","fish":"Pescando","build":"Construindo","craft":"Fabricando","handcraft":"Fabricando ferramenta","cut":"Cortando fibras","cook":"Preparando alimento","eat":"Comendo","rest":"Descansando","drink":"Bebendo água"}.get(player.action_kind,"")
         hud.activity_fraction = 1-player.action_remaining/player.action_duration
     elif not pending_work.is_empty():
         hud.activity_name = "Aproximando-se"
@@ -209,6 +216,7 @@ func _physics_process(delta: float) -> void:
         player.move_vector = Vector2.ZERO
         return
     if not pending_work.is_empty():
+        if pending_work.mode == "tool": return
         approach_timer += delta
         var entry: Dictionary = pending_work.entry
         var direction := Vector2(entry.position.x-player.position.x,entry.position.z-player.position.z)
@@ -237,7 +245,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
     if event.physical_keycode == KEY_ESCAPE:
         if selected_recipe != "":
             cancel_placement()
-        elif hud.modal_mode in ["craft", "pause"]:
+        elif hud.modal_mode in ["craft", "inventory", "pause"]:
             hud.close_modal()
             resume_game()
         elif playing and hud.modal_mode == "":
@@ -255,8 +263,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
         KEY_F: fish_or_cancel()
         KEY_H: consume()
         KEY_P: save_game()
-        KEY_EQUAL, KEY_KP_ADD: camera_distance = maxf(19, camera_distance - 3)
-        KEY_MINUS, KEY_KP_SUBTRACT: camera_distance = minf(48, camera_distance + 3)
+        KEY_EQUAL, KEY_KP_ADD: change_zoom(-3)
+        KEY_MINUS, KEY_KP_SUBTRACT: change_zoom(3)
+
+func change_zoom(amount: float) -> void:
+    camera_distance = clampf(camera_distance+amount,MIN_ZOOM_DISTANCE,MAX_ZOOM_DISTANCE)
+    hud.update_zoom(camera_distance)
+    var settings := ConfigFile.new()
+    settings.load("user://visual.cfg")
+    settings.set_value("camera","distance",camera_distance)
+    if not capture_mode: settings.save("user://visual.cfg")
 
 func interact() -> void:
     if paused(): return
@@ -276,8 +292,12 @@ func interact() -> void:
         return
     action_cooldown = 0.65
     match str(target.kind):
-        "palm", "tree", "rock", "fiber", "metal", "discovery":
-            var animation: String = {"palm":"chop","tree":"chop","rock":"mine","metal":"mine","fiber":"gather","discovery":"search"}[target.kind]
+        "palm", "tree", "rock", "fiber", "metal", "discovery", "loose_log", "loose_stone":
+            var error := state.harvest_error(str(target.kind))
+            if error != "":
+                hud.toast(error,5)
+                return
+            var animation: String = {"palm":"chop","tree":"chop","rock":"mine","metal":"search","fiber":"cut" if state.owns("stone_knife") else "gather","discovery":"search","loose_log":"gather","loose_stone":"gather"}[target.kind]
             queue_work(target,animation,1.05,"harvest",float(target.radius)+0.85)
         "spring":
             player.perform_action("drink",0.95,target.position)
@@ -316,6 +336,11 @@ func select_recipe(kind: String) -> void:
         return
     if kind == "meal":
         craft_meal()
+        return
+    if kind in ["stone_knife", "stone_axe", "stone_pickaxe"]:
+        # Charge and grant together at contact; cancelling before contact costs nothing.
+        pending_work = {"mode":"tool", "recipe":kind}
+        player.perform_action("handcraft",1.4,player.position)
         return
     if kind == "fishing_rod":
         if world.near_structure(player.position, "workbench", 8).is_empty():
@@ -493,8 +518,16 @@ func cancel_work() -> void:
     if is_instance_valid(player): player.cancel_action()
 
 func _on_action_contact(kind: String,point: Vector3) -> void:
-    var effect: String = {"chop":"chop","mine":"mine","gather":"rustle","search":"rustle","fish":"splash","build":"hammer","craft":"hammer","cook":"rustle","eat":"consume","drink":"splash","rest":"rustle"}.get(kind,"rustle")
+    var effect: String = {"chop":"chop","mine":"mine","cut":"rustle","handcraft":"rustle","gather":"rustle","search":"rustle","fish":"splash","build":"hammer","craft":"hammer","cook":"rustle","eat":"consume","drink":"splash","rest":"rustle"}.get(kind,"rustle")
     soundscape.play_effect(effect,point)
+    if not pending_work.is_empty() and pending_work.mode == "tool":
+        var recipe: String = pending_work.recipe
+        if state.craft_tool(recipe):
+            hud.toast("%s pronto! Usado automaticamente na coleta." % SurvivalState.RECIPES[recipe].title,4)
+            save_game(false)
+        else:
+            hud.toast(state.recipe_error(recipe))
+        pending_work.clear()
     if not pending_work.is_empty() and pending_work.mode=="harvest":
         var entry: Dictionary = pending_work.entry
         if entry.kind=="discovery":

@@ -107,7 +107,7 @@ func perform_action(kind: String = "gather",duration: float = 0.75,point: Vector
     var direction := Vector2(point.x-position.x,point.z-position.z)
     if direction.length_squared() > 0.02:
         body_pivot.rotation.y = atan2(direction.x,direction.y)
-    var tool: String = {"chop":"axe","mine":"pick","fish":"rod","build":"hammer","craft":"hammer","eat":"food","cook":"skewer"}.get(kind,"")
+    var tool: String = {"chop":"axe","mine":"pick","cut":"knife","fish":"rod","build":"hammer","craft":"hammer","eat":"food","cook":"skewer"}.get(kind,"")
     if tools.has(tool):
         tools[tool].visible = true
     if kind == "fish":
@@ -135,7 +135,7 @@ func pose_action(progress: float) -> void:
             left_arm.rotation.x = -0.25-wave*0.4
             torso.rotation.x = 0.12*wave
             torso.rotation.z = sin(progress*TAU)*0.07
-        "gather", "search", "drink":
+        "gather", "search", "drink", "cut":
             torso.rotation.x = 0.46*wave
             right_arm.rotation.x = -0.95*wave
             left_arm.rotation.x = -0.65*wave
@@ -144,6 +144,8 @@ func pose_action(progress: float) -> void:
             body_pivot.position.y = -wave*0.18
             if action_kind == "drink":
                 right_arm.rotation.x -= smoothstep(0.3,0.65,progress)*1.1*(1-progress)
+            elif action_kind == "cut":
+                right_arm.rotation.z = sin(progress*TAU)*0.45
         "fish":
             right_arm.rotation.x = -0.75-sin(minf(progress*3.0,1)*PI)*0.7
             right_elbow.rotation.x = -0.3
@@ -151,7 +153,7 @@ func pose_action(progress: float) -> void:
             left_elbow.rotation.x = -0.45
             torso.rotation.x = 0.05+sin(progress*TAU)*0.03
             head_pivot.rotation.x = 0.13
-        "build", "craft":
+        "build", "craft", "handcraft":
             var tap := absf(sin(progress*PI*3))
             right_arm.rotation.x = -0.65-tap*0.72
             right_elbow.rotation.x = -0.2-tap*0.25
@@ -256,12 +258,15 @@ func _build_character() -> void:
 func _build_tools() -> void:
     var timber := Color(0.43,0.29,0.14)
     var metal := Color(0.43,0.48,0.49)
-    for kind in ["axe","pick","hammer","rod","food","skewer"]:
+    for kind in ["axe","pick","knife","hammer","rod","food","skewer"]:
         var root := _joint(right_hand,Vector3.ZERO)
         root.name = kind
         root.visible = false
         tools[kind] = root
         match kind:
+            "knife":
+                SurvivorModels.beam(root,Vector3(0,0.1,0),Vector3(0,-0.2,0),0.045,timber)
+                SurvivorModels.triangles(root,PackedVector3Array([Vector3(-0.08,-0.18,-0.04),Vector3(0.08,-0.18,-0.04),Vector3(0,-0.58,0),Vector3(0.08,-0.18,0.04),Vector3(-0.08,-0.18,0.04),Vector3(0,-0.58,0)]),Color(0.49,0.51,0.43))
             "axe":
                 SurvivorModels.beam(root,Vector3(0,0.15,0),Vector3(0,-0.66,0),0.055,timber)
                 SurvivorModels.triangles(root,PackedVector3Array([Vector3(-0.03,-0.5,-0.08),Vector3(-0.35,-0.53,-0.08),Vector3(-0.24,-0.77,-0.08),Vector3(-0.03,-0.5,0.08),Vector3(-0.24,-0.77,0.08),Vector3(-0.35,-0.53,0.08)]),metal)

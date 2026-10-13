@@ -1,3 +1,13 @@
+# QA atual — v0.4.1 — 13/10/2026
+
+Godot 4.6.1 Linux: 141/141 verificações nativas aprovadas. Novas verificações cobrem recursos iniciais acessíveis, restrição de árvore/rocha sem ferramenta, fabricação com custos exatos, cancelamento anterior ao contato, rejeição de duplicatas, bônus da faca, persistência das ferramentas, migração v1→v2, zoom limitado, joystick reposicionado, grade do inventário, descrição de itens e painel limitado ao viewport.
+
+Sete capturas reais em `tests/capture_inventory.gd` conferidas: praia/controles, mochila, ferramentas bloqueadas, receitas disponíveis, zoom próximo e duas telas em janela menor. Nenhum screenshot conceitual. × e abas permanecem fixos durante a rolagem.
+
+APK release ARM64, package `com.sergiomrge.gptsurvivor`, versionCode 401/versionName 0.4.1. Chave de assinatura mantida da versão 0.4.0. Exportação, correção das authorities Startup/FileProvider, zipalign de 16 KiB, apksigner e CRC são exigidos pela rotina de build. A revisão atual ainda depende de teste físico no Android do usuário; verificação do arquivo não confirma instalação, toque nem FPS no aparelho.
+
+## Histórico da v0.4.0
+
 # QA — GPT Survivor v0.4.0
 
 13/10/2026. Godot 4.6.1 stable Linux x86_64; renderização OpenGL Compatibility/Mesa llvmpipe. Não houve acesso ao celular.
@@ -37,4 +47,4 @@ godot --path . --rendering-method gl_compatibility --script res://tests/capture_
 
 ## Limites
 
-Sem teste Android físico, APK/AAB, medição de FPS/temperatura/bateria no aparelho, teste de publicação ou avaliação auditiva em hardware. FPS em llvmpipe não é um benchmark Android. Warnings de V-Sync do display virtual são ambientais. Os modelos e animações são procedurais e ainda precisam de avaliação artística no aparelho. A coleta usa marcadores de animação, não física detalhada da ferramenta; caminhos de aproximação podem ser bloqueados, caso em que o jogador pode se aproximar por outro lado. Construção/fabricação registrada não é desfeita ao cancelar a resposta visual.
+Na v0.4.0, sem teste Android físico, APK/AAB, medição de FPS/temperatura/bateria no aparelho, teste de publicação ou avaliação auditiva em hardware. FPS em llvmpipe não é um benchmark Android. Warnings de V-Sync do display virtual são ambientais. Os modelos e animações são procedurais e ainda precisam de avaliação artística no aparelho. A coleta usa marcadores de animação, não física detalhada da ferramenta; caminhos de aproximação podem ser bloqueados, caso em que o jogador pode se aproximar por outro lado. Construção/fabricação registrada não é desfeita ao cancelar a resposta visual.

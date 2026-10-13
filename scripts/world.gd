@@ -55,6 +55,7 @@ func generate() -> void:
     trails.generate()
     terrain.set_trail_mask(trails.mask)
     _forest_groups()
+    _ground_resources()
     _spawn_discoveries()
     scenery = SurvivorScenery.new()
     scenery.terrain = terrain
@@ -96,6 +97,14 @@ func _resource(kind: String, id: String, p: Vector2) -> void:
             radius = 1.7
         "fiber":
             SurvivorModels.fern(node,variant)
+        "loose_log":
+            SurvivorModels.beam(node, Vector3(-1.1,0.3,0), Vector3(1.1,0.3,0), 0.3, Color(0.37,0.23,0.10))
+            SurvivorModels.sphere(node,0.29,Color(0.73,0.53,0.28),Vector3(-1.11,0.3,0),Vector3(0.08,1,1))
+            SurvivorModels.sphere(node,0.29,Color(0.73,0.53,0.28),Vector3(1.11,0.3,0),Vector3(0.08,1,1))
+            SurvivorModels.beam(node,Vector3(0.4,0.4,0),Vector3(0.6,0.5,0.5),0.09,Color(0.37,0.23,0.10))
+        "loose_stone":
+            SurvivorModels.sphere(node,0.42,Color(0.5,0.53,0.49),Vector3(0,0.23,0),Vector3(1.1,0.65,0.9))
+            SurvivorModels.sphere(node,0.26,Color(0.39,0.43,0.41),Vector3(0.55,0.12,0.18),Vector3(1,0.6,0.8))
         "metal":
             for i in range(3):
                 var part := SurvivorModels.box(node, Vector3(0.8, 0.2, 1.0), Color(0.47, 0.54, 0.56), Vector3((i - 1) * 0.7, 0.2 + i * 0.15, 0))
@@ -155,6 +164,9 @@ func refresh_resources() -> void:
 func harvest(entry: Dictionary) -> String:
     if not is_instance_valid(entry.get("node")) or not entry.node.visible:
         return "Esse recurso já foi coletado."
+    var error := state.harvest_error(str(entry.kind))
+    if error != "":
+        return error
     var result := ""
     match entry.kind:
         "palm":
@@ -169,8 +181,15 @@ func harvest(entry: Dictionary) -> String:
             state.add_item("stone", 6)
             result = "+6 pedras"
         "fiber":
-            state.add_item("fiber", 5)
-            result = "+5 fibras"
+            var count := 8 if state.owns("stone_knife") else 5
+            state.add_item("fiber", count)
+            result = "+%d fibras" % count
+        "loose_log":
+            state.add_item("wood",3)
+            result = "+3 madeiras • tronco recolhido à mão"
+        "loose_stone":
+            state.add_item("stone",2)
+            result = "+2 pedras • recolhidas à mão"
         "metal":
             state.add_item("metal", 4)
             result = "+4 metais recuperados"
@@ -364,3 +383,20 @@ func surface_height(pos: Vector3) -> float:
         var blend := 1-smoothstep(0.25,1.8,local.z)
         return maxf(ground,lerpf(ground,local.y,blend))
     return ground
+
+func _ground_resources() -> void:
+    # Separate seed and append-only IDs preserve existing resource/save identities.
+    _rng.seed = 813507
+    for i in range(6):
+        _resource("loose_log", "start_log_%d" % i, Vector2(-5+i*2.6,179+(i%2)*3))
+        _resource("loose_stone", "start_pebble_%d" % i, Vector2(-7+i*2.8,185+(i%2)*2))
+    _resource("fiber", "start_hand_fiber", Vector2(8,175))
+    for kind in ["loose_log", "loose_stone"]:
+        for i in range(45):
+            for attempt in range(60):
+                var p := Vector2(_rng.randf_range(-185,185),_rng.randf_range(-185,185))
+                if not terrain.is_land(p.x,p.y) or _reserved(p) or _resource_near(p,2.8):
+                    continue
+                _resource(kind,"%s_%d" % [kind,i],p)
+                break
+    refresh_resources()
