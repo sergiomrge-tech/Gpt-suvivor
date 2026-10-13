@@ -215,7 +215,13 @@ func run() -> void:
     ])
     check(decor.biome_counts["reeds"] > 3 and decor.biome_counts["ferns"] > 30 and decor.biome_counts["stone"] > 3, "Altitude and grade create distinct dune, jungle and rocky habitats")
     check(habitat_meshes.has(0) and habitat_meshes.has(1) and habitat_meshes.has(2), "Original 3D dune/fern/stone meshes appear in their specific ecological zones")
-    check(habitat_total == int(decor.biome_counts["reeds"]) + int(decor.biome_counts["ferns"]) + int(decor.biome_counts["stone"]), "Every habitat is represented by exactly one deterministic MultiMesh instance")
+    var expected_instances := 0
+    for type_name in decor.biome_counts:
+        expected_instances += int(decor.biome_counts[type_name])
+    check(habitat_total == expected_instances, "Every old and new habitat has exactly one deterministic MultiMesh instance")
+    check(habitat_meshes.has(3) and habitat_meshes.has(4), "Coastal driftwood and humid-forest moss-root meshes are present in the actual world")
+    check(int(decor.biome_counts["driftwood"]) >= 10 and int(decor.biome_counts["roots"]) >= 10, "Biome placement creates enough fallen coastal wood and forest floor roots")
+    print("BIOME V16 DETAILS: driftwood=%d moss_roots=%d" % [int(decor.biome_counts["driftwood"]), int(decor.biome_counts["roots"])])
     check(decor.biome_batches.size() > 6 and decor.biome_batches.size() < 320 and not habitat_protected, "Biome details remain chunked and protect original navigation, resources and camp areas")
     var preserved_height: float = game.terrain.height_at(0.0, 170.0)
     decor.set_weather(0.68, 0.50)
