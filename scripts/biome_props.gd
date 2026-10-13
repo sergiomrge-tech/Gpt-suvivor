@@ -56,7 +56,7 @@ static func forest_seedlings() -> ArrayMesh:
             if section >= 1 and section <= 5:
                 var reach := sin(t * PI) * (0.28 + float(frond % 2) * 0.05)
                 for direction in [-1.0, 1.0]:
-                    var leaf_end := a + side * direction * reach + radial * 0.11 + Vector3.UP * (0.01 - t * 0.09)
+                    var leaf_end: Vector3 = a + side * direction * reach + radial * 0.11 + Vector3.UP * (0.01 - t * 0.09)
                     var leaf_tint := Color(0.16, 0.39, 0.20) if frond % 2 == 0 else Color(0.22, 0.45, 0.20)
                     _tri(st, a, leaf_end, b, leaf_tint)
     return _finish(st)
