@@ -783,7 +783,7 @@ func run() -> void:
     game.hud.show_inventory("recipes")
     check(game.hud.build_buttons.has("stone_axe") and game.hud.build_buttons.has("stone_knife") and game.hud.build_buttons.has("stone_pickaxe") and game.hud.build_buttons.has("stone_spear"),"Independent Recipes tab contains all basic tool recipes")
     check(game.hud.build_buttons.has("grilled_crab") and game.hud.build_buttons.has("cooked_meat"),"Food preparation is available on the separate recipe page")
-    var taps_before := quick_taps[0]
+    var taps_before: String = quick_taps[0]
     game.hud._activate_shortcut(0)
     check(quick_taps[0] == taps_before, "Inventory modal blocks background hotbar gestures while reviewing recipes")
 
