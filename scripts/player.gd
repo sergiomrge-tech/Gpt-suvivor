@@ -20,6 +20,8 @@ var left_leg: Node3D
 var right_leg: Node3D
 var left_knee: Node3D
 var right_knee: Node3D
+var left_foot: Node3D
+var right_foot: Node3D
 var left_arm: Node3D
 var right_arm: Node3D
 var left_elbow: Node3D
@@ -92,6 +94,10 @@ func _base_pose() -> void:
     right_leg.rotation.x = -swing
     left_knee.rotation.x = maxf(0,-swing)*lerpf(0.9,1.18,locomotion_blend)
     right_knee.rotation.x = maxf(0,swing)*lerpf(0.9,1.18,locomotion_blend)
+    # Feet counter-rotate against the shin and roll gently heel-to-toe;
+    # ankle pivots are visual only and preserve the original collision body.
+    left_foot.rotation.x = -left_knee.rotation.x * 0.56 + swing * (0.15 if walking else 0.0)
+    right_foot.rotation.x = -right_knee.rotation.x * 0.56 - swing * (0.15 if walking else 0.0)
     left_arm.rotation = Vector3(-swing*lerpf(0.65,0.78,locomotion_blend)-locomotion_blend*0.22,0,0.04)
     right_arm.rotation = Vector3(swing*lerpf(0.65,0.78,locomotion_blend)-locomotion_blend*0.22,0,-0.04)
     left_elbow.rotation.x = -0.15
@@ -103,6 +109,7 @@ func _base_pose() -> void:
     torso.rotation = Vector3(((0.035 + locomotion_blend * 0.16) if walking else breathing), shoulder_turn, -lateral_sway)
     head_pivot.rotation = Vector3(-torso.rotation.x * 0.32, -shoulder_turn * 0.56, lateral_sway * 0.44)
     body_pivot.rotation.x = 0.028 * locomotion_blend
+    body_pivot.rotation.z = sin(animation_clock) * (0.021 if walking else 0.003)
     body_pivot.position.y = absf(sin(animation_clock)) * lerpf(0.042, 0.073, locomotion_blend) if walking else breathing * 0.30
 
 func perform_action(kind: String = "gather",duration: float = 0.75,point: Vector3 = Vector3.ZERO) -> void:
@@ -208,8 +215,8 @@ func _limb(parent: Node3D,length: float,radius: float,color: Color) -> void:
     SurvivorHeroGeometry.shaped_limb(parent, length, radius, radius * 0.85, color)
 
 func _build_character() -> void:
-    # v1.4: anatomically tapered geometry, smaller face details and weathered
-    # survival clothing. Keep all original limb joints for action/locomotion.
+    # v1.7: restrained anatomical detailing, shaped footwear and articulated
+    # ankle pivots. Keep all original action joints, grip and tool transforms.
     var skin := Color(0.65, 0.44, 0.31)
     var skin_shadow := Color(0.58, 0.38, 0.27)
     var shirt := Color(0.19, 0.34, 0.36)
@@ -243,7 +250,17 @@ func _build_character() -> void:
     ]), leather, 18)
     SurvivorModels.box(torso, Vector3(0.61, 0.11, 0.08), Color(0.26, 0.21, 0.15), Vector3(0, -0.40, 0.23))
     SurvivorModels.box(torso, Vector3(0.12, 0.075, 0.035), Color(0.66, 0.62, 0.50), Vector3(0, -0.40, 0.28))
-    SurvivorModels.merge_static(torso, "hero_torso_v14")
+    # Open shirt neckline, displaced stitched collar and irregular creases
+    # break the otherwise seamless tubular silhouette of the torso.
+    for side in [-1.0, 1.0]:
+        SurvivorModels.beam(torso,Vector3(side*0.12,0.53,0.195),Vector3(side*0.22,0.39,0.248),0.024,shirt_shadow)
+        SurvivorModels.beam(torso,Vector3(side*0.17,-0.11,0.281),Vector3(side*0.32,-0.22,0.235),0.011,shirt.lightened(0.10))
+        SurvivorModels.beam(torso,Vector3(side*0.23,0.12,0.252),Vector3(side*0.35,0.07,0.206),0.009,shirt_shadow)
+    SurvivorModels.beam(torso,Vector3(0,0.40,0.295),Vector3(0,0.17,0.304),0.009,shirt_shadow)
+    # Two cinch straps anchor the fabric to the already existing backpack.
+    SurvivorModels.beam(torso,Vector3(-0.29,0.33,-0.10),Vector3(-0.24,-0.37,-0.23),0.031,leather)
+    SurvivorModels.beam(torso,Vector3(0.29,0.33,-0.10),Vector3(0.24,-0.37,-0.23),0.031,leather)
+    SurvivorModels.merge_static(torso, "hero_torso_v17")
 
     head_pivot = _joint(torso, Vector3(0, 0.67, 0))
     SurvivorHeroGeometry.shaped_limb(head_pivot, 0.22, 0.15, 0.16, skin_shadow, 1.0)
@@ -275,7 +292,13 @@ func _build_character() -> void:
         SurvivorModels.sphere(head_pivot, 0.024, Color(0.14, 0.15, 0.14), Vector3(side * 0.13, 0.311, 0.290), Vector3(0.91, 0.95, 0.44))
         SurvivorModels.beam(head_pivot, Vector3(side * 0.068, 0.377, 0.259), Vector3(side * 0.202, 0.369, 0.225), 0.021, Color(0.20, 0.16, 0.13))
     SurvivorModels.beam(head_pivot, Vector3(-0.077, 0.091, 0.228), Vector3(0.077, 0.091, 0.228), 0.016, skin_shadow)
-    SurvivorModels.merge_static(head_pivot, "hero_head_v14")
+    # Subtle cheek/jaw plane transitions, scalp hair wisps and a believable
+    # narrow mouth avoid the previous painted-on spherical facial appearance.
+    for side in [-1.0, 1.0]:
+        SurvivorModels.beam(head_pivot,Vector3(side*0.215,0.214,0.174),Vector3(side*0.105,0.115,0.232),0.010,skin_shadow.lightened(0.06))
+        SurvivorModels.beam(head_pivot,Vector3(side*0.24,0.477,0.159),Vector3(side*0.12,0.43,0.236),0.012,Color(0.18,0.15,0.13))
+        SurvivorModels.sphere(head_pivot,0.018,skin_shadow,Vector3(side*0.031,0.184,0.321),Vector3(0.9,0.50,0.26))
+    SurvivorModels.merge_static(head_pivot, "hero_head_v17")
 
     left_leg = _joint(body_pivot, Vector3(-0.23, 1.00, 0))
     right_leg = _joint(body_pivot, Vector3(0.23, 1.00, 0))
@@ -284,12 +307,18 @@ func _build_character() -> void:
     for leg in [left_leg, right_leg]:
         SurvivorHeroGeometry.shaped_limb(leg, 0.44, 0.215, 0.17, pants, 1.05)
         SurvivorModels.beam(leg, Vector3(0.10, -0.09, 0.18), Vector3(0.08, -0.35, 0.16), 0.018, pants.darkened(0.13))
-        SurvivorModels.merge_static(leg, "hero_thigh_v14")
+        SurvivorModels.merge_static(leg, "hero_thigh_v17")
     for knee in [left_knee, right_knee]:
         SurvivorHeroGeometry.shaped_limb(knee, 0.39, 0.175, 0.115, pants, 0.97)
-        SurvivorModels.box(knee, Vector3(0.30, 0.19, 0.46), Color(0.24, 0.19, 0.14), Vector3(0, -0.39, 0.105))
-        SurvivorModels.beam(knee, Vector3(-0.14, -0.32, 0.26), Vector3(0.14, -0.32, 0.26), 0.018, leather)
-        SurvivorModels.merge_static(knee, "hero_shin_v14")
+        SurvivorModels.beam(knee, Vector3(-0.10, -0.27, 0.10), Vector3(0.10, -0.27, 0.10), 0.013, pants.darkened(0.19))
+        SurvivorModels.merge_static(knee, "hero_shin_v17")
+    left_foot = _joint(left_knee, Vector3(0, -0.39, 0))
+    right_foot = _joint(right_knee, Vector3(0, -0.39, 0))
+    left_foot.name = "LeftAnkle"
+    right_foot.name = "RightAnkle"
+    for foot in [left_foot, right_foot]:
+        SurvivorHeroGeometry.boot(foot,leather,Color(0.18,0.16,0.14))
+        SurvivorModels.merge_static(foot, "hero_boot_v17")
 
     left_arm = _joint(torso, Vector3(-0.52, 0.30, 0))
     right_arm = _joint(torso, Vector3(0.52, 0.30, 0))
@@ -299,14 +328,20 @@ func _build_character() -> void:
         SurvivorHeroGeometry.shaped_limb(arm, 0.215, 0.18, 0.17, shirt, 1.0)
         SurvivorHeroGeometry.shaped_limb(arm, 0.385, 0.132, 0.115, skin, 0.96)
         SurvivorModels.beam(arm, Vector3(-0.16, -0.20, 0), Vector3(0.16, -0.20, 0), 0.020, shirt_shadow)
-        SurvivorModels.merge_static(arm, "hero_upper_arm_v14")
+        SurvivorModels.merge_static(arm, "hero_upper_arm_v17")
     for elbow in [left_elbow, right_elbow]:
         SurvivorHeroGeometry.shaped_limb(elbow, 0.32, 0.128, 0.094, skin, 0.92)
-        SurvivorModels.sphere(elbow, 0.115, skin, Vector3(0, -0.348, 0.015), Vector3(0.84, 0.80, 0.54))
+        SurvivorHeroGeometry.loft(elbow,PackedVector4Array([
+            Vector4(-0.315,0.104,0.081,0.012),
+            Vector4(-0.360,0.126,0.081,0.018),
+            Vector4(-0.423,0.113,0.074,0.028),
+            Vector4(-0.453,0.078,0.056,0.035)
+        ]),skin,16)
+        SurvivorModels.beam(elbow,Vector3(0.11,-0.352,0.042),Vector3(0.152,-0.429,0.103),0.028,skin)
         for finger in range(4):
             var fx := (float(finger) - 1.5) * 0.046
             SurvivorModels.beam(elbow, Vector3(fx, -0.37, 0.026), Vector3(fx * 0.97, -0.455 + absf(fx) * 0.18, 0.054), 0.018, skin)
-        SurvivorModels.merge_static(elbow, "hero_forearm_hand_v14")
+        SurvivorModels.merge_static(elbow, "hero_forearm_hand_v17")
     right_hand = _joint(right_elbow, Vector3(0, -0.35, 0))
     _build_tools()
     fishing_mesh = ImmediateMesh.new()
