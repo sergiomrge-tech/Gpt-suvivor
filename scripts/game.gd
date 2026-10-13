@@ -785,6 +785,7 @@ func _notification(what: int) -> void:
 
 func apply_quality() -> void:
     terrain.sun.shadow_enabled = not light_visuals
+    terrain.set_surface_detail(not light_visuals)
     world.scenery.set_light_mode(light_visuals)
     if is_instance_valid(climate):
         climate.set_light_mode(light_visuals)
