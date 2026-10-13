@@ -1,3 +1,10 @@
+# QA — GPT Survivor v1.4.0 — 13/10/2026
+
+- Branch `feat/hero-anatomy-materials-v14` derivada da v1.3; fonte Godot 4.6.1, GL Compatibility e pipeline mobile existentes preservados.
+- Verificações adicionadas: anatomia de perfis contínuos com normais, integração das malhas fundidas de cabeça/tronco, duas famílias de materiais de pele/cabelo, ativação exclusiva de microrelevo em qualidade Completo e desativação no modo Leve.
+- Revisão visual automatizada: `.github/workflows/visual_hero_v14.yml` usa o Godot real em Xvfb para capturar 5 PNGs de personagem e praia; cenas de poses são fixtures do jogo e não prova de uma partida humana. O resultado precisa ser conferido no GitHub Actions e não é uma afirmação de igualdade a uma referência fotográfica.
+- Limites: falta modelagem AAA/escultura, materiais PBR fotográficos licenciados, rig/skinning profissional, revisão artística humana, benchmarking em Android, medição FPS/temperatura e validação dos gestos no aparelho. Save v3 não foi alterado. NÃO gerar APK sem pedido explícito.
+
 # QA — GPT Survivor v1.3.0 — 13/10/2026
 
 - Branch `feat/cave-vents-voyage-hud-v13`, base v1.2 preservada. Testes de regressão nativos Godot 4.6.1: **445/445 aprovados** antes do último ajuste do workflow. Cobrem nova alternância de risco/silêncio do gás, luzes locais, distância de recife, HUD de integridade do casco e conservação de todos os fluxos anteriores.
