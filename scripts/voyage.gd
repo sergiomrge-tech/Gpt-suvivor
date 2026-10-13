@@ -21,6 +21,7 @@ var hull := 100.0
 var hit_reefs: Dictionary = {}
 var reefs: Array[Node3D] = []
 var last_event := ""
+var event_timer := 0.0
 
 func begin(boat: Node3D) -> void:
     clear_course()
@@ -36,6 +37,7 @@ func begin(boat: Node3D) -> void:
     hull = 100.0
     hit_reefs.clear()
     last_event = "Evite os recifes à frente! Use as setas para manobrar."
+    event_timer = 4.0
     for hazard in REEFS:
         var rock := Node3D.new()
         rock.position = start_point + outward*float(hazard.at) + sideways*float(hazard.lane)
@@ -61,7 +63,9 @@ func step(delta: float) -> void:
     boat_node.position = start_point + outward*distance + sideways*current_lane
     boat_node.position.y = start_point.y + sin(distance*0.42)*0.12
     boat_node.rotation.y = atan2(outward.x,outward.z) + (target_lane-current_lane)*0.035
-    last_event = ""
+    event_timer = maxf(0.0,event_timer-dt)
+    if event_timer <= 0.0:
+        last_event = ""
     for index in range(REEFS.size()):
         var hazard: Dictionary = REEFS[index]
         var at: float = hazard.at
@@ -70,8 +74,10 @@ func step(delta: float) -> void:
             if absf(current_lane-float(hazard.lane)) < 2.7:
                 hull = maxf(0.0,hull-38.0)
                 last_event = "Colisão com recife! Casco %d%%." % int(hull)
+                event_timer = 3.0
             else:
                 last_event = "Recife evitado. Continue no canal!"
+                event_timer = 2.3
     if hull <= 0.0:
         active = false
         vessel_lost.emit()
