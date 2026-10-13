@@ -1,3 +1,11 @@
+# Checkpoint v1.8.0 — 13/10/2026
+
+Continuação de `main` v1.7 (commit fb101618), branch de desenvolvimento `feat/hero-organic-shading-v18`. Foco em trabalhar nos arquivos GDScript do próprio herói e em capturas reais do jogo, sem alterar saves v3, gameplay ou gerar APK.
+
+`scripts/hero_geometry.gd` recebeu `resample_profile(profile,subdivisions)`, spline Catmull–Rom com alturas interpoladas linearmente e raios positivos, com 2 subdivisões por trecho na função `loft`. Isso suaviza torso, rosto, braços e pernas mantendo pivôs e malha única por segmento. `scripts/player.gd` estreita ombros e cintura, interpola o perfil facial, usa elevação leve alternada dos tornozelos durante marcha e contramovimento de cotovelos/quadril; itens e vara de pescar seguem no mesmo pivô da mão direita. `scripts/models.gd` marca cabelo `UV2.x=8` em vez de couro, e `shaders/surfaces.gdshader` aplica um tratamento independente aos fios. Geometria, recursos, cavernas, barco e posicionamento das estruturas da ilha não foram modificados.
+
+Testes adicionados ao `tests/test_survivor.gd` para contorno interpolado, endpoints, monotonicidade de altura, radii, geometria orgânica de cabeça e tronco, separação pele/cabelo e apoio do pé em fase de marcha. Novo `tests/capture_hero_v18.gd` com `.github/workflows/visual_hero_v18.yml` apresenta 12 imagens reais (incluindo inspeção e chuva). Validar parser e suíte de regressão no último commit; renders Xvfb não provam 60 FPS ou fotorrealismo. O fluxo Android só executa com solicitação explícita.
+
 # Checkpoint v1.7.0 — 13/10/2026
 
 Criada branch `feat/hero-anatomy-animation-v17` sobre a `main` v1.6. Objetivo: refinar o herói na cena real Godot, sem imagens conceituais, sem alterar inventário/saves/ferramentas e sem gerar APK.
