@@ -1,3 +1,15 @@
+# Checkpoint — 13/10/2026 — v0.4.2
+
+Base correta: `prototype-v0.4.1-crafting`; continuação preservada na branch `prototype-v0.4.2-equipment`. O `main` permanece um protótipo v0.2 paralelo; nunca substituir seu histórico ou copiar arquivos dessa versão antiga por cima da base 0.4.x. Um PR antigo do ramo v0.2 foi fechado sem merge por esta razão.
+
+Pedido do usuário: área separada **Equipar** para mão principal (vara de pescar) e ferramenta (faca, machado e picareta), com ícones, identificação de equipado, ações de equipar/desequipar e persistência. A vara fabricada na bancada é equipada automaticamente; a ação PESCAR continua aparecendo para orientar como utilizá-la. Colheita de árvores/coqueiros exige machado equipado; pedra exige picareta equipada; faca só dá bônus às fibras quando equipada. Troncos, pedras soltas e fibras iniciais permanecem coletáveis sem ferramentas.
+
+Save atual continua `SAVE_VERSION = 2`, com um campo novo e opcional `equipment`; saves antigos v1/v2 sem esse campo migram automaticamente sem recomeçar a campanha, equipando ferramentas já possuídas. Testes nativos foram ampliados para cobrir migração, troca de slot, pesca sem a vara equipada, equipar após a fabricação e o fluxo do HUD.
+
+Metadados de lançamento: `config/version=0.4.2`, `version/code=402`, `version/name=0.4.2`. O código-fonte e testes são publicados no GitHub; **APK de v0.4.2 ainda não foi exportado nem assinado**. Para poder atualizar a instalação já existente preservando o save, é obrigatório utilizar a mesma chave privada da v0.4.0/0.4.1. Android físico, toque e FPS ainda precisam ser confirmados.
+
+## Histórico anterior
+
 # Checkpoint — 13/10/2026 — v0.4.1
 
 ## Autorização de publicação
