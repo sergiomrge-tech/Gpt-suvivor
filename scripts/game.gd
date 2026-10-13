@@ -247,6 +247,9 @@ func _on_action(action: String) -> void:
         return
     if not running:
         return
+    if action.begins_with("recipe:"):
+        _craft(action.trim_prefix("recipe:"))
+        return
     if action.begins_with("equip:"):
         var item: String = action.trim_prefix("equip:")
         if state.equip(item):
