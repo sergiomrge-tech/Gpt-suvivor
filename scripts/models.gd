@@ -211,6 +211,22 @@ static func building(parent: Node3D, kind: String) -> void:
                 beam(parent,Vector3(cos(a)*0.3-0.5,1.65,sin(a)*0.3),Vector3(cos(b)*0.3-0.5,1.65,sin(b)*0.3),0.035,Color(0.65,0.57,0.36))
             box(parent,Vector3(0.14,0.35,0.10),wood,Vector3(1.1,1.76,-0.35))
             box(parent,Vector3(0.09,0.27,0.10),Color(0.41,0.46,0.46),Vector3(1.1,1.78,-0.15))
+        "tool_rack":
+            # A distinct second-tier workshop: framed rack, steel tools and a luminous crystal.
+            for x in [-1.3,1.3]:
+                for depth in [-0.48,0.48]:
+                    beam(parent,Vector3(x,0,depth),Vector3(x,2.75,depth),0.14,wood)
+            for level in [0.30,1.50,2.63]:
+                box(parent,Vector3(2.9,0.17,1.25),plank,Vector3(0,level,0))
+            for i in range(5):
+                var x := -1.00+float(i)*0.5
+                beam(parent,Vector3(x,1.57,-0.27),Vector3(x,2.35,-0.27),0.06,Color(0.48,0.53,0.53))
+                box(parent,Vector3(0.27,0.20,0.14),Color(0.62,0.66,0.62),Vector3(x,2.27,-0.27))
+            for x in [-1.03,1.03]:
+                beam(parent,Vector3(x,0.45,0.55),Vector3(x,2.63,0.55),0.08,wood)
+            var gem := stone(parent,0.35,5,Color(0.24,0.68,0.78),Vector3(0.0,1.88,0),Vector3(0.75,1.25,0.75))
+            gem.rotation.z = 0.15
+            box(parent,Vector3(0.90,0.10,0.58),Color(0.55,0.55,0.50),Vector3(0,1.68,0))
         "house":
             for i in range(12):
                 box(parent, Vector3(5.8, 0.18, 0.48), plank.lightened(i % 3 * 0.025), Vector3(0, 0.25, (i - 5.5) * 0.49))
