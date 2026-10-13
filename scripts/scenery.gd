@@ -13,7 +13,7 @@ var details_material: ShaderMaterial
 var light_mode := false
 var grass_material: ShaderMaterial
 var biome_batches: Array[Dictionary] = []
-var biome_counts := {"reeds":0, "ferns":0, "stone":0}
+var biome_counts := {"reeds":0, "ferns":0, "stone":0, "driftwood":0, "roots":0}
 var biome_material: ShaderMaterial
 
 func generate() -> void:
@@ -68,7 +68,7 @@ func generate() -> void:
 # loading the same save produces the same habitats.
 func _generate_biome_habitats() -> void:
     biome_batches.clear()
-    biome_counts = {"reeds":0, "ferns":0, "stone":0}
+    biome_counts = {"reeds":0, "ferns":0, "stone":0, "driftwood":0, "roots":0}
     var rng := RandomNumberGenerator.new()
     rng.seed = 340951
     var patch_noise := FastNoiseLite.new()
@@ -109,10 +109,44 @@ func _generate_biome_habitats() -> void:
             0: biome_counts["reeds"] += 1
             1: biome_counts["ferns"] += 1
             2: biome_counts["stone"] += 1
+    # Independent second RNG leaves the three v1.5 habitat distributions
+    # byte-for-byte stable across saves and between development versions.
+    var accents := RandomNumberGenerator.new()
+    accents.seed = 651046
+    for sample_index in range(1450):
+        var p := Vector2(accents.randf_range(-207.0,207.0),accents.randf_range(-207.0,207.0))
+        var h := terrain.height_at(p.x,p.y)
+        if not terrain.is_land(p.x,p.y) or _protected(p):
+            continue
+        var patch := patch_noise.get_noise_2d(p.x,p.y)
+        var kind := -1
+        if h > 1.0 and h < 3.35 and patch > -0.48:
+            kind = 3 # Stranded timber above the wave-wash limit.
+        elif h > 5.2 and h < 22.0 and patch > -0.30:
+            kind = 4 # Root tangles + moss in genuinely vegetated ground.
+        if kind < 0:
+            continue
+        var key := Vector3i(floori(p.x/CHUNK_SIZE),floori(p.y/CHUNK_SIZE),kind)
+        if not buckets.has(key):
+            buckets[key] = []
+        var tone := accents.randf_range(0.79,1.0)
+        var tint := Color(tone,tone*0.98,tone*0.93) if kind == 3 else Color(tone*0.94,tone,tone*0.88)
+        buckets[key].append({
+            "position":Vector3(p.x,h+0.022,p.y),
+            "angle":accents.randf_range(0.0,TAU),
+            "size":accents.randf_range(0.78,1.36),
+            "tint":tint
+        })
+        if kind == 3:
+            biome_counts["driftwood"] += 1
+        else:
+            biome_counts["roots"] += 1
     var habitat_meshes := [
         SurvivorBiomeProps.dune_reeds(),
         SurvivorBiomeProps.forest_seedlings(),
-        SurvivorBiomeProps.coastal_stones()
+        SurvivorBiomeProps.coastal_stones(),
+        SurvivorBiomeProps.driftwood(),
+        SurvivorBiomeProps.moss_roots()
     ]
     biome_material = ShaderMaterial.new()
     biome_material.shader = load("res://shaders/biome_props.gdshader")
@@ -130,12 +164,12 @@ func _generate_biome_habitats() -> void:
             multi.set_instance_transform(i,Transform3D(basis,item.position-center))
             multi.set_instance_custom_data(i,item.tint)
         var node := MultiMeshInstance3D.new()
-        node.name = ["DuneReeds","ForestFerns","ErodedStones"][key.z]
+        node.name = ["DuneReeds","ForestFerns","ErodedStones","StrandedTimber","MossyRootClusters"][key.z]
         node.position = center
         node.multimesh = multi
         node.material_override = biome_material
         node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-        node.visibility_range_end = 74.0 if key.z == 1 else 64.0
+        node.visibility_range_end = 74.0 if key.z == 1 else (48.0 if key.z >= 3 else 64.0)
         add_child(node)
         biome_batches.append({"node":node, "entries":entries, "family":key.z})
 
