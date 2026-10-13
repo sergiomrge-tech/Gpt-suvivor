@@ -730,6 +730,8 @@ func escape_island() -> void:
     player.visible = false
     player.enabled = false
     marker.visible = false
+    hud.toast_time = 0.0
+    hud.toast_label.visible = false
     soundscape.set_active(true)
     voyage.begin(boat.node)
     hud.show_voyage()
