@@ -131,21 +131,21 @@ func _build_playing_view() -> void:
     var right := VBoxContainer.new()
     right.anchor_left = 1.0
     right.anchor_right = 1.0
-    right.anchor_top = 0.23
-    right.anchor_bottom = 0.23
+    right.anchor_top = 0.19
+    right.anchor_bottom = 0.19
     right.offset_left = -163.0
     right.offset_right = -13.0
-    right.add_theme_constant_override("separation", 6)
+    right.add_theme_constant_override("separation", 3)
     playing_view.add_child(right)
-    for action in ["collect", "fish", "eat", "drink", "craft_menu", "save", "menu"]:
-        var title: String = {"collect": "COLETAR [E]", "fish": "PESCAR [F]", "eat": "COMER [H]", "drink": "BEBER [T]", "craft_menu": "CRIAR [B]", "save": "SALVAR [P]", "menu": "MENU [Esc]"}[action]
+    for action in ["collect", "fish", "eat", "drink", "inventory", "craft_menu", "zoom_in", "zoom_out", "menu"]:
+        var title: String = {"collect": "COLETAR [E]", "fish": "PESCAR [F]", "eat": "COMER [H]", "drink": "BEBER [T]", "inventory": "MOCHILA [I]", "craft_menu": "CRIAR [B]", "zoom_in": "ZOOM +", "zoom_out": "ZOOM -", "menu": "MENU"}[action]
         right.add_child(_button(title, action))
 
     var bottom := _panel()
     bottom.anchor_top = 1.0
     bottom.anchor_bottom = 1.0
-    bottom.anchor_left = 0.26
-    bottom.anchor_right = 0.88
+    bottom.anchor_left = 0.28
+    bottom.anchor_right = 0.87
     bottom.offset_top = -65.0
     bottom.offset_bottom = -12.0
     playing_view.add_child(bottom)
@@ -157,10 +157,10 @@ func _build_playing_view() -> void:
     joystick = SurvivorJoystick.new()
     joystick.anchor_top = 1.0
     joystick.anchor_bottom = 1.0
-    joystick.offset_left = 24.0
-    joystick.offset_top = -235.0
-    joystick.offset_right = 224.0
-    joystick.offset_bottom = -35.0
+    joystick.offset_left = 52.0
+    joystick.offset_top = -276.0
+    joystick.offset_right = 292.0
+    joystick.offset_bottom = -36.0
     joystick.direction_changed.connect(func(vec: Vector2) -> void: move_changed.emit(vec))
     playing_view.add_child(joystick)
 
