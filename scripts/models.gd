@@ -110,10 +110,10 @@ static func palm(parent: Node3D, variant: int) -> void:
             ]))
             if segment > 0 and segment < 7 and segment % 2 == 0:
                 for sign in [-1.0,1.0]:
-                    var root := a+side*sign*w*0.48
-                    var next_root := b+side*sign*w2*0.53
+                    var root: Vector3 = a+side*sign*w*0.48
+                    var next_root: Vector3 = b+side*sign*w2*0.53
                     var droop := (0.13+t*0.24)*Vector3.DOWN
-                    var tip := root+side*sign*(w*0.82+0.36)+radial*0.13+droop
+                    var tip: Vector3 = root+side*sign*(w*0.82+0.36)+radial*0.13+droop
                     vertices.append_array(PackedVector3Array([root,tip,next_root]))
         triangles(parent,vertices,Color(0.12+float(frond%3)*0.018,
             0.32+float((frond+variant)%4)*0.028,0.12+float(frond%2)*0.012))
