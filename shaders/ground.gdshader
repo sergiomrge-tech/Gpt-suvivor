@@ -5,6 +5,7 @@ uniform bool show_trails = false;
 varying vec3 world_point;
 varying vec3 world_normal;
 uniform float sea_level = -0.48;
+uniform float rain_amount = 0.0;
 void vertex() {
     world_point = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
     world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);
@@ -25,11 +26,14 @@ void fragment() {
     ground *= 0.975 + grain * 0.05;
     float ridges = sin(p.x * 3.8 + macro * 3.0) * 0.012;
     ground += vec3(ridges) * (1.0 - grass);
-    float rock_exposure = smoothstep(0.34,0.67,1.0-world_normal.y) * smoothstep(9.0,20.0,h);
+    float rock_exposure = smoothstep(0.32,0.72,1.0-world_normal.y) * smoothstep(7.0,18.0,h);
+    float fine_stones = smoothstep(0.77,0.89,texture(detail_noise,p * 0.58).r) * grass * (1.0 - rock_exposure);
+    float rain_darkness = rain_amount * (0.13 + macro * 0.08);
     if (show_trails) {
         float path = texture(trail_mask,(p+vec2(258.0))/516.0).r;
         ground = mix(ground,vec3(0.46,0.40,0.27)*(0.96+grain*0.08),path*grass*0.78);
     }
-    ALBEDO = mix(ground,vec3(0.39,0.41,0.34) * (0.92+macro*0.13),rock_exposure);
-    ROUGHNESS = mix(0.95,0.68,wet);
+    ground = mix(ground,vec3(0.38,0.40,0.34),fine_stones * 0.26);
+    ALBEDO = mix(ground,vec3(0.39,0.41,0.34) * (0.92+macro*0.13),rock_exposure) * (1.0 - rain_darkness);
+    ROUGHNESS = mix(mix(0.95,0.68,wet),0.48,rain_amount * 0.74);
 }
