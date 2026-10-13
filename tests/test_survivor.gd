@@ -320,7 +320,7 @@ func run() -> void:
     check(game.world.caves.extract_vein(first_vein).is_empty() and first_vein.node.visible, "Deep mineral nodes reject unqualified mining attempts")
     vein_state.add_item("reinforced_pickaxe",1)
     vein_state.equip_tool("reinforced_pickaxe")
-    var ore := game.world.caves.extract_vein(first_vein)
+    var ore: Dictionary = game.world.caves.extract_vein(first_vein)
     check(not ore.is_empty() and vein_state.inventory.cave_crystal == 1 and not first_vein.node.visible, "Equipped tier-two pickaxe extracts a rare crystal deposit exactly once")
     check(game.world.caves.extract_vein(first_vein).is_empty(), "Rare mined crystal never duplicates")
     var saved_ore := SurvivalState.from_data(vein_state.to_data())
