@@ -429,6 +429,13 @@ func select_recipe(kind: String) -> void:
             hud.toast("+1 %s fabricada." % SurvivalState.RECIPES[kind].title)
             save_game(false)
         return
+    if kind in SurvivalState.UPGRADE_TOOLS:
+        if world.near_structure(player.position,"tool_rack",8).is_empty():
+            hud.toast("Aproxime-se da estação de aprimoramento para reforçar a ferramenta.")
+            return
+        pending_work = {"mode":"tool","recipe":kind}
+        player.perform_action("craft",1.4,player.position)
+        return
     if kind in ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear"]:
         # Charge and grant together at contact; cancelling before contact costs nothing.
         pending_work = {"mode":"tool", "recipe":kind}
