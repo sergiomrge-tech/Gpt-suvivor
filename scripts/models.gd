@@ -322,6 +322,41 @@ static func building(parent: Node3D, kind: String) -> void:
                     var strip := box(parent,Vector3(2.16,0.075,0.35),Color(0.53+float(i%3)*0.025,0.47+float(i%2)*0.02,0.26),high.lerp(low,0.52))
                     strip.rotation.z = -side*0.57
             beam(parent,Vector3(0,3.7,-1.85),Vector3(0,3.7,1.85),0.13,wood)
+        "reinforced_wall":
+            # Premium stone-footed timber wall, ribbed steel bracing and visible joints.
+            var granite := Color(0.43,0.45,0.43)
+            var steel := Color(0.54,0.60,0.59)
+            var dark_plank := Color(0.39,0.29,0.19)
+            for x in [-1.58,1.58]:
+                beam(parent,Vector3(x,0,0),Vector3(x,3.27,0),0.19,dark_plank)
+                stone(parent,0.46,3,granite,Vector3(x,0.28,0),Vector3(0.8,0.62,0.82))
+            for i in range(8):
+                var x := (float(i)-3.5)*0.385
+                box(parent,Vector3(0.365,2.46,0.22),dark_plank.lightened(float(i%4)*0.042),Vector3(x,1.85,0))
+                box(parent,Vector3(0.37,0.58,0.39),granite.lightened(float(i%3)*0.037),Vector3(x,0.32,0))
+            for y in [0.63,1.76,3.12]:
+                beam(parent,Vector3(-1.53,y,0.17),Vector3(1.53,y,0.17),0.085,steel)
+            for side in [-1.0,1.0]:
+                beam(parent,Vector3(side*1.36,0.72,0.21),Vector3(-side*1.36,3.0,0.21),0.068,steel)
+            for x in [-1.39,0,1.39]:
+                for y in [0.72,1.76,3.08]:
+                    sphere(parent,0.082,steel.lightened(0.16),Vector3(x,y,0.29))
+        "reinforced_roof":
+            # Cladded roof panels and slate tiles replace the thatch silhouette.
+            var slate := Color(0.35,0.40,0.43)
+            var rib := Color(0.40,0.33,0.23)
+            var steel := Color(0.59,0.61,0.57)
+            for side in [-1.0,1.0]:
+                for z in [-1.62,1.62]:
+                    beam(parent,Vector3(0,3.92,z),Vector3(side*1.89,2.58,z),0.15,rib)
+                for i in range(10):
+                    var zz := (float(i)-4.5)*0.35
+                    var upper := Vector3(0,3.93,zz)
+                    var lower := Vector3(side*1.90,2.59,zz)
+                    var strip := box(parent,Vector3(2.36,0.095,0.345),slate.lightened(float(i%4)*0.028),upper.lerp(lower,0.5))
+                    strip.rotation.z = -side*0.61
+                    box(parent,Vector3(0.16,0.12,0.11),steel,Vector3(side*1.75,2.65,zz))
+            beam(parent,Vector3(0,3.96,-1.83),Vector3(0,3.96,1.83),0.12,steel)
         "chest":
             # Wooden storage chest with brass hinges and edge reinforcements.
             for i in range(6):
