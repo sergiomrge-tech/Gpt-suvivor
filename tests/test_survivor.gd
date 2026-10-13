@@ -229,6 +229,12 @@ func run() -> void:
     decor.set_weather(0.0, 0.0)
     check(is_equal_approx(game.terrain.height_at(0.0,170.0),preserved_height) and SurvivalState.SAVE_VERSION == 3, "New visual habitats do not disturb persisted terrain elevations or save v3")
 
+    var foliage_material: ShaderMaterial = SurvivorModels.merged_material
+    check(foliage_material != null, "Biome foliage has the shared draw-call-saving shader")
+    if foliage_material != null:
+        var sight_camera: Vector3 = foliage_material.get_shader_parameter("camera_world_position")
+        check(sight_camera.distance_to(game.camera.global_position) < 0.5, "Foreground palm foliage tracks the actual camera viewpoint instead of using a fixed transparency")
+
     var shore_mesh: Mesh
     var leaf_mesh: Mesh
     var visual_near_resource := false

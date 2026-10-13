@@ -7,6 +7,7 @@
 - **Coqueiros remodelados** com onze frondes arqueadas e folíolos estreitos individuais, gerando sombra/silhueta mais natural. As malhas continuam unidas e cacheadas por variante, sem mudar ID, rendimento ou raio de coleta dos recursos.
 - **Materiais refinados**: solo tropical com húmus e manchas orgânicas, rochas com bandas minerais, cascas com fissuras longitudinais e granitos com veios discretos. Os shaders reutilizam as mesmas amostras de textura, sem novas dependências externas.
 - **Preservação**: geometria do terreno, elevações, coordenadas de recursos, costa, construções, trilhas, receitas, inventário e `SAVE_VERSION=3` seguem inalterados. Cenas decorativas são agrupadas por `MultiMesh`, têm distância máxima de desenho menor e continuam reduzidas no modo Leve.
+- **Visibilidade do personagem**: corrigida a interferência de folhas de coqueiro que apareciam enormes em primeiro plano nos screenshots de teste. O material agora usa o eixo real câmera→herói para reduzir temporariamente a opacidade somente da vegetação que oculta a jogabilidade.
 - **Capturas verdadeiras**: workflow de oito imagens do próprio Godot, incluindo duas novas áreas de madeira costeira e musgo/raízes; testes nativos abrangem as cinco famílias de habitats. Ainda é necessária avaliação artística humana da captura, além de testes de FPS, toque e temperatura em Android real. Estes procedimentos não afirmam fotorrealismo AAA.
 - **Sem APK**: a exportação Android permanece exclusivamente manual, conforme preferência do projeto.
 

@@ -2,6 +2,7 @@
 
 - **Compatibilidade:** mantidos `SurvivorTerrain.height_at`, número e coordenadas de recursos, caminhos da ilha, save v3 e esquema de progressão. As novas famílias são exclusivamente decorativas e descartáveis ao construir.
 - **Geometria:** troncos de praia/raízes musgosas originais em `scripts/biome_props.gd`, frondes arqueadas e folíolos separados em `SurvivorModels.palm`. A distribuição usa uma segunda semente estável e não altera as amostras anteriores.
+- **Auditoria visual:** capturas preliminares mostraram frondes ocupando demais o campo de visão junto a coqueiros. Corrigido com desvanecimento seletivo da vegetação no corredor câmera→sobrevivente, com novo teste da posição da câmera no shader. Nova captura da revisão final ainda precisa passar no CI.
 - **Desempenho:** malhas com `MultiMesh`, distâncias limitadas para os novos detalhes, sem sombras individuais e com densidade reduzida em Leve. Exige medição de FPS e memória em aparelho real antes de afirmar 60 FPS.
 - **Testes:** importar no Godot 4.6.1, validar gameplay nativo e auditorias de projeto/áudio, gerar ZIP de fonte; `visual_biomes_v16.yml` captura 8 imagens reais, incluindo habitat 3 e 4, para revisão do visual. Somente declarar validação concluída quando os respectivos workflows do último commit aprovarem.
 - **Limites honestos:** estética procedural mais rica, não é escultura AAA nem fotogrametria. Sem APK, sem teste físico Android e sem alegar inspeção visual manual dos PNGs, que ficam armazenados nos artefatos do workflow.
