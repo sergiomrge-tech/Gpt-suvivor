@@ -143,7 +143,7 @@ func objective() -> String:
     return "O barco está pronto! Aproxime-se e toque em Embarcar."
 
 func to_data() -> Dictionary:
-    return {"version": SAVE_VERSION, "inventory": inventory, "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
+    return {"version": SAVE_VERSION, "inventory": inventory, "equipment": equipment.duplicate(true), "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
 
 static func from_data(data: Dictionary) -> SurvivalState:
     if int(data.get("version", 0)) not in [1, SAVE_VERSION]:
@@ -157,6 +157,25 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not (value is int or value is float) or not is_finite(float(value)):
             return null
         state.inventory[key] = clampi(int(value), 0, 100000)
+    var gear = data.get("equipment", null)
+    if gear is Dictionary:
+        for slot in state.equipment:
+            var kind: String = str(gear.get(slot, ""))
+            if kind != "" and (not TOOL_SLOTS.has(kind) or TOOL_SLOTS[kind] != slot or not state.owns(kind)):
+                return null
+            state.equipment[slot] = kind
+    elif gear == null:
+        # Old v1/v2 saves used every owned tool automatically.
+        if state.owns("stone_axe"):
+            state.equip_tool("stone_axe")
+        elif state.owns("stone_pickaxe"):
+            state.equip_tool("stone_pickaxe")
+        elif state.owns("stone_knife"):
+            state.equip_tool("stone_knife")
+        if state.owns("fishing_rod"):
+            state.equip_tool("fishing_rod")
+    else:
+        return null
     for stat in ["health", "hunger", "thirst", "elapsed"]:
         var value = data.get(stat, 100.0 if stat != "elapsed" else 0.0)
         if not (value is int or value is float) or not is_finite(float(value)):
