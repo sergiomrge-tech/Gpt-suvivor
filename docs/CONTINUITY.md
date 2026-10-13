@@ -1,3 +1,9 @@
+# Checkpoint — 13/10/2026 — v0.7 fauna inicial
+
+Branch `feat/fauna-coast-v07` criada a partir de `feat/visual-world-weather-v06`, mantendo a v0.6 intacta. Foi implementado `scripts/fauna.gd`: cinco espécies visuais modeladas no próprio Godot (caranguejo, tartaruga, javali, ave e peixe), povoamento determinístico, habitats por elevação e costa, movimento em ciclos de 0,12 s com descanso/vaguear/fugir, ocultação por distância e menor densidade no modo Leve. Vinculada ao ciclo de vida do mundo e do personagem em `world.gd` e `game.gd`. Há testes nativos adicionados ao `tests/test_survivor.gd`.
+
+GitHub Actions `Validate Godot prototype` do commit `b80a8a2`: **success** (confirmado via API). Este sucesso não equivale à inspeção visual em celular, medição de FPS ou APK compilado. Fauna ainda não tem caça, drops, colisão com o jogador nem persistência por instância. Prioridades seguintes: investigar visualização no dispositivo, construir portas/janelas e suporte ao telhado; sistemas de caça/drops e fauna sonora; exploração de cavernas e barco visual por etapas. Não mudar o formato de save nem publicar v0.7 como final antes dos gates.
+
 # Checkpoint — 13/10/2026 — v0.6.0
 
 Branch `feat/visual-world-weather-v06` iniciada do commit `f047a2b2` da v0.5, preservando save, equipamentos e gameplay. Implementados: clima determinístico `SurvivorClimate`, partículas de chuva com modo leve, atmosfera noite/amanhecer/tempestade, solo molhado/ondas/vento nos shaders, coleta real de água sincronizada com chuva, botão correr e nova cinemática de caminhada/corrida, três estruturas modulares repetíveis (piso/parede/telhado) com modelo 3D, snap 3,2m, suporte, colisão e save. Testes de regressão ampliados a 182 e aprovados. Chaves privadas permanecem fora do repo. Android físico ainda pendente.
