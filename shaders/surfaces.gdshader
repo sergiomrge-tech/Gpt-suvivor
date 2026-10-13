@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode cull_disabled;
 uniform sampler2D detail_noise : filter_linear_mipmap, repeat_enable;
+uniform float rain_amount = 0.0;
+uniform float wind_strength = 0.45;
 uniform vec3 survivor_position = vec3(9999.0);
 varying vec3 world_point;
 varying vec3 local_point;
@@ -10,8 +12,8 @@ void vertex() {
     world_point = p;
     if (UV2.x > 1.5 && UV2.x < 2.5) {
         float bend = smoothstep(3.0,8.0,VERTEX.y);
-        VERTEX.x += sin(TIME * 1.3 + p.z * 0.14) * 0.10 * bend;
-        VERTEX.z += cos(TIME * 1.1 + p.x * 0.12) * 0.06 * bend;
+        VERTEX.x += sin(TIME * (1.1 + wind_strength) + p.z * 0.14) * (0.04 + wind_strength * 0.13) * bend;
+        VERTEX.z += cos(TIME * (0.9 + wind_strength) + p.x * 0.12) * (0.03 + wind_strength * 0.10) * bend;
     }
 }
 void fragment() {
@@ -47,7 +49,8 @@ void fragment() {
         float dither = fract(52.9829*fract(dot(floor(FRAGCOORD.xy),vec2(0.06711,0.00584))));
         ALPHA = step(dither,0.12+cover*0.88);
     }
-    ALBEDO = base * grain;
-    ROUGHNESS = rough;
+    float rain_wet = rain_amount * (family < 4.5 ? 0.18 : 0.08);
+    ALBEDO = base * grain * (1.0 - rain_wet);
+    ROUGHNESS = mix(rough,0.45,rain_amount * 0.55);
     METALLIC = metal;
 }
