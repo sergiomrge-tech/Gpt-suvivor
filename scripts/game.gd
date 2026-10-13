@@ -56,6 +56,7 @@ func _ready() -> void:
     hud.storage_requested.connect(_transfer_storage)
     hud.fishing_requested.connect(fish_or_cancel)
     hud.equipment_requested.connect(_equip_item)
+    hud.shortcut_requested.connect(_quick_equip)
     hud.unequip_requested.connect(_unequip_item)
     hud.consume_requested.connect(consume)
     hud.save_requested.connect(save_game)
@@ -613,6 +614,16 @@ func craft_food(kind: String) -> void:
         save_game(false)
     else:
         hud.toast(state.recipe_error(kind))
+
+func _quick_equip(kind: String) -> void:
+    if not playing or paused() or player.is_busy():
+        return
+    if state.equip_tool(kind):
+        hud.update_shortcuts()
+        hud.toast("%s equipado no atalho." % SurvivalState.RECIPES[kind].title,2.1)
+        save_game(false)
+    else:
+        hud.toast("Fabrique essa ferramenta na aba Receitas primeiro.")
 
 func _equip_item(kind: String) -> void:
     if not playing: return
