@@ -148,9 +148,15 @@ func advance(delta: float) -> void:
     var previous_elapsed := elapsed
     elapsed += delta
     if has_structure("rain_collector") and not escaped:
-        # Tropical showers recur on a deterministic schedule; pauses freeze elapsed time.
-        if int(elapsed / 200.0) % 4 == 1:
-            rain_water = minf(12.0, rain_water + maxf(0.0, elapsed - previous_elapsed) * 0.06)
+        # Integrate rain along the interval; simulation and visible climate use the same function.
+        # Small fixed samples also handle elapsed-time jumps without filling in dry weather.
+        var duration := maxf(0.0, elapsed - previous_elapsed)
+        var slices := maxi(1, ceili(duration / 5.0))
+        var water_added := 0.0
+        for i in range(slices):
+            var at := previous_elapsed + (float(i) + 0.5) * duration / float(slices)
+            water_added += SurvivorClimate.rainfall_at(at) * duration / float(slices) * 0.06
+        rain_water = minf(12.0, rain_water + water_added)
     if elapsed < 180.0 or escaped or health <= 0.0:
         return
     hunger = maxf(0.0, hunger - delta * 0.045)
