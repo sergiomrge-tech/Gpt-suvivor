@@ -9,6 +9,8 @@ var terrain: SurvivorTerrain
 var world: SurvivorWorld
 var move_vector := Vector2.ZERO
 var speed := 8.5
+var sprint_enabled := false
+var locomotion_blend := 0.0
 var walking := false
 var enabled := false
 var body_pivot: Node3D
@@ -52,8 +54,9 @@ func _physics_process(delta: float) -> void:
     var previous := position
     var vec := move_vector.limit_length(1.0)
     walking = vec.length_squared() > 0.012 and not is_busy()
+    var sprinting := walking and sprint_enabled and vec.length() > 0.68
     if walking:
-        var offset := Vector3(vec.x,0,vec.y) * speed * delta
+        var offset := Vector3(vec.x,0,vec.y) * (speed * (1.36 if sprinting else 1.0)) * delta
         for axis in [Vector3(offset.x,0,0),Vector3(0,0,offset.z)]:
             var candidate: Vector3 = position + axis
             if world.walkable(candidate,position):
@@ -62,10 +65,12 @@ func _physics_process(delta: float) -> void:
     position.y = world.surface_height(position)
     var moved := Vector2(position.x-previous.x,position.z-previous.z).length()
     walking = walking and moved > 0.001
-    animation_clock += delta * (11.0 if walking else 1.9)
+    locomotion_blend = move_toward(locomotion_blend, 1.0 if sprinting and walking else 0.0,delta * 3.2)
+    animation_clock += delta * ((11.0 + locomotion_blend * 4.6) if walking else 1.9)
     step_distance += moved
-    if step_distance > 1.55:
-        step_distance = fmod(step_distance,1.55)
+    var stride := lerpf(1.55,1.95,locomotion_blend)
+    if step_distance > stride:
+        step_distance = fmod(step_distance,stride)
         footstep.emit("wood" if world.is_on_dock(position) else ("sand" if position.y<3.1 else "grass"),position)
     _base_pose()
     if is_busy():
@@ -82,19 +87,19 @@ func _physics_process(delta: float) -> void:
             action_finished.emit(completed)
 
 func _base_pose() -> void:
-    var swing := sin(animation_clock) * (0.58 if walking else 0.012)
+    var swing := sin(animation_clock) * (lerpf(0.58,0.83,locomotion_blend) if walking else 0.012)
     left_leg.rotation.x = swing
     right_leg.rotation.x = -swing
-    left_knee.rotation.x = maxf(0,-swing)*0.9
-    right_knee.rotation.x = maxf(0,swing)*0.9
-    left_arm.rotation = Vector3(-swing*0.65,0,0.04)
-    right_arm.rotation = Vector3(swing*0.65,0,-0.04)
+    left_knee.rotation.x = maxf(0,-swing)*lerpf(0.9,1.18,locomotion_blend)
+    right_knee.rotation.x = maxf(0,swing)*lerpf(0.9,1.18,locomotion_blend)
+    left_arm.rotation = Vector3(-swing*lerpf(0.65,0.78,locomotion_blend)-locomotion_blend*0.22,0,0.04)
+    right_arm.rotation = Vector3(swing*lerpf(0.65,0.78,locomotion_blend)-locomotion_blend*0.22,0,-0.04)
     left_elbow.rotation.x = -0.15
     right_elbow.rotation.x = -0.15
-    torso.rotation = Vector3(0.03 if walking else 0,0,0)
+    torso.rotation = Vector3((0.03 + locomotion_blend * 0.21) if walking else 0, sin(animation_clock) * 0.025 if walking else 0, -sin(animation_clock)*0.022 if walking else 0)
     head_pivot.rotation = Vector3.ZERO
     body_pivot.rotation.x = 0
-    body_pivot.position.y = absf(sin(animation_clock))*0.065 if walking else sin(animation_clock)*0.018
+    body_pivot.position.y = absf(sin(animation_clock))*lerpf(0.065,0.10,locomotion_blend) if walking else sin(animation_clock)*0.018
 
 func perform_action(kind: String = "gather",duration: float = 0.75,point: Vector3 = Vector3.ZERO) -> void:
     cancel_action()
