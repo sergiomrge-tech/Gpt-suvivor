@@ -1,0 +1,39 @@
+name: Download Poly Haven PBR island options
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/island-realistic-asset-options]
+    paths:
+      - tests/island_assets/download_options.py
+      - .github/workflows/island_asset_options.yml
+permissions:
+  contents: read
+concurrency:
+  group: island-cc0-choice-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download licensed photo-scanned PBR textures and 3D mesh samples
+        run: python3 tests/island_assets/download_options.py
+      - name: Build clean isolated candidate download archive
+        run: |
+          cd out/island_pbr_options
+          python3 - <<'PY'
+          import json,pathlib
+          d=json.loads(pathlib.Path("CATALOGO.json").read_text())
+          for group,record in d["sets"].items():
+              for v in record["models"]+record["materials"]:
+                  for f in v["files"]:
+                      assert pathlib.Path(f).is_file() and pathlib.Path(f).stat().st_size>100
+              print(group,len(record["models"]),"real models",len(record["materials"]),"PBR sets")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-CC0-Realistic-Island-Asset-Options
+          path: out/island_pbr_options/
+          retention-days: 20
