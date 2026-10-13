@@ -143,7 +143,7 @@ func start_game(load_save: bool) -> void:
     else:
         if not load_save:
             save_game(false)
-        hud.toast("Pegue troncos e pedras no chão. Fabrique ferramentas em Mochila → Construções.",5)
+        hud.toast("Pegue troncos e pedras no chão. Fabrique ferramentas em Mochila → Receitas.",5)
 
 func pause_game() -> void:
     if not playing:
@@ -646,7 +646,7 @@ func fish_or_cancel() -> void:
         cancel_placement()
         return
     if not state.is_equipped("fishing_rod"):
-        hud.toast("Abra Mochila → Equipar e coloque a vara na MÃO PRINCIPAL para pescar.")
+        hud.toast("Abra Mochila → Equipamentos e coloque a vara na MÃO PRINCIPAL para pescar.")
         return
     if not terrain.is_shore(player.position.x, player.position.z) and world.near_structure(player.position, "dock", 8).is_empty():
         hud.toast("Aproxime-se do mar ou do cais para pescar.")
