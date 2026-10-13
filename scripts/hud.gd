@@ -917,7 +917,7 @@ func _recipe_grid(title: String,kinds: Array) -> void:
         var recipe: Dictionary = SurvivalState.RECIPES[kind]
         var unlocked := _recipe_unlocked(kind)
         var error := state.recipe_error(kind)
-        var owned := state.owns(kind) and kind not in SurvivalState.MODULES and kind not in SurvivalState.FOOD_RECIPES and kind not in SurvivalState.MATERIAL_RECIPES
+        var owned: bool = state.owns(kind) and kind not in SurvivalState.MODULES and kind not in SurvivalState.FOOD_RECIPES and kind not in SurvivalState.MATERIAL_RECIPES
         var can_craft := error == ""
         var card := PanelContainer.new()
         card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
