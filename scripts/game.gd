@@ -8,6 +8,8 @@ var camera: Camera3D
 var hud: SurvivorHUD
 var playing := false
 var selected_recipe := ""
+var relocation_kind := ""
+var preview_rotation := 0.0
 var preview: Node3D
 var marker: MeshInstance3D
 var target: Dictionary = {}
@@ -45,6 +47,9 @@ func _ready() -> void:
     hud.minimap.terrain = terrain
     hud.action_requested.connect(interact)
     hud.build_requested.connect(select_recipe)
+    hud.rotate_requested.connect(rotate_preview)
+    hud.relocate_requested.connect(relocate_structure)
+    hud.storage_requested.connect(_transfer_storage)
     hud.fishing_requested.connect(fish_or_cancel)
     hud.equipment_requested.connect(_equip_item)
     hud.unequip_requested.connect(_unequip_item)
@@ -196,7 +201,9 @@ func _process(delta: float) -> void:
         preview.position = point
         if selected_recipe == "dock":
             preview.rotation.y = atan2(-point.x, -point.z)
-        var error := world.placement_error(selected_recipe, point, player.position)
+        elif selected_recipe != "boat":
+            preview.rotation.y = preview_rotation
+        var error := world.placement_error(selected_recipe, point, player.position, relocation_kind)
         _tint_preview(error == "")
         hud.update_placement(selected_recipe, error)
     if fishing_remaining > 0:
@@ -306,16 +313,26 @@ func interact() -> void:
             state.thirst = 100
             hud.toast("Água fresca da nascente. Sede recuperada.")
         "campfire": craft_meal()
-        "house":
+        "house", "bed":
             if state.hunger <= 10 or state.thirst <= 10:
                 hud.toast("Coma e beba antes de descansar.")
             else:
                 player.perform_action("rest",2.5,target.position)
-                state.health = minf(100, state.health + 25)
+                state.health = minf(100, state.health + (38 if target.kind == "bed" else 25))
                 state.hunger = maxf(0, state.hunger - 4)
                 state.thirst = maxf(0, state.thirst - 6)
-                hud.toast("Descanso no abrigo: +25 de saúde.")
+                hud.toast("Descanso: saúde recuperada.")
                 action_cooldown = 5
+        "chest": hud.show_storage()
+        "rain_collector":
+            if state.rain_water >= 1.0:
+                state.rain_water -= 1.0
+                state.thirst = minf(100.0, state.thirst + 40.0)
+                player.perform_action("drink",0.8,target.position)
+                hud.toast("Água da chuva: +40 de sede. Reservatório: %.1f" % state.rain_water)
+                save_game(false)
+            else:
+                hud.toast("Reservatório vazio. Aguarde a próxima chuva tropical.")
         "boat": escape_island()
 
 func consume() -> void:
@@ -339,6 +356,15 @@ func select_recipe(kind: String) -> void:
     if kind == "meal":
         craft_meal()
         return
+    if kind in SurvivalState.MATERIAL_RECIPES:
+        if kind == "plank" and world.near_structure(player.position,"workbench",8).is_empty():
+            hud.toast("Aproxime-se da bancada para cortar as tábuas.")
+            return
+        if state.craft_material(kind):
+            player.perform_action("craft" if kind == "plank" else "handcraft",1.1,player.position)
+            hud.toast("+1 %s fabricada." % SurvivalState.RECIPES[kind].title)
+            save_game(false)
+        return
     if kind in ["stone_knife", "stone_axe", "stone_pickaxe"]:
         # Charge and grant together at contact; cancelling before contact costs nothing.
         pending_work = {"mode":"tool", "recipe":kind}
@@ -355,18 +381,57 @@ func select_recipe(kind: String) -> void:
             hud.toast("Vara pronta e equipada! Aproxime-se do mar e toque em Pescar.")
             save_game(false)
         return
+    _begin_placement(kind)
+
+func _begin_placement(kind: String) -> void:
     cancel_placement()
     selected_recipe = kind
+    preview_rotation = 0.0
     preview = Node3D.new()
     add_child(preview)
     SurvivorModels.building(preview, kind)
     if kind != "campfire":
         SurvivorModels.merge_static(preview, "building_" + kind)
-    # Preview lights must not affect the island before construction is committed.
+    # Area indicator marks the required footprint, not just the model geometry.
+    var footprint := MeshInstance3D.new()
+    footprint.name = "BuildFootprint"
+    var size := 9.0 if kind == "house" else 4.8
+    var pad := BoxMesh.new()
+    pad.size = Vector3(size,0.035,size)
+    footprint.mesh = pad
+    footprint.position.y = 0.09
+    preview.add_child(footprint)
     for node in preview.get_children():
         if node is Light3D:
             node.visible = false
-    hud.toast("Mova-se para posicionar. Confirmar constrói; Cancelar volta.", 4)
+    hud.set_rotation_visible(kind not in ["dock","boat"])
+    hud.toast("Posicione, gire e confirme. Cancelar mantém seus materiais.",4)
+
+func rotate_preview() -> void:
+    if selected_recipe != "" and selected_recipe not in ["dock","boat"]:
+        preview_rotation = fposmod(preview_rotation + PI * 0.5,TAU)
+        if is_instance_valid(preview):
+            preview.rotation.y = preview_rotation
+
+func relocate_structure(kind: String) -> void:
+    if not playing or paused() or not state.has_structure(kind):
+        return
+    if kind in ["boat","dock"]:
+        hud.toast("Cais e barco ficam fixos por segurança da navegação.")
+        return
+    cancel_work()
+    _begin_placement(kind)
+    relocation_kind = kind
+    hud.toast("Mova a estrutura sem gastar recursos. Confirme ou cancele.",4)
+
+func _transfer_storage(kind: String, to_chest: bool) -> void:
+    if not state.has_structure("chest") or not playing:
+        return
+    if state.transfer_storage(kind,to_chest):
+        hud.show_storage()
+        save_game(false)
+    else:
+        hud.toast("Não há itens suficientes ou o baú está cheio.")
 
 func placement_point() -> Vector3:
     var facing := Vector3(sin(player.body_pivot.rotation.y), 0, cos(player.body_pivot.rotation.y))
@@ -390,16 +455,25 @@ func _tint_preview(valid: bool) -> void:
 
 func confirm_placement() -> void:
     var point := placement_point()
-    var error := world.placement_error(selected_recipe, point, player.position)
-    if error == "":
+    var error := world.placement_error(selected_recipe, point, player.position, relocation_kind)
+    if error == "" and relocation_kind == "":
         error = state.recipe_error(selected_recipe)
     if error != "":
         hud.toast(error)
         return
     var kind := selected_recipe
-    if not state.pay_recipe(kind):
-        return
+    if relocation_kind == "":
+        if not state.pay_recipe(kind):
+            return
+    else:
+        for i in range(state.buildings.size() - 1,-1,-1):
+            if str(state.buildings[i].kind) == relocation_kind:
+                state.buildings.remove_at(i)
+                break
+        world.remove_structure(relocation_kind)
     var entry := {"kind": kind, "x": point.x, "z": point.z}
+    if kind not in ["boat","dock"]:
+        entry["rotation"] = preview_rotation
     state.buildings.append(entry)
     world.add_structure(entry)
     var work_entry := {"kind":kind,"position":point}
@@ -418,6 +492,9 @@ func confirm_placement() -> void:
 
 func cancel_placement() -> void:
     selected_recipe = ""
+    relocation_kind = ""
+    if is_instance_valid(hud):
+        hud.set_rotation_visible(false)
     if is_instance_valid(preview):
         preview.queue_free()
     preview = null
