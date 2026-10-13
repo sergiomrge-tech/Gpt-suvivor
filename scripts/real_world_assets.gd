@@ -71,6 +71,43 @@ static func attach(parent: Node3D,asset_id: String,target_height: float,draw_ran
     instances[asset_id] = int(instances.get(asset_id,0))+1
     return true
 
+# Actual source GLB consists of independent real meshes for wings, wingtips,
+# canopy, landing gear and fuselage. Detach the authored geometry itself rather
+# than pretending some cubes scattered near a pristine aircraft are a crash.
+static func fracture_airplane(model: Node3D) -> int:
+    var wing_parts: Array[MeshInstance3D] = []
+    var tip_parts: Array[MeshInstance3D] = []
+    for child in model.find_children("*","MeshInstance3D",true,false):
+        var body: MeshInstance3D = child as MeshInstance3D
+        var label := String(body.name).to_lower().replace(" ","").replace("_","")
+        if label.contains("finitetaperedwing"):
+            wing_parts.append(body)
+        if label.contains("colouredwingtip"):
+            tip_parts.append(body)
+    if wing_parts.size() < 2:
+        push_warning("GLB had no separable wing, preserving intact source visual")
+        return 0
+    var broken: MeshInstance3D = wing_parts[1]
+    broken.position += Vector3(2.1,-0.43,3.4)
+    broken.rotation = Vector3(0.49,-0.30,0.63)
+    broken.set_meta("wreck_detached",true)
+    var surface: Material = broken.material_override
+    if surface == null and broken.mesh != null and broken.mesh.get_surface_count() > 0:
+        surface = broken.mesh.surface_get_material(0)
+    if surface is StandardMaterial3D:
+        var burned := (surface as StandardMaterial3D).duplicate() as StandardMaterial3D
+        burned.albedo_color = burned.albedo_color * Color(0.59,0.53,0.48)
+        burned.roughness = 0.95
+        broken.material_override = burned
+    if tip_parts.size() >= 2:
+        var tip: MeshInstance3D = tip_parts[1]
+        tip.position += Vector3(2.1,-0.43,3.4)
+        tip.rotation = Vector3(0.49,-0.30,0.63)
+        tip.set_meta("wreck_detached",true)
+    # Four pieces of actual in-game aircraft mesh geometry, one visibly
+    # separated and weathered. No collision/search radius changes.
+    return 1 + (1 if tip_parts.size() >= 2 else 0)
+
 static func add_crash_damage(parent: Node3D) -> void:
     # Original airframe remains the imported authored GLB. Debris is a separate
     # authored-in-code overlay to tell the crash story without "cube airplane."
