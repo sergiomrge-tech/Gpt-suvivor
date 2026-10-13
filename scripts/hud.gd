@@ -9,6 +9,7 @@ signal storage_requested(kind: String, to_chest: bool)
 signal confirm_build_requested
 signal cancel_build_requested
 signal equipment_requested(kind: String)
+signal shortcut_requested(kind: String)
 signal unequip_requested(slot: String)
 signal fishing_requested
 signal consume_requested
@@ -63,6 +64,10 @@ var build_buttons: Dictionary = {}
 var selected_item := ""
 var inventory_tabs: Dictionary = {}
 var inventory_title_font: SystemFont
+var shortcut_bar: HBoxContainer
+var shortcut_buttons: Array[Button] = []
+var shortcut_visual_keys: Array[String] = []
+const QUICK_BASE := ["stone_axe","stone_pickaxe","stone_knife","stone_spear","fishing_rod"]
 const BAG_BG := Color(0.075,0.069,0.057,0.985)
 const BAG_PANEL := Color(0.13,0.119,0.094,0.97)
 const BAG_SLOT := Color(0.17,0.153,0.121,0.99)
@@ -188,6 +193,7 @@ func _ready() -> void:
             compact.content_margin_left = 6
             compact.content_margin_right = 6
             button.add_theme_stylebox_override(theme_name,compact)
+    _create_shortcuts()
     var activity := VBoxContainer.new()
     activity.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
     activity.offset_left = -140
@@ -320,9 +326,96 @@ func _bag_button(value: String, action: Callable, selected: bool = false) -> But
     button.custom_minimum_size.y = 50
     return button
 
+func _create_shortcuts() -> void:
+    shortcut_bar = HBoxContainer.new()
+    shortcut_bar.name = "ToolShortcuts"
+    shortcut_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+    shortcut_bar.offset_left = -179
+    shortcut_bar.offset_right = 179
+    shortcut_bar.offset_top = -77
+    shortcut_bar.offset_bottom = -13
+    shortcut_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+    shortcut_bar.add_theme_constant_override("separation",6)
+    game_controls.add_child(shortcut_bar)
+    for i in range(QUICK_BASE.size()):
+        var index := i
+        var button := _bag_button("",func(): _activate_shortcut(index))
+        button.name = "Shortcut%d" % (i+1)
+        button.custom_minimum_size = Vector2(64,62)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        shortcut_bar.add_child(button)
+        var icon := TextureRect.new()
+        icon.name = "ToolIcon"
+        icon.texture = _icon(QUICK_BASE[i])
+        icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        button.add_child(icon)
+        icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+        icon.offset_left = 13
+        icon.offset_top = 5
+        icon.offset_right = -10
+        icon.offset_bottom = -9
+        var number := _label(str(i+1),12)
+        number.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        number.add_theme_color_override("font_color",BAG_GOLD)
+        number.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+        number.offset_left = 5
+        number.offset_right = 20
+        number.offset_top = 0
+        number.offset_bottom = 18
+        button.add_child(number)
+        shortcut_buttons.append(button)
+        shortcut_visual_keys.append("")
+
+func _active_shortcut_kind(index: int) -> String:
+    if index < 0 or index >= QUICK_BASE.size():
+        return ""
+    var base: String = QUICK_BASE[index]
+    if base == "stone_axe" and state.owns("reinforced_axe"):
+        return "reinforced_axe"
+    if base == "stone_pickaxe" and state.owns("reinforced_pickaxe"):
+        return "reinforced_pickaxe"
+    return base
+
+func _activate_shortcut(index: int) -> void:
+    if not is_playing or modal_mode != "" or state == null:
+        return
+    var kind := _active_shortcut_kind(index)
+    if kind != "" and state.owns(kind):
+        shortcut_requested.emit(kind)
+
+func update_shortcuts() -> void:
+    if not is_playing or state == null:
+        return
+    for i in range(shortcut_buttons.size()):
+        var button := shortcut_buttons[i]
+        var kind := _active_shortcut_kind(i)
+        var available := state.owns(kind)
+        var selected := state.is_equipped(kind)
+        var visual_key := "%s/%s/%s" % [kind,str(available),str(selected)]
+        if visual_key == shortcut_visual_keys[i]:
+            continue
+        shortcut_visual_keys[i] = visual_key
+        button.disabled = not available
+        button.tooltip_text = str(SurvivalState.RECIPES[kind].title)+" • tecla "+str(i+1)
+        button.add_theme_stylebox_override("normal",_bag_style(Color(0.29,0.24,0.14,0.98) if selected else BAG_SLOT,selected))
+        var picture: TextureRect = button.get_node("ToolIcon")
+        picture.texture = _icon(kind)
+        picture.modulate = Color.WHITE if available else Color(0.42,0.40,0.35,0.7)
+
+func _unhandled_key_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not event.echo:
+        var digit := int(event.keycode)-int(KEY_1)
+        if digit >= 0 and digit < QUICK_BASE.size() and is_playing and modal_mode == "":
+            _activate_shortcut(digit)
+            get_viewport().set_input_as_handled()
+
 func set_playing(value: bool) -> void:
     is_playing = value
     game_controls.visible = value
+    if value:
+        update_shortcuts()
     joystick.active = value and modal_mode == ""
     if not joystick.active:
         joystick.reset()
@@ -929,6 +1022,7 @@ func _process(delta: float) -> void:
         return
     ui_refresh = 0
     stats.text = "Saúde %d • Fome %d • Água %d" % [state.health, state.hunger, state.thirst]
+    update_shortcuts()
     activity_label.text = activity_name
     activity_progress.visible = activity_name != ""
     activity_progress.value = activity_fraction
