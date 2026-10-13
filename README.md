@@ -1,5 +1,19 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.1.0 — Ilha aprimorada + Inventário visual e funcional (código-fonte, sem APK)
+
+**Identidade do novo inventário**: interface do jogo em tons de madeira escura e bronze envelhecido, títulos em fonte serifada (Noto Serif/Georgia/serif por disponibilidade no sistema), bordas finas douradas, painéis retangulares, ícones grandes e leitura de quantidades. O mesmo tema é utilizado nas quatro seções e nos botões de abertura e fechamento do inventário.
+
+- **MOCHILA**: grade 5×N com os 21 recursos/ferramentas existentes, seleção destacada, descrição e quantidade, prévia 3D real do sobrevivente, resumo de materiais e acesso a alimentos.
+- **EQUIPAMENTOS**: duas áreas físicas distintas (mão principal e ferramenta), ícones dos itens equipados, ações Equipar/Desequipar e Comparar. O painel compara o item escolhido com o atualmente equipado, usando rendimento real do machado (8→12 madeiras) e picareta (6→9 pedras), sem atributos fictícios.
+- **CONSTRUÇÕES**: categorias de acampamento, casa modular e estruturas reforçadas, com painel adicional para administrar o acampamento. Exibe materiais possuídos / exigidos, bloqueios de pesquisa e progresso de preparação.
+- **RECEITAS**: somente ferramentas básicas e reforçadas, corda/tábua e receitas de cozinha, com situações **DESBLOQUEADA/BLOQUEADA/CONCLUÍDO**, recurso insuficiente em vermelho e suficiente em verde, indicadores visuais de progresso.
+- **ATALHOS DE FERRAMENTAS**: cinco botões físicos dentro da HUD mobile (machado, picareta, faca, lança, vara). Tocá-los troca o equipamento salvo; opções ainda não fabricadas ficam desativadas; ferramentas reforçadas ocupam automaticamente o atalho correspondente quando possuídas. No PC funcionam também as teclas 1–5. O uso da ferramenta continua respeitando as regras reais de equipamentos, caça, coleta e pesca.
+- **QUALIDADE**: navegação touch, bloqueio de botões de fundo durante modais, ajustes responsivos para telas horizontais, teste nativo no Godot 4.6.1, e workflow adicional que tira capturas **reais do jogo renderizado** para auditoria visual.
+
+**Compatibilidade:** preservados save versão 3, toda exploração anterior, caça, barco em etapas, construção modular, cavernas, clima, áudio confortável e modo Leve/Completo. Não há APK nesta atualização; a exportação Android continua fora do workflow de validação de fonte. **A referência visual fornecida pelo usuário é o alvo de fidelidade; igualdade pixel a pixel requer comparar as capturas reais com a imagem fornecida, sem afirmar equivalência não verificada.**
+
+
 ## v1.0.0 — Construção reforçada, revisão de progressão e APK beta Android
 
 A versão 1.0 mantém o ciclo de sobrevivência em ilha 3D de todas as versões anteriores: coleta com ferramentas equipadas, pesca funcional, caça de animais, cozinhar alimentos, água/sede, clima, inventário, baú, fabricação, dois sistemas de cavernas com relíquias, oficina nível 2 e barco construído em cinco estágios para fuga.
