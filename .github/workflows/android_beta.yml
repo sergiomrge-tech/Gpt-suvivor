@@ -1,9 +1,6 @@
 name: Build Android 1.0 Beta APK
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - release/gpt-survivor-v1-0-android
 permissions:
   contents: read
 jobs:
