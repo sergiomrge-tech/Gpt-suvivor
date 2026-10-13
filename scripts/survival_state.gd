@@ -2,25 +2,29 @@ extends RefCounted
 class_name SurvivalState
 
 const SAVE_VERSION := 3
-const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear", "fishing_rod"]
+const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear", "fishing_rod", "reinforced_axe", "reinforced_pickaxe"]
 const MATERIAL_RECIPES := ["rope", "plank"]
 const FOOD_RECIPES := ["meal", "grilled_crab", "cooked_meat"]
+const UPGRADE_TOOLS := ["reinforced_axe", "reinforced_pickaxe"]
 const MODULES := ["floor_panel", "wall_panel", "door_panel", "window_panel", "roof_panel"]
 const WALL_MODULES := ["wall_panel", "door_panel", "window_panel"]
-const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal", "raw_crab", "raw_meat", "grilled_crab", "cooked_meat"]
-const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "stone_spear":"utility", "fishing_rod":"main_hand"}
+const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal", "raw_crab", "raw_meat", "grilled_crab", "cooked_meat", "cave_crystal"]
+const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "stone_spear":"utility", "fishing_rod":"main_hand", "reinforced_axe":"utility", "reinforced_pickaxe":"utility"}
 const DAY_SECONDS := 1200.0
 const START_POSITION := Vector3(0.0, 0.0, 170.0)
-const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado", "raw_crab": "Caranguejo cru", "raw_meat": "Carne crua", "grilled_crab": "Caranguejo assado", "cooked_meat": "Carne assada", "rope": "Corda", "plank": "Tábua"}
+const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado", "raw_crab": "Caranguejo cru", "raw_meat": "Carne crua", "grilled_crab": "Caranguejo assado", "cooked_meat": "Carne assada", "rope": "Corda", "plank": "Tábua", "cave_crystal": "Cristal da caverna"}
 const RECIPES := {
     "stone_knife": {"title": "Faca de pedra", "cost": {"wood": 1, "stone": 2, "fiber": 1}, "requires": [], "description": "Feita à mão. Corta fibras: coleta 8 em vez de 5."},
     "stone_axe": {"title": "Machado de pedra", "cost": {"wood": 3, "stone": 2, "fiber": 2}, "requires": [], "description": "Feito à mão. Necessário para cortar árvores e coqueiros."},
     "stone_pickaxe": {"title": "Picareta de pedra", "cost": {"wood": 3, "stone": 3, "fiber": 2}, "requires": [], "description": "Feita à mão. Necessária para extrair pedra das rochas."},
     "stone_spear": {"title": "Lança de pedra", "cost": {"wood": 4, "stone": 2, "fiber": 3}, "requires": [], "description": "Ferramenta de caça artesanal. Equipe para caçar javalis na mata."},
+    "reinforced_axe": {"title": "Machado reforçado", "cost": {"metal": 3, "plank": 2, "rope": 1}, "requires": ["stone_axe", "tool_rack"], "description": "Ferramenta de nível 2. Corta madeira mais rapidamente e rende 12 madeiras por árvore."},
+    "reinforced_pickaxe": {"title": "Picareta reforçada", "cost": {"metal": 3, "plank": 2, "rope": 1}, "requires": ["stone_pickaxe", "tool_rack"], "description": "Ferramenta de nível 2. Extração de 9 pedras por rocha."},
     "rope": {"title": "Corda", "cost": {"fiber": 1}, "requires": [], "description": "Trance fibras à mão. Usada nos móveis e no barco."},
     "plank": {"title": "Tábua", "cost": {"wood": 2}, "requires": ["workbench"], "description": "Prepare madeira na bancada. Usada nas peças do barco."},
     "campfire": {"title": "Fogueira", "cost": {"wood": 10, "stone": 6}, "requires": [], "description": "Asse peixes e ilumine o acampamento."},
     "workbench": {"title": "Bancada", "cost": {"wood": 16, "stone": 8}, "requires": ["campfire"], "description": "Libera ferramentas e construção avançada."},
+    "tool_rack": {"title": "Estação de aprimoramento", "cost": {"wood": 6, "plank": 4, "metal": 2, "cave_crystal": 1}, "requires": ["workbench"], "description": "Nível 2 da oficina. Pesquise o relicário do Leste para construir e melhorar machado e picareta."},
     "fishing_rod": {"title": "Vara de pesca", "cost": {"wood": 6, "fiber": 8}, "requires": ["workbench"], "description": "Pesque na costa ou no cais."},
     "house": {"title": "Casa", "cost": {"wood": 30, "stone": 10, "fiber": 10}, "requires": ["workbench"], "description": "Abrigo para descansar e recuperar saúde."},
     "dock": {"title": "Cais", "cost": {"wood": 20, "fiber": 10}, "requires": ["workbench"], "description": "Construa na praia. Ponto de pesca e embarque."},
@@ -38,8 +42,8 @@ const RECIPES := {
     "cooked_meat": {"title": "Assar carne", "cost": {"raw_meat": 1}, "requires": ["campfire"], "description": "Carne de javali. Recupera 48 de fome e um pouco de saúde."}
 }
 var equipment: Dictionary = {"main_hand":"", "utility":""}
-var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "raw_crab": 0, "raw_meat": 0, "grilled_crab": 0, "cooked_meat": 0, "fishing_rod": 0, "stone_spear": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0}
-var storage: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 0, "raw_fish": 0, "meal": 0, "raw_crab": 0, "raw_meat": 0, "grilled_crab": 0, "cooked_meat": 0}
+var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "raw_crab": 0, "raw_meat": 0, "grilled_crab": 0, "cooked_meat": 0, "fishing_rod": 0, "stone_spear": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0, "reinforced_axe": 0, "reinforced_pickaxe": 0, "cave_crystal": 0}
+var storage: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 0, "raw_fish": 0, "meal": 0, "raw_crab": 0, "raw_meat": 0, "grilled_crab": 0, "cooked_meat": 0, "cave_crystal": 0}
 var rain_water := 0.0
 var buildings: Array[Dictionary] = []
 var harvested: Dictionary = {}
@@ -80,9 +84,9 @@ func is_equipped(kind: String) -> bool:
     return str(equipment.get(TOOL_SLOTS[kind], "")) == kind and owns(kind)
 
 func harvest_error(kind: String) -> String:
-    if kind in ["palm", "tree"] and not is_equipped("stone_axe"):
+    if kind in ["palm", "tree"] and not (is_equipped("stone_axe") or is_equipped("reinforced_axe")):
         return "Equipe o machado de pedra em Mochila → Equipar para cortar árvores."
-    if kind == "rock" and not is_equipped("stone_pickaxe"):
+    if kind == "rock" and not (is_equipped("stone_pickaxe") or is_equipped("reinforced_pickaxe")):
         return "Equipe a picareta em Mochila → Equipar para minerar rochas."
     if kind == "boar" and not is_equipped("stone_spear"):
         return "Equipe a lança de pedra em Mochila → Equipar para caçar javalis."
@@ -100,6 +104,8 @@ func recipe_error(kind: String) -> String:
         return "Receita desconhecida."
     if kind not in FOOD_RECIPES and kind not in MATERIAL_RECIPES and kind not in MODULES and owns(kind):
         return "Você já possui esse item."
+    if kind == "tool_rack" and not bool(discoveries.get("east_vault", false)):
+        return "Pesquise os dois selos e abra o Relicário do Leste para descobrir a estação de aprimoramento."
     if kind == "boat" and not bool(discoveries.get("sail_diagram", false)):
         return "Encontre o esquema de vela na Caverna do Leste antes de construir o barco."
     var recipe: Dictionary = RECIPES[kind]
@@ -283,7 +289,7 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not entry is Dictionary or not RECIPES.has(str(entry.get("kind", ""))):
             return null
         var kind := str(entry.kind)
-        if kind == "meal" or kind in TOOLS or kind in MATERIAL_RECIPES or (state.has_structure(kind) and kind not in MODULES):
+        if kind in FOOD_RECIPES or kind in TOOLS or kind in MATERIAL_RECIPES or (state.has_structure(kind) and kind not in MODULES):
             return null
         for axis in ["x", "z"]:
             var value = entry.get(axis)
