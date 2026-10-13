@@ -46,7 +46,7 @@ func run() -> void:
                     if bool(piece.get_meta("wreck_detached",false)):
                         detached += 1
             check(detached >= 1,"Actual imported mesh instance is tilted and displaced as crash wreckage")
-            var supplies := crash.node.get_node_or_null("CrashSalvage")
+            var supplies: Node = crash.node.get_node_or_null("CrashSalvage")
             check(supplies != null and supplies.get_child_count() == 4,"Airplane site displays four original licensed salvage props")
             if supplies != null:
                 check(supplies.find_child("CC0_wooden_military_crate",true,false) != null,"Salvaged military crate is a real imported GLTF")
