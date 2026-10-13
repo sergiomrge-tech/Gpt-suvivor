@@ -62,31 +62,65 @@ static func triangles(parent: Node3D, vertices: PackedVector3Array, color: Color
     return node
 
 static func palm(parent: Node3D, variant: int) -> void:
-    var tall := 7.0 + float(variant % 4) * 0.7
-    var bend := Vector3(1.0, 0, 0.5) * (0.6 + float(variant % 3) * 0.3)
-    for i in range(8):
-        var t := float(i) / 8.0
-        var t2 := float(i + 1) / 8.0
-        var a := Vector3(0, tall * t, 0) + bend * t * t
-        var b := Vector3(0, tall * t2, 0) + bend * t2 * t2
-        beam(parent, a, b, 0.38 - t * 0.17, Color(0.39 + t * 0.1, 0.27 + t * 0.07, 0.15))
-    var crown := Vector3(0, tall, 0) + bend
-    for f in range(9):
-        var angle := f * TAU / 9.0 + variant * 0.3
-        var radial := Vector3(cos(angle), 0, sin(angle))
-        var side := Vector3(-sin(angle), 0, cos(angle))
+    # Retain harvest anchor and collision: only improve the visual silhouette.
+    # Tapered segmented stem, bark scars and serrated arching crown are merged
+    # to one static mesh by SurvivorWorld for mobile rendering.
+    var tall := 7.1 + float(variant%4)*0.64
+    var curve := Vector3(1.0,0.0,0.55)*(0.58+float(variant%3)*0.25)
+    var trunk_color := Color(0.40,0.29,0.17)
+    for i in range(9):
+        var t := float(i)/9.0
+        var t2 := float(i+1)/9.0
+        var a := Vector3(0,tall*t,0)+curve*t*t
+        var b := Vector3(0,tall*t2,0)+curve*t2*t2
+        beam(parent,a,b,0.40-t*0.18,trunk_color.lightened(float(i%3)*0.028))
+        if i > 0:
+            # Short dark notches trace old bark attachment rings, not stripes.
+            var ring := PackedVector3Array()
+            var mid := a.lerp(b,0.15)
+            var radius := (0.40-t*0.18)*1.03
+            for side in range(9):
+                var angle := float(side)*TAU/9.0
+                var next := float(side+1)*TAU/9.0
+                var first := Vector3(cos(angle),0,sin(angle))*radius
+                var second := Vector3(cos(next),0,sin(next))*radius
+                ring.append_array(PackedVector3Array([
+                    mid+first,mid+second+Vector3.UP*0.025,mid+first+Vector3.UP*0.052
+                ]))
+            triangles(parent,ring,trunk_color.darkened(0.16))
+    var crown := Vector3(0,tall,0)+curve
+    # Leaves are not planar broad triangles: 11 curved, serrated 3D fronds
+    # with drooping side leaflets and per-frond tonal differences.
+    for frond in range(11):
+        var angle := float(frond)*TAU/11.0+float(variant)*0.22
+        var radial := Vector3(cos(angle),0,sin(angle))
+        var side := Vector3(-sin(angle),0,cos(angle))
+        var length := 4.15+float((frond+variant)%4)*0.34
         var vertices := PackedVector3Array()
-        for section in range(8):
-            var t := section / 8.0
-            var next := (section + 1) / 8.0
-            var a := crown + radial * t * 4.9 + Vector3.UP * (sin(t * PI) * 1.1 - t * t * 1.6)
-            var b := crown + radial * next * 4.9 + Vector3.UP * (sin(next * PI) * 1.1 - next * next * 1.6)
-            var width := sin(t * PI) * 0.72
-            var width2 := sin(next * PI) * 0.72
-            vertices.append_array(PackedVector3Array([a - side * width, b - side * width2, a + side * width, a + side * width, b - side * width2, b + side * width2]))
-        triangles(parent, vertices, Color(0.13 + (f % 3) * 0.025, 0.35 + (f % 3) * 0.035, 0.14))
-    for i in range(3):
-        sphere(parent, 0.25, Color(0.41, 0.31, 0.12), crown + Vector3(cos(i * 2.1) * 0.38, -0.5, sin(i * 2.1) * 0.38))
+        for segment in range(10):
+            var t := float(segment)/10.0
+            var t2 := float(segment+1)/10.0
+            var a := crown+radial*t*length+Vector3.UP*(sin(t*PI)*0.62-t*t*2.08)
+            var b := crown+radial*t2*length+Vector3.UP*(sin(t2*PI)*0.62-t2*t2*2.08)
+            var w := sin(t*PI)*0.57
+            var w2 := sin(t2*PI)*0.57
+            vertices.append_array(PackedVector3Array([
+                a-side*w,b-side*w2,a+side*w,
+                a+side*w,b-side*w2,b+side*w2
+            ]))
+            if segment > 0 and segment < 9:
+                for sign in [-1.0,1.0]:
+                    var root := a+side*sign*w*0.48
+                    var next_root := b+side*sign*w2*0.53
+                    var droop := (0.13+t*0.24)*Vector3.DOWN
+                    var tip := root+side*sign*(w*0.82+0.36)+radial*0.13+droop
+                    vertices.append_array(PackedVector3Array([root,tip,next_root]))
+        triangles(parent,vertices,Color(0.12+float(frond%3)*0.018,
+            0.32+float((frond+variant)%4)*0.028,0.12+float(frond%2)*0.012))
+    for i in range(4):
+        var a := float(i)*TAU/4.0
+        sphere(parent,0.22,Color(0.44,0.32,0.12),
+            crown+Vector3(cos(a)*0.40,-0.51+float(i%2)*0.12,sin(a)*0.40))
 
 static func stone_mesh(radius: float, variant: int) -> ArrayMesh:
     var sphere_shape := SphereMesh.new()
@@ -126,9 +160,22 @@ static func surface_family(color: Color) -> float:
     return 1.0 # Timber, bark and rope.
 
 static func rock(parent: Node3D, variant: int, size: float = 1.0) -> void:
-    for i in range(3):
-        var node := stone(parent, (0.8 + (variant + i) % 3 * 0.25) * size, variant + i, Color(0.39 + i * 0.035, 0.43 + i * 0.03, 0.42 + i * 0.02), Vector3((i - 1) * 0.65 * size, 0.6 * size, (i % 2) * 0.4 * size), Vector3(1.2, 0.8, 1.0))
-        node.rotation_degrees = Vector3(i * 21, variant * 39 + i * 15, i * 17)
+    # Fractured granite mass with strata and smaller weathered fragments.
+    # No collision radius or resource yield changes.
+    for i in range(4):
+        var width := (0.76 + float((variant+i)%3)*0.23)*size
+        var tint := Color(0.37+float(i%3)*0.033,0.41+float(i%3)*0.026,0.39+float(i%2)*0.035)
+        var chunk := stone(parent,width,variant+i,tint,
+            Vector3((float(i)-1.5)*0.49*size,(0.41+float(i%2)*0.19)*size,float(i%3)*0.25*size),
+            Vector3(1.23,0.70+float(i%2)*0.07,0.90))
+        chunk.rotation_degrees = Vector3(i*14,variant*27+i*29,i*11)
+    for i in range(4):
+        var a := float(i)*TAU/4.0+float(variant)*0.33
+        var pebble := stone(parent,(0.19+float(i%2)*0.07)*size,variant+30+i,
+            Color(0.43+float(i%3)*0.032,0.45+float(i%2)*0.025,0.40),
+            Vector3(cos(a)*1.38*size,0.17*size,sin(a)*0.95*size),
+            Vector3(1.25,0.58,0.83))
+        pebble.rotation_degrees.y = i*31
 
 static func fiber(parent: Node3D, variant: int) -> void:
     for i in range(7):
