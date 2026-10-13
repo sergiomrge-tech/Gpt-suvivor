@@ -745,6 +745,19 @@ func show_journal() -> void:
             text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
             panel_content.add_child(text)
             count += 1
+    panel_content.add_child(_label("EXPLORAÇÃO E PESQUISA",22))
+    for cave_id in ["east","roots"]:
+        var area_name := "Caverna do Leste" if cave_id == "east" else "Gruta das raízes"
+        var seals := int(bool(state.discoveries.get(cave_id+"_amber",false))) + int(bool(state.discoveries.get(cave_id+"_blue",false)))
+        var opened := bool(state.discoveries.get(cave_id+"_vault",false))
+        var status := "Relicário aberto" if opened else ("Selos %d/2 • procure os dois mecanismos" % seals)
+        panel_content.add_child(_label("%s • %s" % [area_name,status],18))
+    if state.has_structure("tool_rack"):
+        panel_content.add_child(_label("Oficina nível 2: construída. Melhore o machado e a picareta perto dela.",18))
+    elif bool(state.discoveries.get("east_vault",false)):
+        panel_content.add_child(_label("Pesquisa concluída: cristais das cavernas permitem criar a Estação de aprimoramento na aba Construções.",18))
+    else:
+        panel_content.add_child(_label("Pesquisa bloqueada: encontre os selos do Leste e abra o relicário para desbloquear a oficina nível 2.",18))
     if count == 0:
         panel_content.add_child(_label("Procure objetos junto aos destroços e às cavernas.",18))
     panel_content.add_child(_button("Voltar ao jogo",func(): close_modal()))
