@@ -395,7 +395,8 @@ func show_inventory(tab: String = "items") -> void:
         _recipe_grid("Pesquisa e ferramentas nível 2 • relicário + oficina",["tool_rack","reinforced_axe","reinforced_pickaxe"])
         _recipe_grid("Acampamento",["campfire","workbench","fishing_rod","house","chest","bed","rain_collector","dock","boat"])
         _recipe_grid("Cozinha • fogueira",SurvivalState.FOOD_RECIPES)
-        _recipe_grid("Casa modular • pisos, paredes, portas, janelas e telhados na grade de 3,2 m",SurvivalState.MODULES)
+        _recipe_grid("Casa modular • madeira / nível 1",["floor_panel","wall_panel","door_panel","window_panel","roof_panel"])
+        _recipe_grid("Casa reforçada • nível 2 após aprimorar a oficina",["reinforced_wall","reinforced_roof"])
     elif tab == "camp":
         _camp_panel()
     else:
