@@ -3,6 +3,9 @@ class_name SurvivorHUD
 
 signal action_requested
 signal build_requested(kind: String)
+signal rotate_requested
+signal relocate_requested(kind: String)
+signal storage_requested(kind: String, to_chest: bool)
 signal confirm_build_requested
 signal cancel_build_requested
 signal equipment_requested(kind: String)
@@ -32,6 +35,7 @@ var objective_label: Label
 var time_label: Label
 var action_button: Button
 var fishing_button: Button
+var rotate_button: Button
 var toast_label: Label
 var placement_label: Label
 var panel: PanelContainer
@@ -133,7 +137,7 @@ func _ready() -> void:
     actions.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
     actions.offset_left = -210
     actions.offset_right = -20
-    actions.offset_top = -232
+    actions.offset_top = -298
     actions.offset_bottom = -24
     actions.alignment = BoxContainer.ALIGNMENT_END
     actions.add_theme_constant_override("separation",7)
@@ -142,6 +146,9 @@ func _ready() -> void:
     actions.add_child(action_button)
     fishing_button = _button("Pescar", func(): fishing_requested.emit())
     actions.add_child(fishing_button)
+    rotate_button = _button("Girar 90°",func(): rotate_requested.emit())
+    rotate_button.visible = false
+    actions.add_child(rotate_button)
     var secondary := HBoxContainer.new()
     secondary.add_theme_constant_override("separation",6)
     actions.add_child(secondary)
@@ -288,7 +295,7 @@ func _new_modal(mode: String, title: String, description: String) -> void:
     scroll.add_child(panel_content)
     var heading := _label(title, 32)
     heading.add_theme_color_override("font_color", GOLD)
-    if mode in ["craft", "inventory", "pause"]:
+    if mode in ["craft", "inventory", "pause", "storage"]:
         var header := HBoxContainer.new()
         heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         header.add_child(heading)
@@ -361,19 +368,22 @@ func show_inventory(tab: String = "items") -> void:
     _new_modal("craft" if tab == "craft" else "inventory", "MOCHILA", "Organize itens e equipe as ferramentas antes de usá-las na ilha.")
     var tabs := HBoxContainer.new()
     modal_top.add_child(tabs)
-    for entry in [["Itens", "items"], ["Equipar", "equipment"], ["Construções", "craft"]]:
+    for entry in [["Itens", "items"], ["Equipar", "equipment"], ["Construções", "craft"], ["Acampamento", "camp"]]:
         var tab_button := _button(entry[0],_inventory_tab_callback(entry[1]))
         tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         if tab == entry[1]:
             tab_button.add_theme_stylebox_override("normal",_style(Color(0.28,0.36,0.23)))
         tabs.add_child(tab_button)
-    var summary := _label("Madeira %d  •  Pedra %d  •  Fibra %d  •  Metal %d" % [state.inventory.wood,state.inventory.stone,state.inventory.fiber,state.inventory.metal],19)
+    var summary := _label("Madeira %d • Pedra %d • Fibra %d • Metal %d • Corda %d • Tábua %d" % [state.inventory.wood,state.inventory.stone,state.inventory.fiber,state.inventory.metal,state.inventory.rope,state.inventory.plank],18)
     modal_top.add_child(summary)
     if tab == "equipment":
         _equipment_panel()
     elif tab == "craft":
         _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe"])
-        _recipe_grid("Acampamento e bancada",["campfire","workbench","fishing_rod","house","dock","boat","meal"])
+        _recipe_grid("Materiais • corda à mão, tábuas na bancada",["rope","plank"])
+        _recipe_grid("Acampamento",["campfire","workbench","fishing_rod","house","chest","bed","rain_collector","dock","boat","meal"])
+    elif tab == "camp":
+        _camp_panel()
     else:
         _inventory_grid()
     panel_content.add_child(_button("Voltar ao jogo",func(): close_modal(); resume_requested.emit()))
@@ -398,7 +408,7 @@ func _inventory_grid() -> void:
     grid.add_theme_constant_override("h_separation",8)
     grid.add_theme_constant_override("v_separation",8)
     bag_column.add_child(grid)
-    for kind in ["wood","stone","fiber","metal","coconut","raw_fish","meal","stone_knife","stone_axe","stone_pickaxe","fishing_rod"]:
+    for kind in ["wood","stone","fiber","metal","rope","plank","coconut","raw_fish","meal","stone_knife","stone_axe","stone_pickaxe","fishing_rod"]:
         var title: String = SurvivalState.ITEMS.get(kind,SurvivalState.RECIPES.get(kind,{}).get("title",kind))
         var amount: int = state.inventory.get(kind,0)
         var slot := _button("%s\n×%d" % [title,amount],_item_callback(kind))
@@ -478,6 +488,56 @@ func _inventory_grid() -> void:
     character_column.add_child(_button("Gerenciar equipamentos",func(): show_inventory("equipment")))
     character_column.add_child(_button("Diário da ilha",func(): show_journal()))
 
+func _camp_panel() -> void:
+    panel_content.add_child(_label("CONSTRUÇÕES DO ACAMPAMENTO",23))
+    panel_content.add_child(_label("Para reposicionar, escolha Mover, caminhe até o novo local e confirme. Nenhum recurso será cobrado.",18))
+    if state.buildings.is_empty():
+        panel_content.add_child(_label("Construa primeiro a fogueira e a bancada.",18))
+    for building in state.buildings:
+        var kind: String = str(building.get("kind",""))
+        var title: String = str(SurvivalState.RECIPES.get(kind,{}).get("title",kind))
+        var line := HBoxContainer.new()
+        line.add_theme_constant_override("separation",10)
+        panel_content.add_child(line)
+        var label_node := _label(title,20)
+        label_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        line.add_child(label_node)
+        if kind not in ["boat","dock"]:
+            line.add_child(_button("Mover",_relocate_callback(kind)))
+    if state.has_structure("chest"):
+        panel_content.add_child(_button("Abrir baú de recursos",func(): show_storage()))
+    if state.has_structure("rain_collector"):
+        panel_content.add_child(_label("Coletor de chuva: %.1f / 12 medidas. Aproxime-se para beber." % state.rain_water,18))
+
+func _relocate_callback(kind: String) -> Callable:
+    return func():
+        close_modal()
+        resume_requested.emit()
+        relocate_requested.emit(kind)
+
+func show_storage() -> void:
+    if not is_playing or state == null or not state.has_structure("chest"):
+        return
+    _new_modal("storage","BAÚ DO ACAMPAMENTO","Capacidade: 100 itens. Para guardar ou retirar, fique próximo ao baú.")
+    var total := 0
+    for kind in SurvivalState.STORABLE:
+        total += int(state.storage.get(kind,0))
+    panel_content.add_child(_label("Armazenamento %d / 100" % total,21))
+    for kind in SurvivalState.STORABLE:
+        var line := HBoxContainer.new()
+        panel_content.add_child(line)
+        var label_node := _label("%s: mochila %d • baú %d" % [SurvivalState.ITEMS.get(kind,kind),int(state.inventory.get(kind,0)),int(state.storage.get(kind,0))],18)
+        label_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        line.add_child(label_node)
+        var deposit_kind: String = kind
+        line.add_child(_button("Guardar 1",func(): storage_requested.emit(deposit_kind,true)))
+        line.add_child(_button("Retirar 1",func(): storage_requested.emit(deposit_kind,false)))
+    panel_content.add_child(_button("Fechar baú",func(): close_modal(); resume_requested.emit()))
+
+func set_rotation_visible(value: bool) -> void:
+    if is_instance_valid(rotate_button):
+        rotate_button.visible = value
+
 func _equipment_panel() -> void:
     panel_content.add_child(_label("EQUIPAMENTOS DO PERSONAGEM",23))
     panel_content.add_child(_label("É preciso equipar a ferramenta correta. A vara fica na mão principal; machado, picareta e faca usam o espaço de ferramenta.",18))
@@ -532,7 +592,7 @@ func _item_callback(kind: String) -> Callable:
     return func():
         if not is_instance_valid(item_detail): return
         var title: String = SurvivalState.ITEMS.get(kind,SurvivalState.RECIPES.get(kind,{}).get("title",kind))
-        var descriptions := {"wood":"Troncos soltos podem ser recolhidos à mão. Para cortar árvores, fabrique um machado.","stone":"Pedras soltas podem ser recolhidas à mão. Para minerar rochas, fabrique uma picareta.","fiber":"Recolha à mão nas plantas. A faca aumenta a quantidade coletada.","metal":"Recupere ferragens nos destroços e nas cavernas para construir o barco.","coconut":"Recupera água e fome. Use Comer / beber.","raw_fish":"Asse na fogueira antes de comer.","meal":"Peixe assado: recupera fome e saúde."}
+        var descriptions := {"wood":"Troncos soltos podem ser recolhidos à mão. Para cortar árvores, fabrique um machado.","stone":"Pedras soltas podem ser recolhidas à mão. Para minerar rochas, fabrique uma picareta.","fiber":"Recolha à mão nas plantas. A faca aumenta a quantidade coletada.","metal":"Recupere ferragens nos destroços e nas cavernas para construir o barco.","coconut":"Recupera água e fome. Use Comer / beber.","raw_fish":"Asse na fogueira antes de comer.","meal":"Peixe assado: recupera fome e saúde.","rope":"Material intermediário feito com fibras. Use nos móveis e no barco.","plank":"Peça preparada na bancada. Necessária para o barco."}
         var detail: String = descriptions.get(kind,SurvivalState.RECIPES.get(kind,{}).get("description",""))
         item_detail.text = "%s • %d no inventário\n%s" % [title,state.inventory.get(kind,0),detail]
 
@@ -569,7 +629,7 @@ func _recipe_grid(title: String,kinds: Array) -> void:
         detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         body.add_child(detail)
         var error := state.recipe_error(kind)
-        var button := _button("Pronto" if state.owns(kind) else ("Fabricar" if kind in SurvivalState.TOOLS or kind == "meal" else "Construir"),_recipe_callback(kind))
+        var button := _button("Pronto" if state.owns(kind) else ("Fabricar" if kind in SurvivalState.TOOLS or kind in SurvivalState.MATERIAL_RECIPES or kind == "meal" else "Construir"),_recipe_callback(kind))
         button.disabled = error != ""
         body.add_child(button)
         build_buttons[kind] = button
@@ -633,7 +693,7 @@ func _process(delta: float) -> void:
         fishing_button.text = "Pescar"
         action_button.text = "Explorar"
         if not target.is_empty():
-            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
+            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
     if not target.is_empty() and placement_kind == "" and activity_name == "":
         var error := state.harvest_error(str(target.kind))
         if error != "": action_button.text = "Precisa de machado" if target.kind in ["tree","palm"] else "Precisa de picareta"
