@@ -116,6 +116,15 @@ func run() -> void:
     game = load("res://scenes/main.tscn").instantiate()
     root.add_child(game)
     await process_frame
+    check(game.player.using_skinned_hero, "Godot loads actual MakeHuman skinned human instead of the obsolete handmade hero mesh")
+    check(game.player.rigged_hero != null and game.player.rigged_hero.skeleton != null, "Imported human contains playable Skeleton3D")
+    if game.player.rigged_hero != null and game.player.rigged_hero.skeleton != null:
+        var rig := game.player.rigged_hero
+        check(rig.skeleton.get_bone_count() >= 50, "The new protagonist has 50+ real skinned anatomical joints")
+        check(rig.clips.has("idle") and rig.clips.has("walk") and rig.clips.has("run"), "The imported rig exposes authentic animation clips")
+        check(game.player.right_hand.get_parent() == rig.grip and rig.grip.get_parent() == rig.skeleton, "Every crafted tool and fishing rod follows the rigged right-hand bone")
+        check(not game.player.torso.visible and not game.player.left_leg.visible, "Superseded procedural body is hidden, not displayed over real skinned human")
+        check(is_equal_approx(rig.normalized_height,2.07), "New skeleton normalization preserves gameplay scale")
     var anatomical_fixture := Node3D.new()
     var loft_mesh := SurvivorHeroGeometry.loft(anatomical_fixture, PackedVector4Array([
         Vector4(0.35, 0.15, 0.14, 0.0),
