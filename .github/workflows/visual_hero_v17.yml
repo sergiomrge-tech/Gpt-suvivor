@@ -1,0 +1,41 @@
+name: Real Godot hero anatomical screenshots v1.7
+on:
+  push:
+    branches:
+      - feat/hero-anatomy-animation-v17
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: survivor-v17-character-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  hero-visuals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Godot 4.6.1
+        run: |
+          curl --fail --location --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo /tmp/godot >> "$GITHUB_PATH"
+      - name: Import the original 3D scene
+        run: |
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/hero-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error' /tmp/hero-import.log; then exit 1; fi
+      - name: Render true game actor and action pose fixtures
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 240 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_hero_v17.gd
+          for view in 01_hero_front_anatomy 02_hero_profile_proportions 03_hero_pack_and_boots 04_hero_walk_ankle_fixture 05_hero_chopping_fixture 06_hero_fishing_fixture 07_hero_mobile_gameplay_scale; do
+            test -s "/tmp/survivor-hero-v17/${view}.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-v17-real-hero-frames
+          path: /tmp/survivor-hero-v17/*.png
+          retention-days: 14
