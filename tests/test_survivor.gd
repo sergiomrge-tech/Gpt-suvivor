@@ -77,6 +77,14 @@ func run() -> void:
     root.add_child(game)
     await process_frame
     check(game.world.resources.size() >= 190, "Island generated with abundant accessible resources")
+    check(game.world.fauna != null and game.world.fauna.animals.size() >= 12, "Coastal and forest fauna populate the island")
+    var wildlife_species := {}
+    for animal in game.world.fauna.animals:
+        wildlife_species[animal.kind] = true
+    check(wildlife_species.has("boar") and wildlife_species.has("bird") and wildlife_species.has("fish"), "Forest, sky and reef fauna generated")
+    game.world.fauna.set_light_mode(true)
+    check(game.world.fauna.light_mode, "Light quality can reduce visible wildlife")
+    game.world.fauna.set_light_mode(false)
     var terrain_mesh: MeshInstance3D = game.terrain.get_node("IslandTerrain")
     var terrain_normals: PackedVector3Array = terrain_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
     var upward := true
