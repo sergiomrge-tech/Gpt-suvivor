@@ -154,17 +154,38 @@ func add_structure(entry: Dictionary) -> Node3D:
     elif entry.kind != "boat":
         node.rotation.y = float(entry.get("rotation", 0.0))
     add_child(node)
-    SurvivorModels.building(node, entry.kind)
+    if entry.kind == "boat":
+        _build_boat_model(node,int(entry.get("stage",5)))
+    else:
+        SurvivorModels.building(node, entry.kind)
     if entry.kind == "door_panel":
         var leaf: Node3D = node.get_node_or_null("DoorLeaf")
         if leaf != null:
             leaf.rotation.y = -PI * 0.5 if bool(entry.get("door_open", false)) else 0.0
-    if entry.kind != "campfire":
+    if entry.kind not in ["campfire", "boat"]:
         SurvivorModels.merge_static(node, "building_" + str(entry.kind))
-    structures.append({"kind": entry.kind, "node": node, "position": node.position, "door_open": bool(entry.get("door_open", false)), "save_entry": entry})
+    structures.append({"kind": entry.kind, "node": node, "position": node.position, "door_open": bool(entry.get("door_open", false)), "stage":int(entry.get("stage",5)) if entry.kind == "boat" else 0, "save_entry": entry})
     if scenery != null:
         scenery.clear_area(node.position, 5.0 if entry.kind == "house" else 2.8)
     return node
+
+func _build_boat_model(parent: Node3D, stage: int) -> void:
+    var model := Node3D.new()
+    model.name = "BoatModel"
+    parent.add_child(model)
+    SurvivorModels.boat_stage(model,stage)
+    SurvivorModels.merge_static(model,"boat_model_stage_%d" % stage)
+
+func refresh_boat_stage(entry: Dictionary) -> void:
+    if str(entry.get("kind","")) != "boat":
+        return
+    var new_stage := state.boat_stage()
+    entry["stage"] = new_stage
+    var old_model: Node3D = entry.node.get_node_or_null("BoatModel")
+    if old_model != null:
+        entry.node.remove_child(old_model)
+        old_model.queue_free()
+    _build_boat_model(entry.node,new_stage)
 
 func toggle_door(entry: Dictionary) -> bool:
     if str(entry.get("kind", "")) != "door_panel":
