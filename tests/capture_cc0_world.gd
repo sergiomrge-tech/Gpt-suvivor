@@ -94,6 +94,22 @@ func capture_biomes() -> void:
     game.world.add_structure({"kind":"tool_rack","x":-20.0,"z":139.0,"rotation":0.0})
     await travel(Vector2(-23,143),14.0)
     await shot("14_cc0_buckets_and_crates")
+    # Genuine close-up through an in-engine free camera, NOT a painted render.
+    var inspection := Camera3D.new()
+    inspection.fov = 51.0
+    game.add_child(inspection)
+    inspection.make_current()
+    await travel(Vector2(-8,164),8.0)
+    inspection.global_position = Vector3(-14.0,game.terrain.height_at(-8,164)+5.5,176.0)
+    inspection.look_at(Vector3(-8.0,game.terrain.height_at(-8,164)+1.45,164.0),Vector3.UP)
+    await create_timer(0.8).timeout
+    await shot("15_actual_broken_airframe_3d_closeup")
+    await travel(Vector2(-55,72),14.0)
+    inspection.global_position = Vector3(-48.0,game.terrain.height_at(-55,72)+5.2,81.0)
+    inspection.look_at(Vector3(-55.0,game.terrain.height_at(-55,72)+1.15,72.0),Vector3.UP)
+    await create_timer(0.8).timeout
+    await shot("16_real_polyhaven_dense_jungle_3d_closeup")
+    print("CC0_UNDERSTORY_BATCHES ",game.world.scenery.tropical_floor_batches.size()," real plants=",game.world.scenery.tropical_floor_count)
     print("IMPORTED_REAL_MODEL_COUNTS: ",SurvivorRealWorldAssets.instances)
     print("BIOMES: ", game.world.scenery.biome_counts)
     print("RENDER: ", Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), " calls (software rendering, not Android FPS)")
