@@ -19,12 +19,15 @@ const VEINS := {
     "roots_vein_2":{"cave":"roots","local":Vector3(12,0,-31),"reward":{"cave_crystal":1,"metal":3}}
 }
 const HAZARD_POINTS := {"east":Vector2(0,-24),"roots":Vector2(0,-24)}
+const VENT_PERIOD := 8.0
+const VENT_ACTIVE_SECONDS := 4.5
 const WIDTH := 17.0
 const DEPTH := 13.0
 var state: SurvivalState
 var rooms: Dictionary = {}
 var caches: Array[Dictionary] = []
 var veins: Array[Dictionary] = []
+var vent_lights: Dictionary = {}
 var puzzles: SurvivorCavePuzzles
 
 static func cave_at(pos: Vector3) -> String:
@@ -172,6 +175,30 @@ func _model_deep_chamber(room: Node3D,id: String,rock: Color,damp: Color) -> voi
     light.omni_range = 21.0
     light.shadow_enabled = false
     room.add_child(light)
+    # Local, shadow-free light broadcasts the hazardous vent cycle without particles.
+    var vent := OmniLight3D.new()
+    vent.name = "MineralGasSignal"
+    vent.position = Vector3(0,1.45,-24.0)
+    vent.light_color = Color(0.88,0.28,0.69) if id == "east" else Color(0.74,0.82,0.18)
+    vent.light_energy = 0.0
+    vent.omni_range = 8.0
+    vent.shadow_enabled = false
+    room.add_child(vent)
+    vent_lights[id] = vent
+
+func _process(delta: float) -> void:
+    if state == null:
+        return
+    for cave_id in vent_lights:
+        var vent: OmniLight3D = vent_lights[cave_id]
+        var goal := 1.8 if vent_is_active(str(cave_id),state.elapsed) else 0.10
+        vent.light_energy = lerpf(vent.light_energy,goal,minf(1.0,delta*7.0))
+
+static func vent_is_active(id: String, elapsed: float) -> bool:
+    if not CENTERS.has(id):
+        return false
+    var phase := fposmod(maxf(0.0,elapsed)+(1.4 if id == "roots" else 0.0),VENT_PERIOD)
+    return phase < VENT_ACTIVE_SECONDS
 
 func _model_cache(node: Node3D, id: String) -> void:
     SurvivorModels.box(node,Vector3(1.5,0.75,1.05),Color(0.32,0.20,0.10),Vector3(0,0.43,0))
@@ -181,12 +208,12 @@ func _model_cache(node: Node3D, id: String) -> void:
     SurvivorModels.sphere(node,0.17,Color(0.31,0.81,0.88) if id.begins_with("east") else Color(0.86,0.73,0.33),Vector3(0,1.18,0))
     SurvivorModels.merge_static(node,"cache_"+id)
 
-func hazard_rate_at(pos: Vector3) -> float:
+func hazard_rate_at(pos: Vector3, elapsed: float = 0.0) -> float:
     var cave_id := cave_at(pos)
     if cave_id == "":
         return 0.0
     var local: Vector3 = pos-CENTERS[cave_id]
-    if Vector2(local.x,local.z).distance_to(HAZARD_POINTS[cave_id]) < 2.8:
+    if Vector2(local.x,local.z).distance_to(HAZARD_POINTS[cave_id]) < 2.8 and vent_is_active(cave_id,elapsed):
         return 1.2 if cave_id == "east" else 1.65
     return 0.0
 
