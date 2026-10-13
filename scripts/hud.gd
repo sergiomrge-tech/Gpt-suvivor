@@ -164,38 +164,39 @@ func _build_playing_view() -> void:
     joystick.direction_changed.connect(func(vec: Vector2) -> void: move_changed.emit(vec))
     playing_view.add_child(joystick)
 
-    craft_panel = _panel()
-    craft_panel.anchor_left = 0.5
-    craft_panel.anchor_right = 0.5
-    craft_panel.anchor_top = 0.5
-    craft_panel.anchor_bottom = 0.5
-    craft_panel.offset_left = -245.0
-    craft_panel.offset_right = 245.0
-    craft_panel.offset_top = -240.0
-    craft_panel.offset_bottom = 240.0
-    craft_panel.visible = false
-    playing_view.add_child(craft_panel)
+    inventory_panel = _panel()
+    inventory_panel.anchor_left = 0.5
+    inventory_panel.anchor_right = 0.5
+    inventory_panel.anchor_top = 0.5
+    inventory_panel.anchor_bottom = 0.5
+    inventory_panel.offset_left = -310.0
+    inventory_panel.offset_right = 310.0
+    inventory_panel.offset_top = -255.0
+    inventory_panel.offset_bottom = 255.0
+    inventory_panel.visible = false
+    playing_view.add_child(inventory_panel)
+    var inventory_column := VBoxContainer.new()
+    inventory_column.add_theme_constant_override("separation", 10)
+    inventory_panel.add_child(inventory_column)
+    inventory_column.add_child(_label("MOCHILA DO SOBREVIVENTE", 25))
+    var tabs := HBoxContainer.new()
+    tabs.add_theme_constant_override("separation", 6)
+    inventory_column.add_child(tabs)
+    for tab_name in ["items", "equipment", "craft"]:
+        var tab_button := Button.new()
+        tab_button.custom_minimum_size = Vector2(170, 46)
+        tab_button.text = {"items": "ITENS", "equipment": "EQUIPAR", "craft": "FABRICAR"}[tab_name]
+        tab_button.pressed.connect(_select_tab.bind(tab_name))
+        tabs.add_child(tab_button)
     var scroll := ScrollContainer.new()
+    scroll.custom_minimum_size = Vector2(552.0, 328.0)
     scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    craft_panel.add_child(scroll)
-    craft_list = VBoxContainer.new()
-    craft_list.custom_minimum_size.x = 445.0
-    craft_list.add_theme_constant_override("separation", 8)
-    scroll.add_child(craft_list)
-    craft_list.add_child(_label("FABRICAÇÃO / CONSTRUÇÃO", 25))
-    craft_list.add_child(_label("Os materiais são consumidos ao fabricar.", 15))
-    for recipe in SurvivorState.RECIPES.keys():
-        var cost: Dictionary = SurvivorState.RECIPES[recipe]
-        var fragments: Array[String] = []
-        for item in cost:
-            fragments.append("%s %d" % [str(item), int(cost[item])])
-        var button := Button.new()
-        button.text = "%s  •  %s" % [RECIPE_NAMES[recipe], ", ".join(fragments)]
-        button.custom_minimum_size.y = 52.0
-        var id: String = str(recipe)
-        button.pressed.connect(func() -> void: recipe_selected.emit(id))
-        craft_list.add_child(button)
-    craft_list.add_child(_button("FECHAR", "close_craft"))
+    inventory_column.add_child(scroll)
+    inventory_list = VBoxContainer.new()
+    inventory_list.custom_minimum_size.x = 548.0
+    inventory_list.add_theme_constant_override("separation", 8)
+    scroll.add_child(inventory_list)
+    inventory_column.add_child(_button("FECHAR MOCHILA", "close_inventory"))
 
 func _build_menu_view() -> void:
     menu_view = ColorRect.new()
