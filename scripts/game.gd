@@ -212,7 +212,7 @@ func _process(delta: float) -> void:
         hud.activity_name = ""
     state.advance(delta)
     cave_hazard_warning = maxf(0.0,cave_hazard_warning-delta)
-    var gas_damage := world.caves.hazard_rate_at(player.position)
+    var gas_damage := world.caves.hazard_rate_at(player.position,state.elapsed)
     if gas_damage > 0.0:
         state.health = maxf(0.0,state.health-gas_damage*delta)
         if cave_hazard_warning <= 0.0:
