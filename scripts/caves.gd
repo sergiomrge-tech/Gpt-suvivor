@@ -12,11 +12,18 @@ const CACHE_INFO := {
     "east_deep_cache": {"cave":"east", "local":Vector3(-9.0,0,-28.0), "title":"Bolsa do explorador", "text":"No fundo da galeria, um antigo kit de escalada contém cordas, suprimentos e ferramentas de metal.", "reward":{"rope":4,"metal":3,"coconut":2}},
     "roots_deep_cache": {"cave":"roots", "local":Vector3(9.0,0,-28.0), "title":"Depósito sob as raízes", "text":"A pedra esconde um estoque esquecido de tábuas e alimentos preservados.", "reward":{"plank":5,"coconut":2,"fiber":5}}
 }
+const VEINS := {
+    "east_vein_1":{"cave":"east","local":Vector3(-13,0,-25),"reward":{"cave_crystal":1,"stone":4}},
+    "east_vein_2":{"cave":"east","local":Vector3(12,0,-31),"reward":{"cave_crystal":1,"metal":3}},
+    "roots_vein_1":{"cave":"roots","local":Vector3(-13,0,-25),"reward":{"cave_crystal":1,"stone":4}},
+    "roots_vein_2":{"cave":"roots","local":Vector3(12,0,-31),"reward":{"cave_crystal":1,"metal":3}}
+}
 const WIDTH := 17.0
 const DEPTH := 13.0
 var state: SurvivalState
 var rooms: Dictionary = {}
 var caches: Array[Dictionary] = []
+var veins: Array[Dictionary] = []
 var puzzles: SurvivorCavePuzzles
 
 static func cave_at(pos: Vector3) -> String:
@@ -64,6 +71,20 @@ func generate() -> void:
         _model_cache(cache, str(id))
         caches.append({"kind":"cave_cache","id":id,"cave":info.cave,"title":info.title,
             "position":owner.to_global(info.local),"node":cache,"radius":0.9})
+    for id in VEINS:
+        var info: Dictionary = VEINS[id]
+        var owner: Node3D = rooms[info.cave]
+        var node := Node3D.new()
+        node.position = info.local
+        node.name = "Vein_" + str(id)
+        node.visible = not bool(state.discoveries.get(id,false))
+        owner.add_child(node)
+        SurvivorModels.rock(node,23,0.72)
+        for i in range(5):
+            var angle := TAU*float(i)/5.0
+            SurvivorModels.stone(node,0.32,i+33,Color(0.22,0.65,0.71),Vector3(cos(angle)*0.65,0.72,sin(angle)*0.65),Vector3(0.6,1.5,0.7))
+        SurvivorModels.merge_static(node,"deep_vein_"+str(info.cave))
+        veins.append({"kind":"cave_vein","id":id,"cave":info.cave,"title":"Veio cristalino","position":owner.to_global(info.local),"node":node,"radius":0.95})
     puzzles = SurvivorCavePuzzles.new()
     puzzles.state = state
     add_child(puzzles)
@@ -187,11 +208,31 @@ func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
         if d < limit:
             limit = d
             best = cache
+    for vein in veins:
+        if str(vein.cave) != id or not vein.node.visible:
+            continue
+        var reach_distance := Vector2(pos.x-vein.position.x,pos.z-vein.position.z).length()
+        if reach_distance < limit:
+            limit = reach_distance
+            best = vein
     if puzzles != null:
         var mechanism := puzzles.nearest_target(pos,limit)
         if not mechanism.is_empty():
             best = mechanism
     return best
+
+func extract_vein(entry: Dictionary) -> Dictionary:
+    var id := str(entry.get("id",""))
+    if not VEINS.has(id) or bool(state.discoveries.get(id,false)):
+        return {}
+    if not state.is_equipped("reinforced_pickaxe"):
+        return {}
+    state.discoveries[id] = true
+    entry.node.visible = false
+    var info: Dictionary = VEINS[id]
+    for item in info.reward:
+        state.add_item(str(item),int(info.reward[item]))
+    return {"title":"Minério cristalino extraído","text":"A picareta reforçada abriu um veio mineral raro nas profundezas da ilha.","reward":info.reward.duplicate(true)}
 
 func collect_cache(entry: Dictionary) -> Dictionary:
     var id := str(entry.get("id",""))
