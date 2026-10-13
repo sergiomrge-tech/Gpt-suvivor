@@ -112,7 +112,7 @@ func perform_action(kind: String = "gather",duration: float = 0.75,point: Vector
     var direction := Vector2(point.x-position.x,point.z-position.z)
     if direction.length_squared() > 0.02:
         body_pivot.rotation.y = atan2(direction.x,direction.y)
-    var tool: String = {"chop":"axe","mine":"pick","cut":"knife","fish":"rod","build":"hammer","craft":"hammer","eat":"food","cook":"skewer"}.get(kind,"")
+    var tool: String = {"chop":"axe","mine":"pick","cut":"knife","spear":"spear","fish":"rod","build":"hammer","craft":"hammer","eat":"food","cook":"skewer"}.get(kind,"")
     if tools.has(tool):
         tools[tool].visible = true
     if kind == "fish":
@@ -140,6 +140,12 @@ func pose_action(progress: float) -> void:
             left_arm.rotation.x = -0.25-wave*0.4
             torso.rotation.x = 0.12*wave
             torso.rotation.z = sin(progress*TAU)*0.07
+        "spear":
+            # Forward hunting thrust with the crafted stone-tipped spear.
+            right_arm.rotation.x = -0.4 - 1.3 * wave
+            right_elbow.rotation.x = -0.5 - 0.4 * wave
+            left_arm.rotation.x = -0.6 - 0.3 * wave
+            torso.rotation.x = 0.15 * wave
         "gather", "search", "drink", "cut":
             torso.rotation.x = 0.46*wave
             right_arm.rotation.x = -0.95*wave
@@ -263,7 +269,7 @@ func _build_character() -> void:
 func _build_tools() -> void:
     var timber := Color(0.43,0.29,0.14)
     var metal := Color(0.43,0.48,0.49)
-    for kind in ["axe","pick","knife","hammer","rod","food","skewer"]:
+    for kind in ["axe","pick","knife","spear","hammer","rod","food","skewer"]:
         var root := _joint(right_hand,Vector3.ZERO)
         root.name = kind
         root.visible = false
@@ -279,6 +285,14 @@ func _build_tools() -> void:
             "pick":
                 SurvivorModels.beam(root,Vector3(0,0.15,0),Vector3(0,-0.64,0),0.055,timber)
                 SurvivorModels.beam(root,Vector3(-0.34,-0.58,0),Vector3(0.34,-0.66,0),0.07,metal)
+            "spear":
+                SurvivorModels.beam(root,Vector3(0,0.18,0),Vector3(0,-2.42,0),0.055,timber)
+                SurvivorModels.triangles(root,PackedVector3Array([
+                    Vector3(-0.18,-2.32,-0.07),Vector3(0.18,-2.32,-0.07),Vector3(0,-2.86,0),
+                    Vector3(0.18,-2.32,0.07),Vector3(-0.18,-2.32,0.07),Vector3(0,-2.86,0)
+                ]),Color(0.57,0.62,0.59))
+                for y in [-2.34,-2.20]:
+                    SurvivorModels.beam(root,Vector3(-0.1,y,0.035),Vector3(0.1,y+0.03,0.035),0.025,Color(0.68,0.52,0.33))
             "hammer":
                 SurvivorModels.beam(root,Vector3(0,0.12,0),Vector3(0,-0.48,0),0.045,timber)
                 SurvivorModels.box(root,Vector3(0.29,0.16,0.14),metal,Vector3(0,-0.46,0))
