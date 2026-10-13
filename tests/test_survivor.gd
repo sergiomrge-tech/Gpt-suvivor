@@ -196,6 +196,33 @@ func run() -> void:
     var decor: SurvivorScenery = game.world.scenery
     check(decor.coastal_detail_count > 80 and decor.forest_detail_count > 200, "Deterministic real 3D shells, smooth shore pebbles and forest leaf litter populate both biomes")
     check(decor.detail_batches.size() > 8 and decor.detail_batches.size() < 240, "Coastal and forest visual props are batched in bounded mobile-friendly MultiMeshes")
+
+    var habitat_total := 0
+    var habitat_meshes: Dictionary = {}
+    var habitat_protected := false
+    for batch in decor.biome_batches:
+        var habitat: MultiMesh = batch.node.multimesh
+        check(habitat.use_custom_data and habitat.instance_count == batch.entries.size(), "Biome instancing preserves own material and transform data")
+        habitat_total += habitat.instance_count
+        habitat_meshes[int(batch.family)] = habitat.mesh
+        for sample in batch.entries.slice(0, mini(2, batch.entries.size())):
+            var sample_point: Vector3 = sample.position
+            if decor._protected(Vector2(sample_point.x, sample_point.z)):
+                habitat_protected = true
+    print("BIOME V15 HABITATS: reeds=%d ferns=%d stones=%d batches=%d" % [
+        int(decor.biome_counts["reeds"]), int(decor.biome_counts["ferns"]),
+        int(decor.biome_counts["stone"]), decor.biome_batches.size()
+    ])
+    check(decor.biome_counts["reeds"] > 3 and decor.biome_counts["ferns"] > 30 and decor.biome_counts["stone"] > 3, "Altitude and grade create distinct dune, jungle and rocky habitats")
+    check(habitat_meshes.has(0) and habitat_meshes.has(1) and habitat_meshes.has(2), "Original 3D dune/fern/stone meshes appear in their specific ecological zones")
+    check(habitat_total == int(decor.biome_counts["reeds"]) + int(decor.biome_counts["ferns"]) + int(decor.biome_counts["stone"]), "Every habitat is represented by exactly one deterministic MultiMesh instance")
+    check(decor.biome_batches.size() > 6 and decor.biome_batches.size() < 320 and not habitat_protected, "Biome details remain chunked and protect original navigation, resources and camp areas")
+    var preserved_height := game.terrain.height_at(0.0, 170.0)
+    decor.set_weather(0.68, 0.50)
+    check(is_equal_approx(float(decor.biome_material.get_shader_parameter("rain_amount")), 0.50), "Biome materials darken in tropical showers")
+    decor.set_weather(0.0, 0.0)
+    check(is_equal_approx(game.terrain.height_at(0.0,170.0),preserved_height) and SurvivalState.SAVE_VERSION == 3, "New visual habitats do not disturb persisted terrain elevations or save v3")
+
     var shore_mesh: Mesh
     var leaf_mesh: Mesh
     var visual_near_resource := false
@@ -233,6 +260,12 @@ func run() -> void:
         if batch.node.multimesh.visible_instance_count >= batch.node.multimesh.instance_count:
             limited = false
     check(not game.terrain.sun.shadow_enabled and limited and game.climate.particles.amount == 90, "Light mode reduces shadows, cover and weather particles")
+    var has_light_habitats := false
+    for group in decor.biome_batches:
+        if group.entries.size() >= 4 and group.node.multimesh.visible_instance_count < group.entries.size():
+            has_light_habitats = true
+            break
+    check(has_light_habitats, "Light rendering reduces detailed habitat instances without touching resources")
     check(is_equal_approx(float(game.terrain.ground_material.get_shader_parameter("surface_microdetail")),0.0), "Light graphics preset disables expensive terrain micro-normal samples")
     game.light_visuals = false
     game.apply_quality()
