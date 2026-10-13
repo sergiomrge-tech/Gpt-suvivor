@@ -56,6 +56,16 @@
 - [ ] Medir FPS, testar toque/visuais no Android físico.
 - [ ] Novos biomas de cavernas profundas, materiais para paredes aprimoradas e enigmas expandidos.
 
+## v0.9.0 — Som suave e barco progressivo
+
+- [x] Passos mais suaves: filtro PCM de ataques, fade, volume baixo por tipo de piso.
+- [x] Barco 3D em cinco fases verdadeiras: quilha, casco, convés, mastro, vela e leme.
+- [x] Custos de material por etapa, ação real Explorar e montagem no contato.
+- [x] Nunca partir antes do estágio final. Saves legados com barco concluído mantidos.
+- [x] HUD, painel Acampamento e testes de custos/continuidade/modelos.
+- [ ] Ouvir o som e conferir desempenho e animações em dispositivo físico Android.
+- [ ] Melhorar a construção modular com paredes reforçadas e novos materiais.
+
 ## v0.9 — Barco montado peça a peça
 - Etapas: estrutura inicial → casco → piso → mastro → vela → leme.
 - Modelos e animações sincronizados com recursos consumidos e etapas registradas.
