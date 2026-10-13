@@ -1,5 +1,13 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.3.0 — Ventilação perigosa nas cavernas e painel de navegação (código-fonte, sem APK)
+
+- **Vapores com ritmo legível**: as zonas minerais profundas de ambas as cavernas passam por 4,5 segundos de gás ativo em ciclos de 8 segundos. Uma luz localizada sem sombras móveis diferencia o período de risco da pausa segura; o jogador pode aguardar ou contornar. O período é reproduzível usando o tempo da partida e não exige alterar o save v3.
+- **Barco mais orgânico**: uma oscilação suave de balanço e arfagem acompanha o avanço, sem perder os controles da versão anterior.
+- **HUD marítimo aprimorado**: mostra integridade do casco em uma barra própria, distância em metros até o próximo recife e dica de manobra/posição. Os botões amplos para bombordo e estibordo continuam separados dos controles de exploração.
+- **Regressões**: validação Godot 4.6.1 no GitHub Actions, com 445/445 verificações nativas antes do ajuste final de CI e 4 capturas reais automatizadas de ambientes/viagem. Permanecem pendentes teste manual touch no Android, FPS, áudio por audição e comparação visual contra referência original. Sem gerar APK.
+
+
 ## v1.2.0 — Cavernas profundas, natureza sonora e fuga marítima jogável (código, SEM APK)
 
 ### 5. Exploração das cavernas
