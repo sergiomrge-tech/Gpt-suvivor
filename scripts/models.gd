@@ -570,7 +570,8 @@ static func merge_static(parent: Node3D, cache_key: String = "") -> void:
                         # Only the hero uses palette family 6 (skin); tools retain
                         # their own metal/wood grading and geometry.
                         var skin_tone: bool = color.r > 0.54 and color.r < 0.74 and color.g > 0.34 and color.g < 0.56 and color.b > 0.23 and color.b < 0.37
-                        family = 6.0 if skin_tone else 5.0
+                        var hide_tone: bool = color.r > color.g * 1.14 and color.g > color.b * 1.10 and color.r < 0.54
+                        family = 6.0 if skin_tone else (7.0 if hide_tone else 5.0)
                     elif cache_key.begins_with("hero_tool_") and family == 3.0:
                         family = 4.0
                     st.set_uv2(Vector2(family,0))
