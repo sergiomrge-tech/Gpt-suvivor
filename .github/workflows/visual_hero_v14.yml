@@ -1,0 +1,40 @@
+name: Real Godot character and terrain screenshots v1.4
+on:
+  push:
+    branches:
+      - feat/hero-anatomy-materials-v14
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: survivor-v14-visual-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  capture-v14:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Godot 4.6.1
+        run: |
+          curl --fail --location --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo /tmp/godot >> "$GITHUB_PATH"
+      - name: Import all game sources
+        run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit
+      - name: Capture actual game framebuffer
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 240 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_hero_v14.gd
+          test -s /tmp/survivor-hero-v14/01_hero_front.png
+          test -s /tmp/survivor-hero-v14/02_hero_profile.png
+          test -s /tmp/survivor-hero-v14/03_hero_axe_pose_fixture.png
+          test -s /tmp/survivor-hero-v14/04_shore_complete_material.png
+          test -s /tmp/survivor-hero-v14/05_shore_light_material.png
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-v14-authentic-hero-and-terrain
+          path: /tmp/survivor-hero-v14/*.png
+          retention-days: 14
