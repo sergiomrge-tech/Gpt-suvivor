@@ -1,0 +1,41 @@
+name: Real Godot island biome screenshots v1.6
+on:
+  push:
+    branches:
+      - feat/coastal-forest-fidelity-v16
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: survivor-biome-v16-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-biome-captures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.6.1
+        run: |
+          curl --fail --location --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo /tmp/godot >> "$GITHUB_PATH"
+      - name: Import scene and shaders
+        run: |
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/import-v16.log
+          if grep -E 'SCRIPT ERROR|Parse Error' /tmp/import-v16.log; then exit 1; fi
+      - name: Render authentic beaches, forest, highlands and rain
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 240 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_biomes_v16.gd
+          for file in 01_tropical_beach_full 02_tidal_sand_detail 03_forest_understory 04_central_highlands 05_rain_wet_shore 06_mobile_light_preset 07_coastal_driftwood 08_forest_moss_roots; do
+            test -s "/tmp/survivor-biomes-v16/${file}.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-v16-real-biome-captures
+          path: /tmp/survivor-biomes-v16/*.png
+          retention-days: 14
