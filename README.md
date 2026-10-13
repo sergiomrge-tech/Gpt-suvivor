@@ -1,5 +1,12 @@
 # GPT Survivor — Ilha: Último Voo
 
+## Desenvolvimento v0.7.0 — fauna inicial (branch experimental)
+
+Esta branch adiciona animais originais modelados diretamente com primitivas e malhas do Godot: caranguejos na areia, tartarugas costeiras, javalis no interior, aves sobre a ilha e cardumes costeiros. A população usa seed fixa e regiões de habitat; os animais vagueiam, descansam e fogem ao perceber o personagem. Atualização de movimento em passos de ~0,12 s e ocultação por distância; o modo Leve reduz a fauna visível.
+
+A fauna é **visual/interativa apenas na reação à aproximação** nesta primeira etapa: ainda não há caça, alimentação dos animais, coleta de drops ou IA de perseguição. Essas mecânicas, os módulos avançados de construção, cavernas navegáveis e fuga cinematográfica continuam no roadmap. O save v3 não foi alterado, e os animais não persistem individualmente (são gerados deterministicamente). O APK v0.7 **não está pronto para instalação**. A execução dos testes no CI e validação em hardware Android devem ser verificadas antes de qualquer distribuição.
+
+
 **Protótipo de desenvolvimento v0.6.0 (código-fonte) • Godot 4.x • 3D top-down • Android e PC**
 
 Um sobrevivente de um acidente aéreo precisa explorar uma ilha tropical de aproximadamente 400 metros de diâmetro, montar seu acampamento e construir um barco para voltar para casa.
