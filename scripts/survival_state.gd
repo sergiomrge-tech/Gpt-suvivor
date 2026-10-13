@@ -12,6 +12,7 @@ const ROOF_MODULES := ["roof_panel", "reinforced_roof"]
 const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal", "raw_crab", "raw_meat", "grilled_crab", "cooked_meat", "cave_crystal"]
 const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "stone_spear":"utility", "fishing_rod":"main_hand", "reinforced_axe":"utility", "reinforced_pickaxe":"utility"}
 const DAY_SECONDS := 1200.0
+const VOYAGE_COST := {"coconut":2,"meal":1,"rope":2,"plank":1}
 const START_POSITION := Vector3(0.0, 0.0, 170.0)
 const BOAT_STAGE_NAMES := ["", "Quilha", "Casco", "Convés", "Mastro", "Vela e leme"]
 const BOAT_STAGE_COSTS := {
@@ -268,7 +269,27 @@ func objective() -> String:
         return "6/6 • Inicie a quilha do barco junto ao cais. A construção terá 5 etapas."
     if stage < 5:
         return "6/6 • Barco %d/5: %s. Reúna materiais e use Explorar no barco." % [stage,BOAT_STAGE_NAMES[stage+1]]
-    return "O barco está pronto! Aproxime-se e toque em Embarcar."
+    if not bool(discoveries.get("voyage_prepared",false)):
+        return "Prepare a viagem no barco: 2 cocos, 1 peixe assado, 2 cordas e 1 tábua."
+    return "Tudo pronto! Aproxime-se do barco e navegue até o canal seguro."
+
+func voyage_error() -> String:
+    if not boat_ready():
+        return "Termine as cinco etapas do barco antes da partida."
+    if bool(discoveries.get("voyage_prepared",false)):
+        return ""
+    for item in VOYAGE_COST:
+        if int(inventory.get(item,0)) < int(VOYAGE_COST[item]):
+            return "Para a viagem falta %s: %d/%d." % [ITEMS.get(item,item),int(inventory.get(item,0)),int(VOYAGE_COST[item])]
+    return ""
+
+func prepare_voyage() -> bool:
+    if not boat_ready() or bool(discoveries.get("voyage_prepared",false)) or voyage_error() != "":
+        return false
+    for item in VOYAGE_COST:
+        inventory[item] = int(inventory.get(item,0))-int(VOYAGE_COST[item])
+    discoveries["voyage_prepared"] = true
+    return true
 
 func to_data() -> Dictionary:
     return {"version": SAVE_VERSION, "inventory": inventory, "storage": storage.duplicate(true), "rain_water": rain_water, "equipment": equipment.duplicate(true), "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
