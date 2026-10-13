@@ -47,11 +47,18 @@ void fragment() {
         float weave = sin(UV.x * 104.0) * cos(UV.y * 118.0);
         grain = 0.945 + detail * 0.055 + weave * 0.012;
         rough = 0.88;
-    } else {
-        // Subtle pore-scale variation and less chalky skin response.
+    } else if (family < 6.5) {
+        // Warm epidermal microvariation, subtle non-metallic specular lobe.
         float pores = texture(detail_noise, UV * 2.1).r;
         grain = 0.973 + (pores - 0.5) * 0.035;
         rough = 0.74;
+    } else {
+        // Worn backpack/boot leather: stretched seams, small scuffs and
+        // rain-darkened grain distinct from the surrounding cotton fabric.
+        float pores = texture(detail_noise, UV * 0.92).r;
+        float scratches = sin(UV.x * 38.0 + pores * 4.0) * cos(UV.y * 19.0);
+        grain = 0.93 + pores * 0.09 + scratches * 0.018;
+        rough = 0.78;
     }
     ALPHA = 1.0;
     ALPHA_SCISSOR_THRESHOLD = 0.5;
@@ -70,7 +77,7 @@ void fragment() {
         float occlusion = corridor*step(0.04,progress)*(1.0-step(0.97,progress));
         ALPHA = step(dither,(0.12+cover*0.88)*(1.0-0.86*occlusion));
     }
-    float rain_wet = rain_amount * (family < 4.5 ? 0.18 : 0.08);
+    float rain_wet = rain_amount * (family < 4.5 ? 0.18 : (family > 6.5 ? 0.16 : 0.08));
     ALBEDO = base * grain * (1.0 - rain_wet);
     ROUGHNESS = mix(rough,0.45,rain_amount * 0.55);
     METALLIC = metal;
