@@ -37,6 +37,25 @@ func run() -> void:
     state.hunger = 40
     state.consume()
     check(state.hunger == 78 and state.inventory.meal == 0, "Cooked meal consumed")
+    var wild_food_state := SurvivalState.new()
+    wild_food_state.add_item("wood", 4)
+    wild_food_state.add_item("stone", 2)
+    wild_food_state.add_item("fiber", 3)
+    check(wild_food_state.craft_tool("stone_spear") and wild_food_state.is_equipped("stone_spear"), "Stone spear crafted and equipped in utility slot")
+    check(wild_food_state.harvest_error("boar") == "" and wild_food_state.harvest_error("palm") != "", "Spear enables hunting without bypassing axe requirement")
+    wild_food_state.buildings.append({"kind":"campfire","x":0.0,"z":155.0})
+    wild_food_state.add_item("raw_crab", 2)
+    wild_food_state.add_item("raw_meat", 2)
+    check(wild_food_state.pay_recipe("grilled_crab"), "Campfire recipe consumes exactly one raw crab")
+    wild_food_state.add_item("grilled_crab", 1)
+    check(wild_food_state.pay_recipe("cooked_meat"), "Campfire recipe consumes exactly one piece of raw meat")
+    wild_food_state.add_item("cooked_meat", 1)
+    wild_food_state.hunger = 15.0
+    wild_food_state.health = 60.0
+    check(wild_food_state.consume().contains("Carne assada") and wild_food_state.hunger == 63.0 and wild_food_state.health == 68.0, "Cooked meat restores balanced hunger and health")
+    check(wild_food_state.consume().contains("Caranguejo assado") and wild_food_state.hunger == 89.0, "Cooked crab is edible and recovers hunger")
+    var wildlife_saved := SurvivalState.from_data(wild_food_state.to_data())
+    check(wildlife_saved != null and wildlife_saved.inventory.raw_crab == 1 and wildlife_saved.inventory.raw_meat == 1 and wildlife_saved.owns("stone_spear"), "Old save version preserves wildlife food and tool without schema migration")
     var grace := SurvivalState.new()
     grace.advance(120)
     check(grace.hunger == 100 and grace.thirst == 100, "Three-minute learning grace period")
@@ -78,6 +97,32 @@ func run() -> void:
     await process_frame
     check(game.world.resources.size() >= 190, "Island generated with abundant accessible resources")
     check(game.world.fauna != null and game.world.fauna.animals.size() >= 12, "Coastal and forest fauna populate the island")
+    var crab_entry: Dictionary = {}
+    var boar_entry: Dictionary = {}
+    for creature in game.world.fauna.animals:
+        if creature.kind == "crab" and crab_entry.is_empty():
+            crab_entry = creature
+        if creature.kind == "boar" and boar_entry.is_empty():
+            boar_entry = creature
+    check(not crab_entry.is_empty() and not boar_entry.is_empty(), "Harvestable crab and boar exist on valid habitats")
+    if not crab_entry.is_empty() and not boar_entry.is_empty():
+        var wildlife_state: SurvivalState = game.world.fauna.state
+        var hunting_fixture := SurvivalState.new()
+        game.world.fauna.state = hunting_fixture
+        check(game.world.fauna.nearest_prey(crab_entry.position, 1.0).get("kind", "") == "crab", "Nearby wildlife is targetable from live island nodes")
+        check(game.world.harvest(crab_entry).contains("Caranguejo") and hunting_fixture.inventory.raw_crab == 1, "Collecting a crab grants raw crab meat")
+        check(hunting_fixture.harvested.has(crab_entry.id) and not crab_entry.node.visible, "Wildlife harvest hides node and records a respawn deadline")
+        game.world.harvest(crab_entry)
+        check(hunting_fixture.inventory.raw_crab == 1, "Same crab cannot be harvested twice during cooldown")
+        hunting_fixture.elapsed = 901.0
+        check(game.world.harvest(crab_entry).contains("Caranguejo") and hunting_fixture.inventory.raw_crab == 2, "Crabs return after saved world-time cooldown")
+        check(game.world.harvest(boar_entry).contains("lança") and hunting_fixture.inventory.raw_meat == 0, "Boar hunting requires equipped spear")
+        hunting_fixture.add_item("stone_spear", 1)
+        hunting_fixture.equip_tool("stone_spear")
+        check(game.world.harvest(boar_entry).contains("Carne") and hunting_fixture.inventory.raw_meat == 2, "Spear hunting drops exactly two raw meats")
+        var round_trip := SurvivalState.from_data(hunting_fixture.to_data())
+        check(round_trip != null and round_trip.harvested.has(boar_entry.id) and round_trip.inventory.raw_meat == 2, "Wildlife cooldown and drops persist in version-three save")
+        game.world.fauna.state = wildlife_state
     var wildlife_species := {}
     for animal in game.world.fauna.animals:
         wildlife_species[animal.kind] = true
@@ -274,7 +319,7 @@ func run() -> void:
     check(game.hud.panel.get_rect().end.y <= game.hud.root.size.y and game.hud.panel.get_rect().end.x <= game.hud.root.size.x,"Inventory stays inside the viewport after wrapped-label layout")
     game.hud._item_callback("stone_axe").call()
     check(game.hud.item_detail.text.contains("Machado de pedra") and game.hud.item_detail.text.contains("árvores"),"Inventory item selection shows quantity and actual tool function")
-    check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 13,"Inventory grid opens with tool slots and blocks movement")
+    check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 18,"Inventory grid opens with tool slots and blocks movement")
     game.hud.show_inventory("equipment")
     check(game.hud.modal_mode == "inventory" and game.hud.inventory_tab == "equipment","Separate equip tab opens inside backpack")
     game.hud._equip_callback("stone_pickaxe").call()
@@ -521,7 +566,8 @@ func run() -> void:
     game.hud.action_button._input(action_touch)
     check(taps[0] == 1, "Dragging a button cancels its tap for scrolling")
     game.hud.show_crafting()
-    check(game.hud.build_buttons.has("stone_axe") and game.hud.build_buttons.has("stone_knife") and game.hud.build_buttons.has("stone_pickaxe"),"Inventory construction tab contains all basic tool recipes")
+    check(game.hud.build_buttons.has("stone_axe") and game.hud.build_buttons.has("stone_knife") and game.hud.build_buttons.has("stone_pickaxe") and game.hud.build_buttons.has("stone_spear"),"Inventory construction tab contains all basic tool recipes and spear")
+    check(game.hud.build_buttons.has("grilled_crab") and game.hud.build_buttons.has("cooked_meat"),"Campfire cooking recipes available in backpack")
     action_touch.pressed = true
     game.hud.action_button._input(action_touch)
     action_touch.pressed = false
