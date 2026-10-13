@@ -70,6 +70,7 @@ func _ready() -> void:
     hud.resume_requested.connect(resume_game)
     hud.quality_requested.connect(toggle_quality)
     hud.sound_requested.connect(toggle_sound)
+    hud.audio_level_requested.connect(_set_audio_level)
     hud.journal_requested.connect(func(): hud.show_journal())
     hud.zoom_requested.connect(change_zoom)
     hud.sprint_requested.connect(toggle_sprint)
@@ -78,12 +79,16 @@ func _ready() -> void:
     if settings.load("user://visual.cfg") == OK:
         light_visuals = bool(settings.get_value("graphics", "light", false))
         muted = bool(settings.get_value("audio","muted",false))
+        for bus in ["Ambiente","Efeitos","Passos"]:
+            var volume: float = clampf(float(settings.get_value("audio",bus,1.0)),0.0,1.0)
+            soundscape.set_mixer_level(bus,volume)
         var saved_zoom = settings.get_value("camera","distance",29.0)
         if (saved_zoom is float or saved_zoom is int) and is_finite(float(saved_zoom)):
             camera_distance = clampf(float(saved_zoom),MIN_ZOOM_DISTANCE,MAX_ZOOM_DISTANCE)
     hud.update_zoom(camera_distance)
     hud.light_visuals = light_visuals
     hud.muted = muted
+    hud.audio_levels = soundscape.mixer_levels.duplicate(true)
     soundscape.set_muted(muted)
     _saved_state = SurvivorSave.recover()
     _create_world(_saved_state if _saved_state != null else state)
@@ -782,6 +787,15 @@ func toggle_quality() -> void:
     settings.set_value("graphics", "light", light_visuals)
     settings.save("user://visual.cfg")
     hud.toast("Visual leve: menos vegetação e sombras desligadas." if light_visuals else "Visual completo: vegetação e sombras ativas.")
+
+func _set_audio_level(bus_name: String,level: float) -> void:
+    soundscape.set_mixer_level(bus_name,level)
+    hud.audio_levels = soundscape.mixer_levels.duplicate(true)
+    var cfg := ConfigFile.new()
+    cfg.load("user://visual.cfg")
+    cfg.set_value("audio",bus_name,float(soundscape.mixer_levels.get(bus_name,1.0)))
+    if not capture_mode:
+        cfg.save("user://visual.cfg")
 
 func queue_work(entry: Dictionary,animation: String,duration: float,mode: String,reach: float) -> void:
     cancel_work()
