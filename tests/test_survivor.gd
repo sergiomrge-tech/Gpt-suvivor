@@ -331,6 +331,9 @@ func run() -> void:
         var cave_center: Vector3 = SurvivorCaves.CENTERS[cave_id]
         check(game.world.caves.hazard_rate_at(cave_center+Vector3(0,0,-24)) > 0.0,"Deep cavern gas hazards damage only when approaching visible ore vents")
         check(game.world.caves.hazard_rate_at(cave_center+Vector3(6,0,-24)) == 0.0,"Players can steer around mineral gas vents along valid walkable routes")
+        check(game.world.caves.hazard_rate_at(cave_center+Vector3(0,0,-24),6.0) == 0.0,"Mineral vents periodically become safe to cross: "+str(cave_id))
+        check(game.world.caves.hazard_rate_at(cave_center+Vector3(0,0,-24),8.0) > 0.0,"Mineral vents wake up after their resting interval: "+str(cave_id))
+        check(game.world.caves.vent_lights.has(cave_id) and is_instance_valid(game.world.caves.vent_lights[cave_id]),"Each vent has a readable 3D warning light: "+str(cave_id))
     var root_cave_spawn := SurvivorCaves.spawn_position("roots")
     check(game.world.caves.is_inside(root_cave_spawn) and game.world.walkable(root_cave_spawn,root_cave_spawn),"Cave pocket has a walkable entry and isolated ground height")
     check(not game.world.walkable(SurvivorCaves.CENTERS["roots"]+Vector3(19,0,0),root_cave_spawn), "Cave walls prevent walking into the unloaded sea")
@@ -814,6 +817,9 @@ func run() -> void:
     game.escape_island()
     check(game.voyage.active and not game.state.escaped and game.hud.voyage_overlay != null, "Second embark begins real offshore piloting with visible touch controls")
     check(game.voyage.reefs.size() == 3 and game.voyage.boat_node != null, "Three physical reef models spawn along boat route")
+    check(game.voyage.next_reef().get("index",-1) == 0 and game.voyage.next_reef().get("distance",0.0) > 20.0, "Sea voyage exposes exact distance to next reef before collision")
+    game.hud.update_voyage(game.voyage)
+    check(game.hud.voyage_hull_bar != null and game.hud.voyage_reef_label != null and game.hud.voyage_reef_label.text.contains("RECIFE"), "Mobile helm displays reef proximity and hull integrity")
     for i in range(230):
         if not game.voyage.active: break
         game.voyage.step(0.12)
@@ -826,6 +832,7 @@ func run() -> void:
         if not game.voyage.active: break
         game.voyage.step(0.12)
     check(game.state.escaped and not game.playing, "Steering around hazards reaches the actual sea channel and completes survival")
+    check(game.voyage.reef_hint().contains("ÁGUAS LIVRES"), "Successful passage clears navigation hazard warnings")
     game.hud.show_end(true, game.state.elapsed)
     game.hud.target = {"kind":"boat"}
     game.hud._process(0.2)
