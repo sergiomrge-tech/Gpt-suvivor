@@ -8,7 +8,9 @@ const CACHE_INFO := {
     "east_scrap": {"cave":"east", "local":Vector3(-8.5,0.0,-6.0), "title":"Ferragens na galeria", "text":"Junto a um lampião apagado, restos de uma expedição antiga. Entre rochas úmidas, você recolhe metal e pedras que ainda podem servir ao barco.", "reward":{"metal":6,"stone":4}},
     "east_provisions": {"cave":"east", "local":Vector3(9.0,0.0,-7.5), "title":"Caixa protegida da chuva", "text":"Uma pequena caixa esquecida na rocha guarda tábuas e cordas secas. Uma marca aponta para uma abertura acima da maré.", "reward":{"plank":4,"rope":4}},
     "roots_cache": {"cave":"roots", "local":Vector3(-9.0,0.0,-5.0), "title":"Abrigo entre raízes", "text":"Sob as raízes, alguém escondeu uma reserva de fibras e alimentos. A caverna também foi abrigo de outros sobreviventes.", "reward":{"fiber":12,"coconut":3}},
-    "roots_ore": {"cave":"roots", "local":Vector3(8.5,0.0,-8.0), "title":"Veio de minério", "text":"O fundo da gruta esconde pequenos fragmentos de metal entre as pedras. Você recolhe somente as peças soltas.", "reward":{"metal":4,"stone":5}}
+    "roots_ore": {"cave":"roots", "local":Vector3(8.5,0.0,-8.0), "title":"Veio de minério", "text":"O fundo da gruta esconde pequenos fragmentos de metal entre as pedras. Você recolhe somente as peças soltas.", "reward":{"metal":4,"stone":5}},
+    "east_deep_cache": {"cave":"east", "local":Vector3(-9.0,0,-28.0), "title":"Bolsa do explorador", "text":"No fundo da galeria, um antigo kit de escalada contém cordas, suprimentos e ferramentas de metal.", "reward":{"rope":4,"metal":3,"coconut":2}},
+    "roots_deep_cache": {"cave":"roots", "local":Vector3(9.0,0,-28.0), "title":"Depósito sob as raízes", "text":"A pedra esconde um estoque esquecido de tábuas e alimentos preservados.", "reward":{"plank":5,"coconut":2,"fiber":5}}
 }
 const WIDTH := 17.0
 const DEPTH := 13.0
@@ -20,7 +22,7 @@ var puzzles: SurvivorCavePuzzles
 static func cave_at(pos: Vector3) -> String:
     for id in CENTERS:
         var center: Vector3 = CENTERS[id]
-        if absf(pos.x-center.x) < 19.0 and absf(pos.z-center.z) < 16.0:
+        if absf(pos.x-center.x) < 19.0 and pos.z-center.z > -39.0 and pos.z-center.z < 16.0:
             return str(id)
     return ""
 
@@ -73,6 +75,8 @@ func _model_room(room: Node3D, id: String) -> void:
     SurvivorModels.box(room, Vector3(37.0,0.7,30.0),Color(0.20,0.22,0.20),Vector3(0,-0.40,0))
     # Corte superior aberto: é possível visualizar o personagem com a câmera top-down.
     for i in range(20):
+        if i in [7,8,9,10,11,12]:
+            continue # 11 m wide gallery opening to the actual back chamber.
         var x := -18.0 + i * 1.9
         var h := 3.1 + 1.0 * sin(float(i)*2.0)
         SurvivorModels.sphere(room,2.15,rock,Vector3(x,h*0.40,-15.0),Vector3(0.65,h*0.47,0.90))
@@ -96,6 +100,7 @@ func _model_room(room: Node3D, id: String) -> void:
         for i in range(11):
             var x := -14.0 + i*2.8
             SurvivorModels.sphere(room,0.32,Color(0.17,0.58,0.65),Vector3(x,0.35,-12.5),Vector3(0.7,1.4,0.7))
+    _model_deep_chamber(room,id,rock,damp)
     # Luz própria, sem sombras móveis extras no aparelho.
     for item in [[Vector3(-9,4,-5),Color(0.48,0.74,1.0)],[Vector3(8,4,3),Color(1.0,0.69,0.36)]]:
         var lamp := OmniLight3D.new()
@@ -106,6 +111,40 @@ func _model_room(room: Node3D, id: String) -> void:
         lamp.shadow_enabled = false
         room.add_child(lamp)
     SurvivorModels.merge_static(room,"cave_" + id)
+
+func _model_deep_chamber(room: Node3D,id: String,rock: Color,damp: Color) -> void:
+    # Connected back chamber extends south through a real opening. Keeps original
+    # entrance, previous save coordinates and first four cache positions intact.
+    var floor_color := Color(0.18,0.21,0.22) if id == "east" else Color(0.20,0.20,0.17)
+    SurvivorModels.box(room,Vector3(35.5,0.68,26.5),floor_color,Vector3(0,-0.40,-25.8))
+    for i in range(19):
+        var x := -17.5+float(i)*1.95
+        SurvivorModels.stone(room,1.6,i+12,rock,Vector3(x,1.12,-38.5),Vector3(0.85,1.6,0.85))
+    for side in [-1.0,1.0]:
+        for i in range(10):
+            var z := -37.2+float(i)*2.4
+            SurvivorModels.stone(room,1.6,i+22,damp,Vector3(side*18.0,0.80,z),Vector3(0.9,1.15,1.25))
+        for i in range(4):
+            var z := -34.0+float(i)*5.2
+            if id == "roots":
+                SurvivorModels.beam(room,Vector3(side*17.5,3.6,z),Vector3(side*13.5,0.2,z+2),0.28,Color(0.30,0.21,0.11))
+            else:
+                SurvivorModels.stone(room,0.60,i+31,Color(0.17,0.42,0.49),Vector3(side*14,0.45,z),Vector3(0.8,1.5,0.7))
+    # Rock arches and pointed crystal clusters introduce a readable deep biome.
+    for z in [-19.0,-31.0]:
+        for side in [-1.0,1.0]:
+            SurvivorModels.stone(room,1.2,int(z)+int(side*5)+60,rock,Vector3(side*6.3,1.05,z),Vector3(0.75,1.7,0.9))
+        for i in range(4):
+            var x := -4.6+float(i)*3.1
+            SurvivorModels.stone(room,0.30,i+14,Color(0.21,0.56,0.64) if id == "east" else Color(0.49,0.60,0.27),
+                Vector3(x,0.35,z+float(i%2)*0.70),Vector3(0.65,1.8,0.65))
+    var light := OmniLight3D.new()
+    light.position = Vector3(0,3.6,-27.0)
+    light.light_color = Color(0.30,0.68,0.77) if id == "east" else Color(0.68,0.58,0.34)
+    light.light_energy = 0.8
+    light.omni_range = 21.0
+    light.shadow_enabled = false
+    room.add_child(light)
 
 func _model_cache(node: Node3D, id: String) -> void:
     SurvivorModels.box(node,Vector3(1.5,0.75,1.05),Color(0.32,0.20,0.10),Vector3(0,0.43,0))
@@ -123,7 +162,7 @@ func is_walkable(pos: Vector3) -> bool:
         return false
     var id := cave_at(pos)
     var local: Vector3 = pos-CENTERS[id]
-    if absf(local.x) > WIDTH-0.7 or absf(local.z) > DEPTH-0.7:
+    if absf(local.x) > WIDTH-0.7 or local.z > DEPTH-0.7 or local.z < -35.7:
         return false
     for obstacle in [Vector2(0,-4),Vector2(-12,2),Vector2(12,3)]:
         if Vector2(local.x,local.z).distance_to(obstacle) < 2.1:
