@@ -241,6 +241,40 @@ static func building(parent: Node3D, kind: String) -> void:
                     stone(parent,0.45,4,Color(0.41,0.42,0.38),Vector3(side*2.7,0.1,z),Vector3(1,0.5,1))
             box(parent, Vector3(1.6, 0.25, 1.8), wood, Vector3(0, 0.12, 3.4))
             box(parent, Vector3(1.5, 0.2, 2.6), Color(0.62, 0.68, 0.46), Vector3(-1.4, 0.6, -0.8))
+        "floor_panel":
+            # Low foundation with beams below individual weathered plank strips.
+            for z in [-1.2,1.2]:
+                beam(parent,Vector3(-1.68,0.21,z),Vector3(1.68,0.21,z),0.15,wood)
+            for i in range(8):
+                var x := (float(i)-3.5)*0.40
+                box(parent,Vector3(0.38,0.16,3.2),plank.lightened(float(i%4)*0.022),Vector3(x,0.39,0))
+                beam(parent,Vector3(x,0.48,-1.4),Vector3(x,0.48,1.4),0.009,Color(0.38,0.23,0.12))
+            for x in [-1.51,1.51]:
+                beam(parent,Vector3(x,0.0,-1.55),Vector3(x,0.30,1.55),0.12,wood)
+        "wall_panel":
+            # Full panel on the local X axis. The rotated instance preserves the snap orientation.
+            for x in [-1.57,1.57]:
+                beam(parent,Vector3(x,0,0),Vector3(x,3.15,0),0.15,wood)
+            beam(parent,Vector3(-1.57,3.1,0),Vector3(1.57,3.1,0),0.16,wood)
+            beam(parent,Vector3(-1.57,0.20,0),Vector3(1.57,0.20,0),0.15,wood)
+            for i in range(8):
+                var x := (float(i)-3.5)*0.38
+                box(parent,Vector3(0.365,2.68,0.17),plank.lightened(float(i%3)*0.022),Vector3(x,1.64,0))
+            for y in [0.93,2.23]:
+                beam(parent,Vector3(-1.44,y,0.13),Vector3(1.44,y,0.13),0.085,Color(0.30,0.21,0.13))
+            beam(parent,Vector3(-1.31,0.25,0.17),Vector3(1.31,3.00,0.17),0.07,wood)
+        "roof_panel":
+            # Raised pitched thatch leaves a visible cavity below the roof.
+            for side in [-1,1]:
+                beam(parent,Vector3(0,3.65,-1.75),Vector3(side*1.75,2.55,-1.75),0.12,wood)
+                beam(parent,Vector3(0,3.65,1.75),Vector3(side*1.75,2.55,1.75),0.12,wood)
+                for i in range(10):
+                    var z := (float(i)-4.5)*0.36
+                    var high := Vector3(0,3.68,z)
+                    var low := Vector3(side*1.83,2.50,z)
+                    var strip := box(parent,Vector3(2.16,0.075,0.35),Color(0.53+float(i%3)*0.025,0.47+float(i%2)*0.02,0.26),high.lerp(low,0.52))
+                    strip.rotation.z = -side*0.57
+            beam(parent,Vector3(0,3.7,-1.85),Vector3(0,3.7,1.85),0.13,wood)
         "chest":
             # Wooden storage chest with brass hinges and edge reinforcements.
             for i in range(6):
