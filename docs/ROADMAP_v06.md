@@ -29,6 +29,15 @@
 - Sons e drops próprios; materiais/receitas conectados à sobrevivência.
 - Teste de save, toque, colisões e orçamentos de CPU/GPU.
 
+## v0.7.2 — Loop inicial de fauna e cozinha
+
+- [x] Coleta de caranguejos nas praias e caça de javalis exigindo lança de pedra equipada.
+- [x] Novos alimentos crus e assados na fogueira; recuperação de fome/saúde; mochila/baú.
+- [x] Reaparecimento em tempo de jogo e persistência de fauna coletada no save v3.
+- [x] Pipeline APK alterado para disparo exclusivamente manual após pedido do usuário.
+- [ ] IA avançada com procura real de alimentos, sons exclusivos, reação a ferimentos e animações corporais detalhadas.
+- [ ] QA visual e de desempenho no Android físico.
+
 ## v0.8 — Exploração com significado
 - Duas cavernas realmente navegáveis, com entrada/saída e interiores coerentes.
 - Novos destroços, suprimentos e enigmas ambientais curtos.
