@@ -558,6 +558,14 @@ func run() -> void:
     var keel_mesh: MeshInstance3D = keel_model.get_child(0) as MeshInstance3D
     var keel_height := keel_mesh.get_aabb().size.y
     game.cancel_work()
+    var from_pier := dock_entry.position + Vector3(dock_entry.position.x,0,dock_entry.position.z).normalized() * 2.0
+    from_pier.y = game.world.surface_height(from_pier)
+    check(game.world.is_on_dock(from_pier) and game.world.walkable(from_pier,from_pier), "Boat construction controls are reachable from the real dock")
+    game.player.position = from_pier
+    game.action_cooldown = 0.0
+    game.interact()
+    check(game.pending_work.get("mode","") == "boat_upgrade", "Explore on unfinished boat begins construction through real gameplay interaction")
+    game.cancel_work()
     var prebuild: Dictionary = game.state.inventory.duplicate(true)
     game.queue_work(built_boat,"build",1.65,"boat_upgrade",10.0)
     check(game.state.boat_stage() == 1 and game.state.inventory == prebuild, "Queued boat upgrade pays nothing before tool contact")
