@@ -59,5 +59,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: GPT-Survivor-MakeHuman-3-CC0-B-selected
-          path: /tmp/MakeHuman_B_Vestido_CC0_Original.zip
+          path: /tmp/GPT_Survivor_MakeHuman_3_opcoes_CC0_B_selecionado.zip
           retention-days: 21
