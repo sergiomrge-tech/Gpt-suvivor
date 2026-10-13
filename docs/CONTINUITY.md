@@ -1,3 +1,9 @@
+# Checkpoint — 13/10/2026 — v0.7.2 caça e alimentação
+
+Branch `feat/wildlife-food-v072` parte de `feat/modular-shelter-v071`. Nova mecânica: fauna coletável (`crab`) e caça de javalis (`boar`) somente com lança de pedra equipada no slot utility; animação original da lança, coleta no contato, cozinhar caranguejo e carne na fogueira, inventário ampliado em cinco ícones/itens, armazenamento, fome/saúde e respawn determinístico de 900s registrado no mapa `harvested` do save v3. Fauna passiva (aves, tartarugas e peixes visuais), inventário/equipamento, clima, construção modular, pesca e barco originais foram mantidos. Testes automatizados ampliados.
+
+**Preferência explícita:** usuário solicitou em 13/10/2026: "Avance e so faça apk quando eu pedir". Exportação Android AUTOMÁTICA DESLIGADA na branch, workflow `Build Android Beta APK` apenas manual. Não gerar APK, não oferecer exportação automática, não iniciar workflow manual a menos que o usuário peça. Continuar alterando, validando e publicando código-fonte no GitHub. Sem homologação visual/60 FPS em dispositivo.
+
 # Checkpoint — 13/10/2026 — v0.7.1 abrigo modular
 
 Branch `feat/modular-shelter-v071` parte de `feat/fauna-coast-v07`, que por sua vez preserva a base v0.6 de clima, corrida, ferramentas e pesca. Implementados módulos de porta e janela, geometria 3D procedural própria, dobradiça móvel, controle de passagem pela colisão, interação pelo botão Explorar, novos ícones, suporte modular compartilhado e prevenção de ocupação do mesmo soquete por painéis diferentes. O save mantém `SAVE_VERSION=3`, agora validando booleano `door_open` opcional para porta. Testes nativos expandidos verificam receitas, portas, passagem, save e duplicidade.
