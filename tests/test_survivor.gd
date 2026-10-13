@@ -121,7 +121,7 @@ func run() -> void:
     for entry in game.world.resources:
         if entry.kind=="tree": trees+=1
     check(trees>=10,"Harvestable broadleaf trees generated in forest groups")
-    check(game.world.discoverables.size()==3,"Unique objects available at crash site and caves")
+    check(game.world.discoverables.size()==5,"Unique clues available at crash site and caves")
     check(game.soundscape.streams.size()==13 and game.soundscape.voices.size()==7,"Original ambience and pooled positional effect voices loaded")
     check(game.soundscape.streams.sea.loop_mode==AudioStreamWAV.LOOP_FORWARD,"Sea ambience loops natively")
     game.soundscape.set_muted(true)
@@ -246,7 +246,7 @@ func run() -> void:
     check(game.hud.panel.get_rect().end.y <= game.hud.root.size.y and game.hud.panel.get_rect().end.x <= game.hud.root.size.x,"Inventory stays inside the viewport after wrapped-label layout")
     game.hud._item_callback("stone_axe").call()
     check(game.hud.item_detail.text.contains("Machado de pedra") and game.hud.item_detail.text.contains("árvores"),"Inventory item selection shows quantity and actual tool function")
-    check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 11,"Inventory grid opens with tool slots and blocks movement")
+    check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 13,"Inventory grid opens with tool slots and blocks movement")
     game.hud.show_inventory("equipment")
     check(game.hud.modal_mode == "inventory" and game.hud.inventory_tab == "equipment","Separate equip tab opens inside backpack")
     game.hud._equip_callback("stone_pickaxe").call()
@@ -290,12 +290,20 @@ func run() -> void:
     for entry in game.world.resources:
         game.world.harvest(entry)
     var total_wood: int = game.state.inventory.wood
+    var sail_found := false
+    for clue in game.world.discoverables:
+        if str(clue.id) == "sail_diagram":
+            var reward: Dictionary = game.world.discover(clue)
+            sail_found = not reward.is_empty() and game.state.discoveries.get("sail_diagram",false)
+    check(sail_found,"Sailing plan clue can be found near the eastern cave")
     check(total_wood >= 142 and game.state.inventory.fiber >= 48 and game.state.inventory.metal >= 8, "Island resources cover the complete escape recipe")
     var camp_pos := Vector3(0, game.terrain.height_at(0, 154), 154)
     game.player.position = Vector3(0, game.terrain.height_at(0, 159.5), 159.5)
     game.player.body_pivot.rotation.y = PI
     game.select_recipe("campfire")
     check(game.selected_recipe == "campfire" and game.preview != null, "Building preview created")
+    game.rotate_preview()
+    check(is_equal_approx(game.preview_rotation,PI*0.5) and game.preview.has_node("BuildFootprint"),"Rotatable preview displays building footprint")
     var error: String = game.world.placement_error("campfire", camp_pos, game.player.position)
     check(error == "", "Starting beach supports campfire placement: " + error)
     game.confirm_placement()
@@ -310,6 +318,10 @@ func run() -> void:
     check(game.state.owns("workbench"), "Workbench construction")
     var bench: Dictionary = game.world.near_structure(game.player.position, "workbench", 10)
     check(not bench.is_empty(), "Workbench close enough for crafting")
+    for crafting_round in range(10):
+        game.select_recipe("rope")
+        game.select_recipe("plank")
+    check(game.state.inventory.rope == 10 and game.state.inventory.plank == 10,"Ten rope and ten plank crafts succeed near the workbench")
     game.select_recipe("fishing_rod")
     check(game.state.owns("fishing_rod"), "Fishing rod fabricated at workbench")
     check(game.state.is_equipped("fishing_rod"), "Crafted rod is equipped in main hand so fishing is usable")
@@ -318,6 +330,12 @@ func run() -> void:
     game.select_recipe("house")
     game.confirm_placement()
     check(game.state.owns("house"), "House construction on cleared terrain")
+    var before_move: Dictionary = game.state.inventory.duplicate(true)
+    game.relocate_structure("house")
+    check(game.selected_recipe == "house" and game.relocation_kind == "house","Existing house enters move mode")
+    game.cancel_placement()
+    check(game.state.has_structure("house") and game.state.inventory == before_move,"Cancelled relocation preserves house and inventory")
+
     var shore := Vector3.ZERO
     for z in range(172, 224):
         if game.terrain.is_shore(4, z) and game.world.placement_error("dock", Vector3(4, game.terrain.height_at(4, z), z), Vector3(4, game.terrain.height_at(4, z), z - 5.5)) == "":
@@ -364,10 +382,22 @@ func run() -> void:
     check(game.state.owns("boat"), "Boat built next to dock after all prerequisites")
     var built_boat: Dictionary = game.world.near_structure(game.player.position,"boat",12)
     check(not built_boat.is_empty() and game.terrain.height_at(built_boat.position.x,built_boat.position.z) <= game.terrain.sea_level+0.15, "Constructed escape boat actually floats offshore")
-    check(game.state.inventory.wood == total_wood - 142, "Full progression has exact wood cost")
+    check(game.state.inventory.wood == total_wood - 142, "Processed plank stages preserve complete wood budget")
     game.state.player_position = game.player.position
     var full := SurvivalState.from_data(game.state.to_data())
-    check(full != null and full.buildings.size() == 5 and full.owns("fishing_rod"), "Complete camp and tool survive round-trip")
+    check(full != null and full.buildings.size() == 5 and full.owns("fishing_rod") and full.discoveries.get("sail_diagram",false), "Camp, tools and cave clue survive save round-trip")
+    var supplemental := SurvivalState.new()
+    supplemental.buildings.append({"kind":"chest","x":10.0,"z":20.0,"rotation":PI*0.5})
+    supplemental.buildings.append({"kind":"rain_collector","x":14.0,"z":20.0})
+    supplemental.add_item("wood",5)
+    check(supplemental.transfer_storage("wood",true,2) and supplemental.storage.wood == 2 and supplemental.inventory.wood == 3,"Storage deposit conserves resources")
+    check(supplemental.transfer_storage("wood",false,1) and supplemental.storage.wood == 1 and supplemental.inventory.wood == 4,"Storage withdrawal conserves resources")
+    supplemental.elapsed = 220.0
+    supplemental.advance(10.0)
+    check(supplemental.rain_water > 0.0,"Collector fills during scheduled rain")
+    var loaded_camp := SurvivalState.from_data(supplemental.to_data())
+    check(loaded_camp != null and loaded_camp.storage.wood == 1 and loaded_camp.rain_water > 0.0 and is_equal_approx(loaded_camp.buildings[0].rotation,PI*0.5),"Version 3 save stores chest, water and rotation")
+
     game.escape_island()
     check(game.state.escaped and not game.playing, "Embarking completes survival")
     game.hud.show_end(true, game.state.elapsed)
