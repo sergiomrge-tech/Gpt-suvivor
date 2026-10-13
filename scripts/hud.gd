@@ -493,33 +493,36 @@ func _icon(kind: String) -> Texture2D:
 
 func _inventory_grid() -> void:
     var columns := HBoxContainer.new()
-    columns.add_theme_constant_override("separation",20)
+    columns.add_theme_constant_override("separation",22)
     panel_content.add_child(columns)
     var bag_column := VBoxContainer.new()
     bag_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     columns.add_child(bag_column)
-    bag_column.add_child(_label("RECURSOS E FERRAMENTAS",19))
+    bag_column.add_child(_bag_heading("ITENS COLETADOS",21))
     var grid := GridContainer.new()
-    grid.columns = 4
-    grid.add_theme_constant_override("h_separation",8)
-    grid.add_theme_constant_override("v_separation",8)
+    grid.columns = 5
+    grid.add_theme_constant_override("h_separation",7)
+    grid.add_theme_constant_override("v_separation",7)
     bag_column.add_child(grid)
     for kind in ["wood","stone","fiber","metal","rope","plank","coconut","raw_fish","meal","raw_crab","raw_meat","grilled_crab","cooked_meat","cave_crystal","stone_knife","stone_axe","stone_pickaxe","reinforced_axe","reinforced_pickaxe","stone_spear","fishing_rod"]:
         var title: String = SurvivalState.ITEMS.get(kind,SurvivalState.RECIPES.get(kind,{}).get("title",kind))
         var amount: int = state.inventory.get(kind,0)
         var slot := _button("%s\n×%d" % [title,amount],_item_callback(kind))
-        slot.custom_minimum_size = Vector2(126,112)
+        slot.custom_minimum_size = Vector2(106,105)
+        slot.add_theme_stylebox_override("normal",_bag_style(BAG_SLOT,selected_item == kind))
+        slot.add_theme_stylebox_override("hover",_bag_style(Color(0.26,0.22,0.15),true))
+        slot.add_theme_stylebox_override("pressed",_bag_style(Color(0.29,0.24,0.16),true))
         slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         slot.add_theme_font_size_override("font_size",15)
         slot.text = ""
-        var caption := _label("%s\n×%d" % [title,amount],15)
+        var caption := _label("%s\n×%d" % [title,amount],13)
         caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        caption.add_theme_color_override("font_color",Color(0.95,0.93,0.8) if amount > 0 else Color(0.58,0.65,0.60))
+        caption.add_theme_color_override("font_color",BAG_TEXT if amount > 0 else BAG_MUTED)
         slot.add_child(caption)
         caption.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-        caption.offset_top = -46
-        caption.offset_bottom = -6
+        caption.offset_top = -43
+        caption.offset_bottom = -4
         var icon := TextureRect.new()
         icon.texture = _icon(kind)
         icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -527,21 +530,25 @@ func _inventory_grid() -> void:
         icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
         slot.add_child(icon)
         icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-        icon.offset_left = -26
-        icon.offset_right = 26
-        icon.offset_top = 7
-        icon.offset_bottom = 59
-        slot.add_theme_color_override("font_color",Color(0.95,0.93,0.8) if amount > 0 else Color(0.58,0.65,0.60))
+        icon.offset_left = -25
+        icon.offset_right = 25
+        icon.offset_top = 5
+        icon.offset_bottom = 55
+        slot.add_theme_color_override("font_color",BAG_TEXT if amount > 0 else BAG_MUTED)
         grid.add_child(slot)
         item_buttons[kind] = slot
-    item_detail = _label("Toque em um item para ver sua função.",18)
+    var detail_box := PanelContainer.new()
+    detail_box.add_theme_stylebox_override("panel",_bag_style(BAG_PANEL))
+    bag_column.add_child(detail_box)
+    item_detail = _label("Toque em um item para visualizar seus detalhes e comparar equipamentos.",16)
     item_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    bag_column.add_child(item_detail)
-    bag_column.add_child(_button("Comer / beber",func(): close_modal(); consume_requested.emit()))
+    item_detail.custom_minimum_size.y = 62
+    detail_box.add_child(item_detail)
+    bag_column.add_child(_bag_button("CONSUMIR ALIMENTO",func(): close_modal(); consume_requested.emit()))
     var character_column := VBoxContainer.new()
     character_column.custom_minimum_size.x = 280
     columns.add_child(character_column)
-    character_column.add_child(_label("SOBREVIVENTE",19))
+    character_column.add_child(_bag_heading("SOBREVIVENTE",21))
     var viewport_container := SubViewportContainer.new()
     viewport_container.custom_minimum_size = Vector2(280,260)
     viewport_container.stretch = true
@@ -566,7 +573,7 @@ func _inventory_grid() -> void:
     var environment := WorldEnvironment.new()
     environment.environment = Environment.new()
     environment.environment.background_mode = Environment.BG_COLOR
-    environment.environment.background_color = Color(0.08,0.15,0.16)
+    environment.environment.background_color = BAG_BG
     environment.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
     environment.environment.ambient_light_color = Color(0.85,0.9,1)
     environment.environment.ambient_light_energy = 0.85
@@ -580,9 +587,10 @@ func _inventory_grid() -> void:
         var item: String = str(state.equipment.get(slot,""))
         var caption: String = "Mão principal" if slot == "main_hand" else "Ferramenta"
         equipment.text += "%s: %s\n" % [caption, "Vazio" if item == "" else SurvivalState.RECIPES[item].title]
+    equipment.add_theme_color_override("font_color",BAG_TEXT)
     character_column.add_child(equipment)
-    character_column.add_child(_button("Gerenciar equipamentos",func(): show_inventory("equipment")))
-    character_column.add_child(_button("Diário da ilha",func(): show_journal()))
+    character_column.add_child(_bag_button("GERENCIAR EQUIPAMENTOS",func(): show_inventory("equipment")))
+    character_column.add_child(_bag_button("DIÁRIO DE EXPLORAÇÃO",func(): show_journal()))
 
 func _camp_panel() -> void:
     panel_content.add_child(_label("CONSTRUÇÕES DO ACAMPAMENTO",23))
@@ -692,13 +700,55 @@ func _equip_callback(kind: String) -> Callable:
 func _unequip_callback(slot: String) -> Callable:
     return func(): unequip_requested.emit(slot)
 
+func _tool_yield(kind: String) -> int:
+    match kind:
+        "stone_axe": return 8
+        "reinforced_axe": return 12
+        "stone_pickaxe": return 6
+        "reinforced_pickaxe": return 9
+        "stone_knife": return 8
+    return 0
+
+func _tool_family(kind: String) -> String:
+    if kind in ["stone_axe","reinforced_axe"]:
+        return "madeira"
+    if kind in ["stone_pickaxe","reinforced_pickaxe"]:
+        return "pedra"
+    if kind == "stone_knife":
+        return "fibra"
+    return "uso"
+
+func _comparison_text(kind: String) -> String:
+    if kind not in SurvivalState.TOOLS:
+        return ""
+    var slot := str(SurvivalState.TOOL_SLOTS[kind])
+    var equipped := str(state.equipment.get(slot,""))
+    var label := "MÃO PRINCIPAL" if slot == "main_hand" else "FERRAMENTA"
+    if equipped == "":
+        return "\n%s: vazio → %s" % [label,SurvivalState.RECIPES[kind].title]
+    if equipped == kind:
+        return "\n%s: equipado agora" % label
+    var desc := "\n%s: %s → %s" % [label,SurvivalState.RECIPES[equipped].title,SurvivalState.RECIPES[kind].title]
+    if _tool_family(equipped) == _tool_family(kind) and _tool_yield(equipped) > 0 and _tool_yield(kind) > 0:
+        var before := _tool_yield(equipped)
+        var after := _tool_yield(kind)
+        var difference := after-before
+        desc += "\nRendimento de %s: %d → %d (%+d por coleta)" % [_tool_family(kind),before,after,difference]
+    else:
+        desc += "\nFunções diferentes; equipar substitui o item do mesmo espaço."
+    return desc
+
 func _item_callback(kind: String) -> Callable:
     return func():
         if not is_instance_valid(item_detail): return
         var title: String = SurvivalState.ITEMS.get(kind,SurvivalState.RECIPES.get(kind,{}).get("title",kind))
         var descriptions := {"wood":"Troncos soltos podem ser recolhidos à mão. Para cortar árvores, fabrique um machado.","stone":"Pedras soltas podem ser recolhidas à mão. Para minerar rochas, fabrique uma picareta.","fiber":"Recolha à mão nas plantas. A faca aumenta a quantidade coletada.","metal":"Recupere ferragens nos destroços e nas cavernas para construir o barco.","coconut":"Recupera água e fome. Use Comer / beber.","raw_fish":"Asse na fogueira antes de comer.","meal":"Peixe assado: recupera fome e saúde.","raw_crab":"Recolha caranguejos na praia e prepare na fogueira.","raw_meat":"Cace javalis com a lança de pedra equipada e asse na fogueira.","grilled_crab":"Caranguejo assado: recupera 26 pontos de fome.","cooked_meat":"Carne assada: recupera fome e saúde.","rope":"Material intermediário feito com fibras. Use nos móveis e no barco.","plank":"Peça preparada na bancada. Necessária para o barco.","cave_crystal":"Cristal raro obtido após ativar dois selos de uma caverna. Pesquise a estação de aprimoramento."}
         var detail: String = descriptions.get(kind,SurvivalState.RECIPES.get(kind,{}).get("description",""))
-        item_detail.text = "%s • %d no inventário\n%s" % [title,state.inventory.get(kind,0),detail]
+        selected_item = kind
+        item_detail.text = "%s • %d na mochila\n%s%s" % [title,state.inventory.get(kind,0),detail,_comparison_text(kind)]
+        for id in item_buttons:
+            var item_button: Button = item_buttons[id]
+            item_button.add_theme_stylebox_override("normal",_bag_style(BAG_SLOT,id == kind))
 
 func _recipe_grid(title: String,kinds: Array) -> void:
     panel_content.add_child(_label(title,22))
