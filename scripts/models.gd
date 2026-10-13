@@ -589,32 +589,54 @@ static func merge_static(parent: Node3D, cache_key: String = "") -> void:
     parent.add_child(result)
 
 static func canopy_tree(parent: Node3D,variant: int) -> void:
-    var trunk := Color(0.34,0.24,0.14)
-    var height := 5.3+(variant%3)*0.65
-    beam(parent,Vector3.ZERO,Vector3(0.2,height,0.1),0.46,trunk)
-    for i in range(5):
-        var a := i*TAU/5.0+variant*0.7
-        var direction := Vector3(cos(a),0,sin(a))
-        beam(parent,direction*2.1+Vector3(0,0.06,0),Vector3(0,0.65,0),0.13,trunk)
-        var branch := direction*1.8+Vector3(0,height-0.3+(i%2)*0.6,0)
-        beam(parent,Vector3(0,height*0.55,0),branch,0.15,trunk)
-        stone(parent,1.7,variant+i,Color(0.16+(i%2)*0.025,0.35+(i%3)*0.025,0.18),branch+Vector3(0,0.7,0),Vector3(1.25,0.60,1.15))
-    stone(parent,2.0,variant+8,Color(0.17,0.37,0.19),Vector3(0,height+1.0,0),Vector3(1.1,0.70,1.1))
-    # Layered edge leaves break up the spherical canopy silhouette.
-    var foliage := PackedVector3Array()
-    for layer in range(3):
-        for leaflet in range(11):
-            var angle := float(leaflet)*TAU/11.0+float(layer)*0.73+float(variant)*0.1
-            var radial := Vector3(cos(angle),0,sin(angle))
-            var side := Vector3(-radial.z,0,radial.x)
-            var center := radial*(1.6+float(layer)*0.36)+Vector3(0,height+1.03-float(layer)*0.58,0)
-            var tip := center+radial*(0.85+float((leaflet+variant)%3)*0.12)+Vector3.UP*0.11
-            var half_width := 0.30+float(leaflet%3)*0.08
-            foliage.append_array(PackedVector3Array([
-                center-side*half_width,tip,center+side*half_width,
-                center+side*half_width,tip+Vector3.UP*0.04,center-side*half_width
-            ]))
-    triangles(parent,foliage,Color(0.16,0.35+float(variant%3)*0.025,0.16))
+    # True branching broadleaf silhouette, replacing the old stacked
+    # spherical green rock crowns. Every leaf is real 3D geometry, colored in
+    # three green palettes and merged into a cached mesh for mobile drawing.
+    var trunk := Color(0.33,0.245,0.16)
+    var height := 5.3 + float(variant % 3) * 0.65
+    var lean := Vector3(0.19,0,0.13)
+    beam(parent,Vector3.ZERO,Vector3(0,height*0.49,0),0.43,trunk)
+    beam(parent,Vector3(0,height*0.49,0),lean+Vector3.UP*height*0.83,0.34,trunk.lightened(0.026))
+    beam(parent,lean+Vector3.UP*height*0.83,lean*1.32+Vector3.UP*height,0.22,trunk)
+    for root in range(5):
+        var angle := float(root)*TAU/5.0
+        var outward := Vector3(cos(angle),0,sin(angle))
+        beam(parent,outward*0.55+Vector3.UP*0.02,Vector3(0,height*0.22,0),0.12,trunk.darkened(0.09))
+    var leaves_dark := PackedVector3Array()
+    var leaves_mid := PackedVector3Array()
+    var leaves_sun := PackedVector3Array()
+    for branch_id in range(10):
+        var a := float(branch_id)*TAU/10.0+float(variant)*0.17
+        var radial := Vector3(cos(a),0,sin(a))
+        var side := Vector3(-radial.z,0,radial.x)
+        var start_point := Vector3(0,height*(0.54+float(branch_id%3)*0.06),0)
+        var end_point := radial*(2.05+float((branch_id+variant)%4)*0.31) + Vector3.UP*(height+float(branch_id%3)*0.35-0.38)
+        beam(parent,start_point,end_point,0.12 if branch_id%2==0 else 0.105,trunk)
+        for leaflet in range(18):
+            var t := 0.33+float(leaflet%9)*0.075
+            var center := start_point.lerp(end_point,t)
+            center += side*((float((leaflet*7+branch_id)%7)-3.0)*0.19)
+            center.y += sin(float(leaflet)*2.4+float(branch_id))*0.29
+            var leaf_a := float(leaflet)*2.39996+float(branch_id)*0.13
+            var heading := radial*0.68 + side*sin(leaf_a)*0.74
+            heading = heading.normalized()
+            var lateral := Vector3(-heading.z,0,heading.x)
+            var length := 0.23 + float((leaflet+branch_id)%5)*0.055
+            var width := length * (0.29+float(leaflet%3)*0.05)
+            var tip := center + heading*length + Vector3.UP*(0.08+float(leaflet%2)*0.07)
+            var mid := center.lerp(tip,0.56)+Vector3.UP*0.035
+            var leaflet_triangles := PackedVector3Array([
+                center, mid+lateral*width, tip,
+                center, tip, mid-lateral*width
+            ])
+            match (leaflet+branch_id+variant)%3:
+                0: leaves_dark.append_array(leaflet_triangles)
+                1: leaves_mid.append_array(leaflet_triangles)
+                _: leaves_sun.append_array(leaflet_triangles)
+    triangles(parent,leaves_dark,Color(0.135,0.315,0.16))
+    triangles(parent,leaves_mid,Color(0.17,0.385,0.18))
+    triangles(parent,leaves_sun,Color(0.23,0.43,0.19))
+
 
 static func fern(parent: Node3D,variant: int) -> void:
     for frond in range(6):
