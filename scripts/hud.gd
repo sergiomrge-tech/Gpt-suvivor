@@ -342,7 +342,7 @@ func close_modal() -> void:
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
-    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.4.2")
+    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.7.1")
     if paused:
         panel_content.add_child(_button("Voltar ao jogo", func(): close_modal(); resume_requested.emit()))
         panel_content.add_child(_button("Salvar progresso", func(): save_requested.emit()))
@@ -393,7 +393,7 @@ func show_inventory(tab: String = "items") -> void:
         _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe"])
         _recipe_grid("Materiais • corda à mão, tábuas na bancada",["rope","plank"])
         _recipe_grid("Acampamento",["campfire","workbench","fishing_rod","house","chest","bed","rain_collector","dock","boat","meal"])
-        _recipe_grid("Casa modular • peças repetíveis na grade de 3,2 m",SurvivalState.MODULES)
+        _recipe_grid("Casa modular • pisos, paredes, portas, janelas e telhados na grade de 3,2 m",SurvivalState.MODULES)
     elif tab == "camp":
         _camp_panel()
     else:
@@ -709,7 +709,7 @@ func _process(delta: float) -> void:
         fishing_button.text = "Pescar"
         action_button.text = "Explorar"
         if not target.is_empty():
-            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
+            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
     if not target.is_empty() and placement_kind == "" and activity_name == "":
         var error := state.harvest_error(str(target.kind))
         if error != "": action_button.text = "Precisa de machado" if target.kind in ["tree","palm"] else "Precisa de picareta"
