@@ -425,7 +425,7 @@ func _enter_cave(entry: Dictionary) -> void:
     if id == "":
         return
     _teleport_to(SurvivorCaves.spawn_position(id))
-    hud.toast("Você entrou na caverna. Procure suprimentos e use Explorar na saída para voltar.",5)
+    hud.toast("Caverna: espere a luz dos vapores apagar ou contorne o gás. Explore a saída para voltar.",5)
 
 func _leave_cave(entry: Dictionary) -> void:
     var id := str(entry.get("id",""))
