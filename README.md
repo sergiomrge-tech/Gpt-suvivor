@@ -2,6 +2,7 @@
 
 ## v1.7.0 — Herói 3D: tornozelos articulados, botas orgânicas, mãos e materiais (fonte Godot; SEM APK)
 
+- **Auditoria extra de câmera lateral**: a renderização ampliada revelou sola e volume dos calçados exagerados e mangas e punhos cilíndricos. A malha dos pés foi encurtada/afinada sem alterar o pivô do tornozelo, e as mangas e palmas foram suavizadas.
 - **Proporções revistas após capturas reais**: cabeça visualmente menor, ombros e braços mais esguios, pernas prolongadas sem deslocar a sola do chão e olhos/nariz menos exagerados. O próprio render evidenciou aparência de boneco na primeira revisão, então essa correção integra a mesma v1.7.
 - **Pés e caminhada:** removidos os antigos sapatos em caixas retangulares. Cada canela possui agora um pivô de tornozelo independente; botas criadas em 3D com peito do pé arredondado, camada de solado, cano e cadarços, e correção heel-to-toe em marcha. Os pivôs são exclusivamente visuais, sem mudar a colisão.
 - **Silhueta e roupas:** gola e abertura da camisa, pregas assimétricas, costuras finas e alças do equipamento. Palma das mãos agora tem um volume contínuo, polegar e dedos, em vez da antiga esfera simples. Revisão discreta das maçãs do rosto, sobrancelhas, borda de cabelo e nariz.

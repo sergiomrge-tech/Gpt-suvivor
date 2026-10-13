@@ -163,6 +163,12 @@ func run() -> void:
                 has_leather = true
                 break
         check(boot_arrays[Mesh.ARRAY_VERTEX].size() > 300 and has_leather, "Sculpted boot geometry merges original toe, sole and leather material into one mobile-friendly draw mesh")
+        var boot_min := Vector3(INF,INF,INF)
+        var boot_max := Vector3(-INF,-INF,-INF)
+        for boot_point in boot_arrays[Mesh.ARRAY_VERTEX]:
+            boot_min = boot_min.min(boot_point)
+            boot_max = boot_max.max(boot_point)
+        check(boot_max.z-boot_min.z < 0.72 and boot_max.x-boot_min.x < 0.37, "Actual boot geometry fits slimmer human foot proportions rather than oversize cartoon shoes")
         check(left_boot_mesh.mesh == right_boot_mesh.mesh, "Both identical boots reuse the cached mesh rather than rebuilding topology")
     var saved_clock: float = game.player.animation_clock
     var saved_walking: bool = game.player.walking

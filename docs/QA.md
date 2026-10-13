@@ -1,6 +1,7 @@
 # QA — GPT Survivor v1.7.0 — 13/10/2026
 
 - **Fonte original:** Godot 4.6.1, projeto GL Compatibility, saves v3 preservados; nenhuma alteração à ilha, loot, interfaces, navio ou lógica de interação.
+- **Inspeção real extra:** o primeiro close-up revelou sapatos desproporcionais, portanto a forma final foi reduzida e agora há teste dos limites espaciais de largura/comprimento da malha.
 - **Proporção:** reduzir cabeça e ombros após revisão de screenshots, aumentar a altura dos membros inferiores mantendo as solas junto ao nível original do solo; teste nativo agora verifica estes invariantes.
 - **Regressão focada:** torso e cabeça mantêm malhas unidas; novas botas de ponta arredondada têm um único mesh por pé e compartilham cache; superfície distingue pele/tecido/couro; tornozelos herdam a hierarquia dos joelhos e giram independentemente; todos os equipamentos continuam filhos de `right_hand`.
 - **Visual:** `visual_hero_v17.yml` testa screenshots reais do jogo nos ângulos frontal/lateral/posterior, ciclo de passo, corte com machado, pesca e zoom mobile e três vistas aproximadas por câmera real Godot. Fixture do código real, não resultado de uma partida humana e não arte conceitual.
