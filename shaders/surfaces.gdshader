@@ -4,6 +4,7 @@ uniform sampler2D detail_noise : filter_linear_mipmap, repeat_enable;
 uniform float rain_amount = 0.0;
 uniform float wind_strength = 0.45;
 uniform vec3 survivor_position = vec3(9999.0);
+uniform vec3 camera_world_position = vec3(9999.0);
 varying vec3 world_point;
 varying vec3 local_point;
 void vertex() {
@@ -57,7 +58,17 @@ void fragment() {
     if (family > 1.5 && family < 2.5 && local_point.y > 3.0) {
         float cover = smoothstep(1.8,4.5,length(world_point.xz-survivor_position.xz));
         float dither = fract(52.9829*fract(dot(floor(FRAGCOORD.xy),vec2(0.06711,0.00584))));
-        ALPHA = step(dither,0.12+cover*0.88);
+        // Fade only leaves lying in the actual camera-to-survivor corridor,
+        // leaving neighboring trees solid. Prevents giant palm fronds from
+        // covering the playable character in close-up on a mobile screen.
+        vec3 sightline = survivor_position - camera_world_position;
+        vec3 ray_to_leaf = world_point - camera_world_position;
+        float length_sq = max(dot(sightline,sightline),0.001);
+        float progress = clamp(dot(ray_to_leaf,sightline)/length_sq,0.0,1.0);
+        float gap = length(ray_to_leaf-sightline*progress);
+        float corridor = 1.0-smoothstep(0.95,2.75,gap);
+        float occlusion = corridor*step(0.04,progress)*(1.0-step(0.97,progress));
+        ALPHA = step(dither,(0.12+cover*0.88)*(1.0-0.86*occlusion));
     }
     float rain_wet = rain_amount * (family < 4.5 ? 0.18 : 0.08);
     ALBEDO = base * grain * (1.0 - rain_wet);
