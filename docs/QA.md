@@ -1,3 +1,10 @@
+# QA — GPT Survivor v1.3.0 — 13/10/2026
+
+- Branch `feat/cave-vents-voyage-hud-v13`, base v1.2 preservada. Testes de regressão nativos Godot 4.6.1: **445/445 aprovados** antes do último ajuste do workflow. Cobrem nova alternância de risco/silêncio do gás, luzes locais, distância de recife, HUD de integridade do casco e conservação de todos os fluxos anteriores.
+- GitHub Actions `Native Godot screenshots - deep caves and sea voyage` aprovou quatro capturas reais do framebuffer: duas cavernas e duas cenas da embarcação. Isso comprova renderização da cena no Linux/Xvfb, não igualdade artística à referência nem taxa de quadros no celular.
+- O workflow `Validate Godot prototype` estava aprovando testes mesmo com `rg` ausente na etapa de busca por erros de importação. Corrigido para usar `grep -E` disponível e interromper a importação quando ocorrer `SCRIPT ERROR` ou `ERROR:`. Revalidar no commit final antes de considerar a barreira de parser rigorosa.
+- Ainda pendentes: testes físicos Android, gesto multitoque/rotação de tela, audição de loops ambientais e medição de FPS/energia. Nenhum APK solicitado ou gerado nesta revisão. Save v3 preservado e pipeline Android permanece estritamente manual.
+
 # QA — GPT Survivor v0.6.0 — 13/10/2026
 
 Validação nativa Godot 4.6.1 Linux: **182/182 testes de gameplay aprovados** no commit `b0abd7cb`, seguida de outras validações de integração. O workflow de cada commit também audita referências `res://` e 13 arquivos WAV mono PCM. Os testes desta versão acrescentam clima seco/chuva/temporal, vento, leve/completo, shader de umidade, botão sprint, postura de corrida, receitas repetíveis de piso/parede/telhado, encaixes de parede/telhado, colisão, save com módulos duplicados e regressões de pesca/acampamento/barco.
