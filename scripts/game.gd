@@ -409,9 +409,9 @@ func _begin_placement(kind: String) -> void:
     # Area indicator marks the required footprint, not just the model geometry.
     var footprint := MeshInstance3D.new()
     footprint.name = "BuildFootprint"
-    var size := 9.0 if kind == "house" else 4.8
+    var size := 9.0 if kind == "house" else (3.2 if kind in SurvivalState.MODULES else 4.8)
     var pad := BoxMesh.new()
-    pad.size = Vector3(size,0.035,size)
+    pad.size = Vector3(size,0.035,0.38 if kind == "wall_panel" else size)
     footprint.mesh = pad
     footprint.position.y = 0.09
     preview.add_child(footprint)
@@ -430,8 +430,8 @@ func rotate_preview() -> void:
 func relocate_structure(kind: String) -> void:
     if not playing or paused() or not state.has_structure(kind):
         return
-    if kind in ["boat","dock"]:
-        hud.toast("Cais e barco ficam fixos por segurança da navegação.")
+    if kind in ["boat","dock"] or kind in SurvivalState.MODULES:
+        hud.toast("Peças modulares e estruturas costeiras ficam encaixadas e não podem ser movidas.")
         return
     cancel_work()
     _begin_placement(kind)
@@ -458,6 +458,11 @@ func placement_point() -> Vector3:
         if not dock.is_empty():
             point = world.boat_location(dock.position)
             return point
+    if selected_recipe in SurvivalState.MODULES:
+        point.x = roundf(point.x / 3.2) * 3.2
+        point.z = roundf(point.z / 3.2) * 3.2
+        if selected_recipe == "wall_panel":
+            point += Vector3(sin(preview_rotation),0,cos(preview_rotation)) * 1.6
     point.y = terrain.height_at(point.x, point.z)
     return point
 
