@@ -1,3 +1,9 @@
+# Checkpoint — 13/10/2026 — v0.5.0
+
+Branch `feat/survival-camp-exploration-v05`, originada de `prototype-v0.4.2-equipment`. Requisitos escolhidos: (3) cordas/tábuas e manufatura por etapas; (4) rotação, indicador de área, mover acampamento sem custo; (5) baú, cama e coletor com chuva periódica; (6) pistas nos destroços/caverna e esquema de vela necessário ao barco. A lista recuperada terminava em 6: o item 7 não foi definido e não deve ser inventado.
+
+Inventário e save v3 aceitam saves v1 e v2, com dados de equipamento persistidos, baú, água armazenada e rotação. Vida/fome/sede/recursos antigos permanecem. Build Android assinado v0.5 ainda precisa da mesma chave privada; apenas Godot headless/CI foi validado. Manter prioridade mobile-first e não chamar arte de preview de captura real do jogo.
+
 # Checkpoint — 13/10/2026 — v0.4.1
 
 ## Autorização de publicação
