@@ -750,8 +750,21 @@ func _item_callback(kind: String) -> Callable:
             var item_button: Button = item_buttons[id]
             item_button.add_theme_stylebox_override("normal",_bag_style(BAG_SLOT,id == kind))
 
+func _recipe_unlocked(kind: String) -> bool:
+    if kind == "tool_rack" and not bool(state.discoveries.get("east_vault",false)):
+        return false
+    if kind == "boat" and not bool(state.discoveries.get("sail_diagram",false)):
+        return false
+    if kind == "reinforced_roof" and not state.has_structure("reinforced_wall"):
+        return false
+    var recipe: Dictionary = SurvivalState.RECIPES[kind]
+    for requirement in recipe.requires:
+        if not state.owns(requirement):
+            return false
+    return true
+
 func _recipe_grid(title: String,kinds: Array) -> void:
-    panel_content.add_child(_label(title,22))
+    panel_content.add_child(_bag_heading(title,21))
     var grid := GridContainer.new()
     grid.columns = 3
     grid.add_theme_constant_override("h_separation",10)
@@ -759,37 +772,73 @@ func _recipe_grid(title: String,kinds: Array) -> void:
     panel_content.add_child(grid)
     for kind in kinds:
         var recipe: Dictionary = SurvivalState.RECIPES[kind]
+        var unlocked := _recipe_unlocked(kind)
+        var error := state.recipe_error(kind)
+        var owned := state.owns(kind) and kind not in SurvivalState.MODULES and kind not in SurvivalState.FOOD_RECIPES and kind not in SurvivalState.MATERIAL_RECIPES
+        var can_craft := error == ""
         var card := PanelContainer.new()
         card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        card.add_theme_stylebox_override("panel",_style(Color(0.10,0.21,0.21)))
+        card.add_theme_stylebox_override("panel",_bag_style(BAG_PANEL if unlocked else Color(0.105,0.103,0.094,0.98)))
         grid.add_child(card)
         var body := VBoxContainer.new()
-        body.add_theme_constant_override("separation",8)
+        body.add_theme_constant_override("separation",5)
         card.add_child(body)
-        var heading := _label(recipe.title,21)
-        body.add_child(heading)
+        var header := HBoxContainer.new()
+        header.add_theme_constant_override("separation",8)
+        body.add_child(header)
+        var heading := _bag_heading(str(recipe.title),18)
+        heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        header.add_child(heading)
+        var state_label := _label("PRONTO" if owned else ("DESBLOQUEADA" if unlocked else "BLOQUEADA"),12)
+        state_label.add_theme_color_override("font_color",BAG_GREEN if owned or unlocked else BAG_MUTED)
+        header.add_child(state_label)
         var icon := TextureRect.new()
         icon.texture = _icon(kind)
-        icon.custom_minimum_size = Vector2(0,52)
+        icon.custom_minimum_size = Vector2(0,56)
         icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        icon.modulate = Color.WHITE if unlocked else Color(0.46,0.46,0.43,1)
         body.add_child(icon)
-        var costs := PackedStringArray()
-        for item in recipe.cost:
-            costs.append("%s: %d / %d" % [SurvivalState.ITEMS.get(item,item),state.inventory.get(item,0),recipe.cost[item]])
-        body.add_child(_label("\n".join(costs),18))
-        var detail := _label(recipe.description,17)
-        detail.custom_minimum_size.x = 230
+        var costs := VBoxContainer.new()
+        costs.add_theme_constant_override("separation",2)
+        body.add_child(costs)
+        var satisfied := 0
+        var total := 0
+        for material in recipe.cost:
+            var have := int(state.inventory.get(material,0))
+            var needed := int(recipe.cost[material])
+            var cost_label := _label("%s  %d / %d" % [str(SurvivalState.ITEMS.get(material,material)),have,needed],14)
+            cost_label.add_theme_color_override("font_color",BAG_GREEN if have >= needed else BAG_RED)
+            costs.add_child(cost_label)
+            total += 1
+            if have >= needed:
+                satisfied += 1
+        var progress := ProgressBar.new()
+        progress.custom_minimum_size.y = 7
+        progress.max_value = maxi(1,total)
+        progress.value = satisfied
+        progress.show_percentage = false
+        progress.add_theme_stylebox_override("background",_bag_style(Color(0.12,0.11,0.09)))
+        var fill := StyleBoxFlat.new()
+        fill.bg_color = BAG_GREEN if satisfied == total else BAG_GOLD
+        fill.set_corner_radius_all(3)
+        progress.add_theme_stylebox_override("fill",fill)
+        body.add_child(progress)
+        var detail := _label(str(recipe.description),14)
         detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        detail.custom_minimum_size.x = 215
+        detail.add_theme_color_override("font_color",BAG_MUTED)
         body.add_child(detail)
-        var error := state.recipe_error(kind)
-        var button := _button("Pronto" if state.owns(kind) and kind not in SurvivalState.MODULES else ("Fabricar" if kind in SurvivalState.TOOLS or kind in SurvivalState.MATERIAL_RECIPES or kind in SurvivalState.FOOD_RECIPES else "Construir"),_recipe_callback(kind))
-        button.disabled = error != ""
+        var action := "FABRICAR" if kind in SurvivalState.TOOLS or kind in SurvivalState.MATERIAL_RECIPES or kind in SurvivalState.FOOD_RECIPES else "CONSTRUIR"
+        var button := _bag_button("CONCLUÍDO" if owned else action,_recipe_callback(kind),can_craft)
+        button.disabled = not can_craft
         body.add_child(button)
         build_buttons[kind] = button
-        var status := _label(error,15)
-        status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        body.add_child(status)
+        if error != "" and not owned:
+            var status := _label(error,13)
+            status.add_theme_color_override("font_color",BAG_MUTED if not unlocked else BAG_RED)
+            status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+            body.add_child(status)
 
 func update_sprint(value: bool) -> void:
     if is_instance_valid(run_button):
