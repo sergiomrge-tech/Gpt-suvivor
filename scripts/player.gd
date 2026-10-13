@@ -96,10 +96,14 @@ func _base_pose() -> void:
     right_arm.rotation = Vector3(swing*lerpf(0.65,0.78,locomotion_blend)-locomotion_blend*0.22,0,-0.04)
     left_elbow.rotation.x = -0.15
     right_elbow.rotation.x = -0.15
-    torso.rotation = Vector3((0.03 + locomotion_blend * 0.21) if walking else 0, sin(animation_clock) * 0.025 if walking else 0, -sin(animation_clock)*0.022 if walking else 0)
-    head_pivot.rotation = Vector3.ZERO
-    body_pivot.rotation.x = 0
-    body_pivot.position.y = absf(sin(animation_clock))*lerpf(0.065,0.10,locomotion_blend) if walking else sin(animation_clock)*0.018
+    # Counter-rotation keeps the gaze stable while hips and shoulders move.
+    var breathing := sin(animation_clock * 0.58) * 0.012
+    var shoulder_turn := sin(animation_clock) * (0.055 if walking else 0.006)
+    var lateral_sway := sin(animation_clock) * (0.035 if walking else 0.005)
+    torso.rotation = Vector3(((0.035 + locomotion_blend * 0.16) if walking else breathing), shoulder_turn, -lateral_sway)
+    head_pivot.rotation = Vector3(-torso.rotation.x * 0.32, -shoulder_turn * 0.56, lateral_sway * 0.44)
+    body_pivot.rotation.x = 0.028 * locomotion_blend
+    body_pivot.position.y = absf(sin(animation_clock)) * lerpf(0.042, 0.073, locomotion_blend) if walking else breathing * 0.30
 
 func perform_action(kind: String = "gather",duration: float = 0.75,point: Vector3 = Vector3.ZERO) -> void:
     cancel_action()
