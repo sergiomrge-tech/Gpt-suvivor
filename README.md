@@ -13,16 +13,18 @@ A base principal do projeto fica neste repositório. O mundo é criado em runtim
 | --- | --- |
 | WASD / setas / joystick | Mover o sobrevivente |
 | E / COLETAR | Coletar recurso próximo |
-| F / PESCAR | Pescar na praia (requer lança) |
+| F / PESCAR | Pescar perto do mar com vara de pescar equipada |
 | H / COMER | Comer frutas ou peixe |
 | T / BEBER | Beber água coletada |
-| B / CRIAR | Abrir fabricação |
+| B / CRIAR | Abrir a aba FABRICAR na mochila |
+| I / MOCHILA | Itens, slots de equipamentos e fabricação |
+| ZOOM + / ZOOM - | Aproximar ou afastar a câmera |
 | P / SALVAR | Salvar progresso local |
 | Esc / MENU | Menu principal (salva automaticamente) |
 
 ## Loop de sobrevivência
 
-Explore uma ilha de aproximadamente 400m de diâmetro. Recolha árvores, coqueiros, rochas, madeira à deriva, frutas e água doce. Fabrique uma **lança** para pescar e construa **fogueira**, **abrigo**, **coletor de água**, **bancada** e finalmente uma **jangada**, que encerra a sessão com vitória.
+Explore uma ilha de aproximadamente 400m de diâmetro. Recolha primeiro madeira à deriva, fibras e pedras soltas na praia. Na mochila, fabrique um **machado de pedra** (para árvores/coqueiros), uma **picareta de pedra** (para rochas) e a **vara de pescar**; em **EQUIPAR**, selecione a ferramenta a usar. Equipe a vara na mão principal e use PESCAR perto do mar e construa **fogueira**, **abrigo**, **coletor de água**, **bancada** e finalmente uma **jangada**, que encerra a sessão com vitória.
 
 Fome e sede diminuem com o tempo e, se zerarem, a saúde também se perde. O coletor gera água automaticamente a cada 90 segundos. Há ciclo de luz diurno e salvamento versionado no armazenamento do dispositivo (`user://survivor_save_v1.json`).
 
@@ -39,4 +41,9 @@ Fome e sede diminuem com o tempo e, se zerarem, a saúde também se perde. O col
 
 ## Estado de desenvolvimento
 
-**v0.2 — vertical slice, em validação.** O código da primeira partida está integrado, porém ainda faltam testes gráficos e de toque num celular real, assets autorais polidos, animações completas e compilação de APK/AAB. Nenhuma renderização ilustrativa deve ser confundida com uma captura real do jogo.
+**v0.3 — equipamentos e pesca, em validação.** O código da primeira partida está integrado, porém ainda faltam testes gráficos e de toque num celular real, assets autorais polidos, animações completas e compilação de APK/AAB. Nenhuma renderização ilustrativa deve ser confundida com uma captura real do jogo.
+
+
+## Compatibilidade e testes
+
+O save local continua em `user://survivor_save_v1.json`, mas seu conteúdo é atualizado para a versão 2. Saves da v0.2 migram automaticamente; a ordem original dos recursos do mundo foi preservada. Os testes `tests/test_survival.gd` e `tests/test_equipment.gd` são executados no GitHub Actions. O APK depende de exportação Android e não deve ser anunciado como compilado antes de existir um artefato válido.
