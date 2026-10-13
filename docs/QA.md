@@ -1,3 +1,9 @@
+# QA — GPT Survivor v0.6.0 — 13/10/2026
+
+Validação nativa Godot 4.6.1 Linux: **182/182 testes de gameplay aprovados** no commit `b0abd7cb`, seguida de outras validações de integração. O workflow de cada commit também audita referências `res://` e 13 arquivos WAV mono PCM. Os testes desta versão acrescentam clima seco/chuva/temporal, vento, leve/completo, shader de umidade, botão sprint, postura de corrida, receitas repetíveis de piso/parede/telhado, encaixes de parede/telhado, colisão, save com módulos duplicados e regressões de pesca/acampamento/barco.
+
+Limites: execução headless não comprova qualidade visual. **APK beta da v0.6:** gerar e conferir no workflow separado Build Android Beta APK; não declarar instalado ou testado em hardware Android sem evidência. Não houve captura real recente da v0.6, benchmarking 60 FPS, medição térmica nem QA de áudio por audição.
+
 # QA — v0.5.0 — 13/10/2026
 
 A suíte automatizada do Godot 4.6.1 na branch `feat/survival-camp-exploration-v05` cobre nova cadeia de corda/tábua/barco, pista da caverna, espaço de equipamentos, rotação de construção, cancelamento de relocação, baú com transferências sem duplicação, coletor de chuva e persistência do save v3. Foi executada no GitHub Actions, incluindo parser/importação, gameplay, referências e auditoria de WAV. O teste físico Android, desempenho/FPS, toque, qualidade dos modelos de acampamento e APK com assinatura preservada ainda não foram realizados nesta versão.
