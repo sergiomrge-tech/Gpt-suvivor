@@ -112,6 +112,7 @@ func _create_world(next_state: SurvivalState) -> void:
         player.position = SurvivalState.START_POSITION
     player.position.y = world.surface_height(player.position)
     add_child(player)
+    world.fauna.player = player
     player.action_contact.connect(_on_action_contact)
     player.action_finished.connect(_on_action_finished)
     player.footstep.connect(func(surface: String,point: Vector3): soundscape.play_effect("step_"+surface,point))
@@ -611,6 +612,8 @@ func apply_quality() -> void:
     world.scenery.set_light_mode(light_visuals)
     if is_instance_valid(climate):
         climate.set_light_mode(light_visuals)
+    if is_instance_valid(world) and is_instance_valid(world.fauna):
+        world.fauna.set_light_mode(light_visuals)
     hud.light_visuals = light_visuals
     if is_instance_valid(hud.quality_button):
         hud.quality_button.text = "Visual: Leve" if light_visuals else "Visual: Completo"
