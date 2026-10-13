@@ -741,6 +741,14 @@ func _camp_panel() -> void:
         for item in SurvivalState.BOAT_STAGE_COSTS[next_stage]:
             supplies.append("%s %d/%d" % [SurvivalState.ITEMS.get(item,item),state.inventory.get(item,0),SurvivalState.BOAT_STAGE_COSTS[next_stage][item]])
         panel_content.add_child(_label("Próxima etapa do barco: %s • %s" % [SurvivalState.BOAT_STAGE_NAMES[next_stage],", ".join(supplies)],18))
+    if state.boat_ready():
+        if bool(state.discoveries.get("voyage_prepared",false)):
+            panel_content.add_child(_bag_heading("EMBARCAÇÃO ABASTECIDA • PRONTA PARA NAVEGAR",17))
+        else:
+            var cargo := PackedStringArray()
+            for item in SurvivalState.VOYAGE_COST:
+                cargo.append("%s %d/%d" % [SurvivalState.ITEMS.get(item,item),int(state.inventory.get(item,0)),int(SurvivalState.VOYAGE_COST[item])])
+            panel_content.add_child(_label("Preparação da viagem: "+", ".join(cargo)+" • aproxime-se do barco",17))
     if state.has_structure("chest"):
         panel_content.add_child(_button("Abrir baú de recursos",func(): show_storage()))
     if state.has_structure("rain_collector"):
@@ -1133,7 +1141,7 @@ func _process(delta: float) -> void:
         fishing_button.text = "Pescar"
         action_button.text = "Explorar"
         if not target.is_empty():
-            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "crab":"Pegar caranguejo", "boar":"Caçar javali", "cave":"Entrar na caverna", "cave_exit":"Sair da caverna", "cave_cache":"Investigar caixa", "cave_seal":"Ativar selo", "cave_vault":"Abrir relicário", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
+            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "crab":"Pegar caranguejo", "boar":"Caçar javali", "cave":"Entrar na caverna", "cave_exit":"Sair da caverna", "cave_cache":"Investigar caixa", "cave_vein":"Extrair cristal", "cave_seal":"Ativar selo", "cave_vault":"Abrir relicário", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
             if target.kind == "boat" and state.boat_stage() < 5:
                 action_button.text = "Montar %s (%d/5)" % [SurvivalState.BOAT_STAGE_NAMES[state.boat_stage()+1],state.boat_stage()+1]
             elif target.kind == "boat" and not bool(state.discoveries.get("voyage_prepared",false)):
@@ -1178,6 +1186,9 @@ func show_journal() -> void:
         var opened := bool(state.discoveries.get(cave_id+"_vault",false))
         var status := "Relicário aberto" if opened else ("Selos %d/2 • procure os dois mecanismos" % seals)
         panel_content.add_child(_label("%s • %s" % [area_name,status],18))
+        var deep_echoes := int(bool(state.discoveries.get(cave_id+"_deep_amber",false))) + int(bool(state.discoveries.get(cave_id+"_deep_blue",false)))
+        var deep_status := "Câmara profunda explorada" if bool(state.discoveries.get(cave_id+"_deep_vault",false)) else ("Ecos profundos %d/2 • avance pela galeria" % deep_echoes)
+        panel_content.add_child(_label("Galeria profunda: "+deep_status,17))
     if state.has_structure("tool_rack"):
         panel_content.add_child(_label("Oficina nível 2: construída. Melhore o machado e a picareta perto dela.",18))
     elif bool(state.discoveries.get("east_vault",false)):
