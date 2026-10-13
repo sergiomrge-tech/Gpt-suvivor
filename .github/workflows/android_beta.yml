@@ -1,18 +1,5 @@
 name: Build Android Beta APK
 on:
-  push:
-    branches:
-      - feat/survival-camp-exploration-v05
-      - feat/visual-world-weather-v06
-      - feat/fauna-coast-v07
-      - feat/modular-shelter-v071
-    paths:
-      - .github/workflows/android_beta.yml
-      - export_presets.cfg
-      - project.godot
-      - scripts/**
-      - assets/**
-      - shaders/**
   workflow_dispatch:
 permissions:
   contents: read
