@@ -234,8 +234,15 @@ func run() -> void:
         if entry.kind=="tree": trees+=1
     check(trees>=10,"Harvestable broadleaf trees generated in forest groups")
     check(game.world.discoverables.size()==5,"Unique clues available at crash site and caves")
-    check(game.soundscape.streams.size()==13 and game.soundscape.voices.size()==7,"Original ambience and pooled positional effect voices loaded")
+    check(game.soundscape.streams.size()==17 and game.soundscape.voices.size()==7,"Original ambience and pooled positional effect voices loaded")
     check(game.soundscape.streams.sea.loop_mode==AudioStreamWAV.LOOP_FORWARD,"Sea ambience loops natively")
+    for sound in ["birds","insects","rain","cave"]:
+        var generated: AudioStreamWAV = game.soundscape.streams[sound]
+        check(generated.loop_mode == AudioStreamWAV.LOOP_FORWARD and generated.data.size() == 64000, "Native, original 16 kHz 2-second ambience synthesizer loops: "+sound)
+    game.soundscape.set_mixer_level("Passos",0.45)
+    check(is_equal_approx(float(game.soundscape.mixer_levels["Passos"]),0.45),"Footstep audio volume can be adjusted without changing other effect mixers")
+    game.soundscape.set_mixer_level("Passos",1.0)
+
     check(SurvivorSoundscape.FOOTSTEP_VOLUME_DB <= -20.0,"Footsteps have a separate quiet gain, without reducing other gameplay effects")
     var original_footstep: AudioStreamWAV = load(SurvivorSoundscape.STREAM_PATHS.step_sand)
     var filtered_footstep: AudioStreamWAV = game.soundscape.streams.step_sand
@@ -246,20 +253,19 @@ func run() -> void:
     check(not game.soundscape.sea.playing,"Muted audio stops ambient playback")
     game.soundscape.set_muted(false)
     check(game.world.landmarks.size() == 4, "Crash site, spring and two caves generated")
-    check(game.world.caves != null and game.world.caves.rooms.size() == 2 and game.world.caves.caches.size() == 4, "Two playable 3D cave interiors and four persistent caches generated")
-    check(game.world.caves.puzzles != null and game.world.caves.puzzles.mechanisms.size() == 6, "Both caves spawn two seal pedestals and an independent relic vault")
+    check(game.world.caves != null and game.world.caves.rooms.size() == 2 and game.world.caves.caches.size() == 6, "Two connected extended 3D cave interiors and six persistent caches generated")
+    check(game.world.caves.puzzles != null and game.world.caves.puzzles.mechanisms.size() == 12, "Both caves spawn two independent pairs of seals and two vaults each")
     var puzzles: SurvivorCavePuzzles = game.world.caves.puzzles
     var original_puzzle_state: SurvivalState = puzzles.state
     var isolated_puzzle_state := SurvivalState.new()
     puzzles.state = isolated_puzzle_state
-    var first_seal: Dictionary = puzzles.mechanisms[0]
+    var first_seal: Dictionary = {}
     var second_seal: Dictionary = {}
     var first_vault: Dictionary = {}
     for mechanism in puzzles.mechanisms:
-        if mechanism.kind == "cave_seal" and mechanism.cave == first_seal.cave and mechanism.id != first_seal.id:
-            second_seal = mechanism
-        if mechanism.kind == "cave_vault" and mechanism.cave == first_seal.cave:
-            first_vault = mechanism
+        if mechanism.id == "east_amber": first_seal = mechanism
+        if mechanism.id == "east_blue": second_seal = mechanism
+        if mechanism.id == "east_vault": first_vault = mechanism
     check(not second_seal.is_empty() and not first_vault.is_empty(), "Every relic vault has exactly two separate stone-seal mechanisms")
     if not second_seal.is_empty() and not first_vault.is_empty():
         check(not puzzles.vault_unlocked(first_vault.id) and puzzles.collect_vault(first_vault).is_empty(), "Relic vault refuses rewards while puzzle is locked")
@@ -273,8 +279,39 @@ func run() -> void:
         var relic_save := SurvivalState.from_data(isolated_puzzle_state.to_data())
         check(relic_save != null and relic_save.discoveries.has(first_vault.id) and relic_save.inventory.cave_crystal == 1, "Puzzle seals, vault state and rare item persist in version-three save")
         first_vault.node.visible = true
+    var deep_seals := 0
+    var deep_vaults := 0
+    for mechanism in puzzles.mechanisms:
+        if str(mechanism.id).contains("_deep_"):
+            if mechanism.kind == "cave_seal": deep_seals += 1
+            if mechanism.kind == "cave_vault": deep_vaults += 1
+    check(deep_seals == 4 and deep_vaults == 2, "Each extended cave contains two extra environmental echoes and one unique deep vault")
+    var deep_puzzle_state := SurvivalState.new()
+    puzzles.state = deep_puzzle_state
+    var eastern_vault: Dictionary = {}
+    var deep_first: Dictionary = {}
+    var deep_second: Dictionary = {}
+    for mechanism in puzzles.mechanisms:
+        if mechanism.id == "east_deep_vault": eastern_vault = mechanism
+        if mechanism.id == "east_deep_amber": deep_first = mechanism
+        if mechanism.id == "east_deep_blue": deep_second = mechanism
+    check(not puzzles.vault_unlocked("east_deep_vault") and puzzles.collect_vault(eastern_vault).is_empty(), "Deeper cave vault cannot be looted without investigating the new separate echoes")
+    puzzles.activate_seal(deep_first)
+    check(not puzzles.vault_unlocked("east_deep_vault"), "One echo is insufficient to unlock deep vault")
+    puzzles.activate_seal(deep_second)
+    check(puzzles.vault_unlocked("east_deep_vault"), "Both new deep echoes unlock a separate, unique vault")
+    var deep_reward := puzzles.collect_vault(eastern_vault)
+    check(not deep_reward.is_empty() and deep_puzzle_state.inventory.cave_crystal == 2, "Hidden chamber grants exactly two rare crystals")
+    check(puzzles.collect_vault(eastern_vault).is_empty(), "Deep exploration loot never duplicates")
+    var deep_saved := SurvivalState.from_data(deep_puzzle_state.to_data())
+    check(deep_saved != null and deep_saved.discoveries.has("east_deep_vault") and deep_saved.inventory.cave_crystal == 2, "New deep puzzles survive version-three saves")
+    eastern_vault.node.visible = true
     puzzles.state = original_puzzle_state
 
+    for cave_id in SurvivorCaves.CENTERS:
+        var at: Vector3 = SurvivorCaves.CENTERS[cave_id]
+        check(game.world.caves.is_walkable(at+Vector3(0,0,-21)) and game.world.caves.is_walkable(at+Vector3(0,0,-33)), "Deep chambers genuinely walkable and joined to old cave: "+str(cave_id))
+    check(game.world.caves.caches[4].id == "east_deep_cache" or game.world.caves.caches[5].id == "east_deep_cache", "Eastern deep chamber has independently collectible new supply cache")
     var root_cave_spawn := SurvivorCaves.spawn_position("roots")
     check(game.world.caves.is_inside(root_cave_spawn) and game.world.walkable(root_cave_spawn,root_cave_spawn),"Cave pocket has a walkable entry and isolated ground height")
     check(not game.world.walkable(SurvivorCaves.CENTERS["roots"]+Vector3(19,0,0),root_cave_spawn), "Cave walls prevent walking into the unloaded sea")
