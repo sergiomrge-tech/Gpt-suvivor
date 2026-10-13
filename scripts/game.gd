@@ -115,6 +115,7 @@ func _start() -> void:
     collector_timer = 0.0
     autosave_timer = 0.0
     session_finished = false
+    fishing_cooldown = 0.0
     _position_camera(1.0)
     running = true
     hud.show_game()
@@ -141,6 +142,7 @@ func _load() -> void:
     collector_timer = 0.0
     autosave_timer = 0.0
     session_finished = false
+    fishing_cooldown = 0.0
     _position_camera(1.0)
     running = not state.dead
     if running:
@@ -162,7 +164,13 @@ func _collect() -> void:
         hud.notify("Aproxime-se de uma árvore, pedra, fruta ou fonte.")
         return
     var kind: String = str(nearest.get_meta("resource_kind"))
+    var needed: String = state.required_tool(kind)
+    if needed != "" and not state.is_equipped(needed):
+        hud.notify("Equipe %s na aba EQUIPAR." % SurvivorState.ITEM_NAMES[needed])
+        return
     var collected: Dictionary = world.harvest(nearest)
+    if collected.is_empty():
+        return
     var desc: Array[String] = []
     for item in collected:
         state.add_item(str(item), int(collected[item]))
@@ -170,14 +178,18 @@ func _collect() -> void:
     hud.notify("%s: %s" % [world.resource_title(kind), ", ".join(desc)])
 
 func _fish() -> void:
-    if state.item_count("spear") < 1:
-        hud.notify("Fabrique uma lança antes de pescar.")
+    if not state.is_equipped("fishing_rod"):
+        hud.notify("Crie a VARA DE PESCAR e equipe na MÃO PRINCIPAL.")
         return
-    if not terrain.is_shore(player.position.x, player.position.z):
-        hud.notify("Para pescar, fique na faixa de areia perto do mar.")
+    if not terrain.is_fishing_spot(player.position.x, player.position.z):
+        hud.notify("Aproxime-se da beira do mar para pescar.")
         return
+    if fishing_cooldown > 0.0:
+        hud.notify("Aguarde %d segundos para pescar novamente." % int(ceilf(fishing_cooldown)))
+        return
+    fishing_cooldown = 7.0
     state.add_item("fish", 1)
-    hud.notify("Peixe capturado! Coma com o botão COMER.")
+    hud.notify("Peixe capturado! +1 peixe no inventário.")
 
 func _craft(recipe: String) -> void:
     if not running:
