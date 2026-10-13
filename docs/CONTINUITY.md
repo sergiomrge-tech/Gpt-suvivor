@@ -1,3 +1,9 @@
+# Checkpoint — 13/10/2026 — v0.7.1 abrigo modular
+
+Branch `feat/modular-shelter-v071` parte de `feat/fauna-coast-v07`, que por sua vez preserva a base v0.6 de clima, corrida, ferramentas e pesca. Implementados módulos de porta e janela, geometria 3D procedural própria, dobradiça móvel, controle de passagem pela colisão, interação pelo botão Explorar, novos ícones, suporte modular compartilhado e prevenção de ocupação do mesmo soquete por painéis diferentes. O save mantém `SAVE_VERSION=3`, agora validando booleano `door_open` opcional para porta. Testes nativos expandidos verificam receitas, portas, passagem, save e duplicidade.
+
+CI de importação, runtime e auditoria deve passar na branch final. O workflow Android exporta APK beta ARM64 com ID exclusivo `com.sergiomrge.gptsurvivor.beta.v071` e assinatura de teste; não atualizar a versão estável com esse pacote. Ainda pendentes: caça/drops, avaliação visual Android, cavernas interiores, construção destrutível/movível de módulos, barco por etapas e medições de FPS reais. Não afirmar que o beta é versão de produção.
+
 # Checkpoint — 13/10/2026 — v0.7 fauna inicial
 
 Branch `feat/fauna-coast-v07` criada a partir de `feat/visual-world-weather-v06`, mantendo a v0.6 intacta. Foi implementado `scripts/fauna.gd`: cinco espécies visuais modeladas no próprio Godot (caranguejo, tartaruga, javali, ave e peixe), povoamento determinístico, habitats por elevação e costa, movimento em ciclos de 0,12 s com descanso/vaguear/fugir, ocultação por distância e menor densidade no modo Leve. Vinculada ao ciclo de vida do mundo e do personagem em `world.gd` e `game.gd`. Há testes nativos adicionados ao `tests/test_survivor.gd`.
