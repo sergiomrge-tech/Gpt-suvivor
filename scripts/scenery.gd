@@ -119,7 +119,7 @@ func _generate_surface_details() -> void:
     noise.seed = 44102
     noise.frequency = 0.067
     var buckets: Dictionary = {}
-    for i in range(9200):
+    for i in range(5300):
         var p := Vector2(rng.randf_range(-207.0,207.0),rng.randf_range(-207.0,207.0))
         var h := terrain.height_at(p.x,p.y)
         if not terrain.is_land(p.x,p.y) or _protected(p):
