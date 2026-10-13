@@ -222,12 +222,13 @@ func _ready() -> void:
     activity_progress.add_theme_stylebox_override("background",track)
     activity_progress.add_theme_stylebox_override("fill",fill)
     activity.add_child(activity_progress)
-    var hint := _label("WASD / setas • E ação • B construir • F pescar • H comer • P salvar", 14)
-    hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-    hint.offset_left = 200
-    hint.offset_right = -254
-    hint.offset_top = -32
-    hint.offset_bottom = -12
+    var hint := _label("WASD / setas • 1–5 ferramentas • E ação • B construir • F pescar • H comer • P salvar", 14)
+    # Put desktop key help above the island, never across the 1–5 tool shortcuts.
+    hint.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+    hint.offset_left = 205
+    hint.offset_right = -245
+    hint.offset_top = 115
+    hint.offset_bottom = 139
     hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     hint.visible = not OS.has_feature("android")
@@ -519,7 +520,7 @@ func _confirm_new_game(overwrite: bool) -> void:
         _intro()
 
 func _intro() -> void:
-    _new_modal("intro", "O último voo", "A tempestade derrubou seu avião perto de uma ilha tropical. Você acorda na areia, cercado por destroços.\n\nMonte um acampamento, encontre água e alimento, explore as cavernas e recupere metal. Construa uma casa e um barco para deixar a ilha.\n\nPrimeiro passo: pegue troncos e pedras soltas no chão, e fibras nas plantas. Abra Mochila → Construções para fabricar machado e picareta de pedra. Depois corte árvores e extraia pedra para sua fogueira.")
+    _new_modal("intro", "O último voo", "A tempestade derrubou seu avião perto de uma ilha tropical. Você acorda na areia, cercado por destroços.\n\nMonte um acampamento, encontre água e alimento, explore as cavernas e recupere metal. Construa uma casa e um barco para deixar a ilha.\n\nPrimeiro passo: pegue troncos e pedras soltas no chão, e fibras nas plantas. Abra Mochila → Receitas para fabricar machado e picareta de pedra. Depois corte árvores e extraia pedra para sua fogueira.")
     panel_content.add_child(_button("Acordar na praia", func(): close_modal(); start_requested.emit(false)))
 
 func show_crafting() -> void:
