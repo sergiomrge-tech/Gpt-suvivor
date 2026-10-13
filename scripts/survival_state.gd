@@ -6,8 +6,9 @@ const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear", "fis
 const MATERIAL_RECIPES := ["rope", "plank"]
 const FOOD_RECIPES := ["meal", "grilled_crab", "cooked_meat"]
 const UPGRADE_TOOLS := ["reinforced_axe", "reinforced_pickaxe"]
-const MODULES := ["floor_panel", "wall_panel", "door_panel", "window_panel", "roof_panel"]
-const WALL_MODULES := ["wall_panel", "door_panel", "window_panel"]
+const MODULES := ["floor_panel", "wall_panel", "door_panel", "window_panel", "roof_panel", "reinforced_wall", "reinforced_roof"]
+const WALL_MODULES := ["wall_panel", "door_panel", "window_panel", "reinforced_wall"]
+const ROOF_MODULES := ["roof_panel", "reinforced_roof"]
 const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal", "raw_crab", "raw_meat", "grilled_crab", "cooked_meat", "cave_crystal"]
 const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "stone_spear":"utility", "fishing_rod":"main_hand", "reinforced_axe":"utility", "reinforced_pickaxe":"utility"}
 const DAY_SECONDS := 1200.0
@@ -41,6 +42,8 @@ const RECIPES := {
     "door_panel": {"title": "Porta de madeira", "cost": {"plank": 3, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Abra e feche a porta tocando em Explorar; oferece passagem quando aberta."},
     "window_panel": {"title": "Parede com janela", "cost": {"plank": 3, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Janela elevada com moldura e abertura para luz e ventilação."},
     "roof_panel": {"title": "Telhado modular", "cost": {"plank": 3, "fiber": 2, "rope": 1}, "requires": ["wall_panel"], "description": "Cobertura inclinada para sua casa modular."},
+    "reinforced_wall": {"title": "Parede reforçada", "cost": {"plank": 3, "stone": 4, "metal": 1}, "requires": ["tool_rack", "floor_panel"], "description": "Painel de nível 2 com base de pedra, suportes metálicos e tábuas reforçadas. Encaixa nos pisos."},
+    "reinforced_roof": {"title": "Telhado reforçado", "cost": {"plank": 5, "stone": 2, "metal": 1}, "requires": ["tool_rack", "reinforced_wall"], "description": "Cobertura com armação rígida e telhas resistentes, para construções de nível 2."},
     "chest": {"title": "Baú do acampamento", "cost": {"wood": 5, "plank": 4, "rope": 2}, "requires": ["workbench"], "description": "Guarde recursos e retire-os quando precisar."},
     "bed": {"title": "Cama de folhas", "cost": {"wood": 6, "fiber": 5, "rope": 2}, "requires": ["house"], "description": "Descansar recupera a saúde."},
     "rain_collector": {"title": "Coletor de chuva", "cost": {"wood": 6, "plank": 2, "rope": 3}, "requires": ["workbench"], "description": "Armazena água durante as chuvas tropicais."},
@@ -148,6 +151,8 @@ func recipe_error(kind: String) -> String:
         return "Você já possui esse item."
     if kind == "tool_rack" and not bool(discoveries.get("east_vault", false)):
         return "Pesquise os dois selos e abra o Relicário do Leste para descobrir a estação de aprimoramento."
+    if kind == "reinforced_roof" and not has_structure("reinforced_wall"):
+        return "Construa primeiro uma parede reforçada de nível 2."
     if kind == "boat" and not bool(discoveries.get("sail_diagram", false)):
         return "Encontre o esquema de vela na Caverna do Leste antes de construir o barco."
     var recipe: Dictionary = RECIPES[kind]
