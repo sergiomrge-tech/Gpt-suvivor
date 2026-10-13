@@ -10,20 +10,35 @@ void vertex() {
 }
 void fragment() {
     vec2 p = world_point.xz;
-    float a = atan(p.y, p.x);
-    // The coastline follows the same deterministic radial island function.
-    float island_radius = 201.0 + 13.0 * sin(a * 5.0 + 0.6) + 10.0 * cos(a * 9.0 - 0.4);
-    float sea_edge = island_radius * 0.9757;
-    float distance_out = length(p) - sea_edge;
-    float shallows = 1.0 - smoothstep(1.0, 18.0, distance_out);
-    float ripple = sin(p.x * 1.7 + TIME * 0.8) * cos(p.y * 1.1 - TIME * 0.5);
-    vec3 water = mix(deep_color.rgb, shallow_color.rgb, shallows * 0.85);
-    water += vec3(0.006,0.012,0.015) * ripple;
-    water = mix(water,water * vec3(0.78,0.84,0.88),clamp(wind_strength - 0.35,0.0,1.0) * 0.22);
-    float breaking_wave = 0.5 + 0.5 * sin(distance_out * 2.2 - TIME * 1.2 + sin(a * 22.0) * 0.7);
-    float foam = (1.0 - smoothstep(0.2, 2.2 + wind_strength * 2.0, max(distance_out, 0.0))) * smoothstep(0.40, 0.91, breaking_wave);
-    ALBEDO = mix(water, vec3(0.76,0.87,0.80), foam * 0.68);
-    ROUGHNESS = mix(0.34, 0.73, foam);
-    METALLIC = 0.05;
-    NORMAL_MAP = vec3(0.5 + ripple * 0.035, 0.5 + sin(p.x * 1.3 + TIME) * 0.028, 1.0);
+    float a = atan(p.y,p.x);
+    // Same coastline equation as the terrain: paint follows actual beaches.
+    float island_radius = 201.0 + 13.0*sin(a*5.0+0.6)+10.0*cos(a*9.0-0.4);
+    float shore = island_radius*0.9757;
+    float distance_out = length(p)-shore;
+    float shallows = 1.0-smoothstep(-0.4,22.0,distance_out);
+
+    // Layered directional swells make the lagoon less like a flat color plane.
+    float long_swell = sin(p.x*0.27+p.y*0.18-TIME*0.63);
+    float crossing = sin(p.x*0.73-p.y*0.48+TIME*0.88);
+    float ripples = sin(p.x*1.68+TIME*0.94)*cos(p.y*1.18-TIME*0.53);
+    float light_ripple = long_swell*0.35+crossing*0.22+ripples*0.43;
+    vec3 water = mix(deep_color.rgb,shallow_color.rgb,shallows*0.86);
+    water *= 0.955+light_ripple*0.041;
+    float quiet_sea = clamp(wind_strength-0.35,0.0,1.0);
+    water = mix(water,water*vec3(0.82,0.88,0.91),quiet_sea*0.22);
+
+    // Irregular lapping shore foam, never a perfectly concentric white ring.
+    float coast_jitter = sin(a*33.0+sin(a*13.0)*0.75)*0.60;
+    float phase = distance_out*2.15-TIME*(1.10+wind_strength*0.54)+coast_jitter;
+    float whitecap = smoothstep(0.54,0.93,sin(phase)*0.5+0.5);
+    float backwash = smoothstep(0.61,0.96,sin(phase*0.65+1.8)*0.5+0.5);
+    float surf_band = 1.0-smoothstep(0.55,3.8+wind_strength*2.3,max(distance_out,0.0));
+    float foam = max(whitecap*0.73,backwash*0.30)*surf_band;
+    float distant_foam = smoothstep(0.78,0.98,0.5+0.5*crossing) *
+        smoothstep(0.72,1.0,quiet_sea)*0.04;
+    vec3 pearl = vec3(0.80,0.89,0.84);
+    ALBEDO = mix(water,pearl,clamp(foam*0.78+distant_foam,0.0,0.90));
+    ROUGHNESS = mix(0.32,0.80,foam);
+    METALLIC = 0.03;
+    NORMAL_MAP = vec3(0.5+ripples*0.032,0.5+crossing*0.028,1.0);
 }
