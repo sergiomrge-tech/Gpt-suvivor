@@ -1,3 +1,11 @@
+# Checkpoint v1.2.0 — 13/10/2026
+
+Branch `feat/deep-caves-atmosphere-voyage-v12`, criada da `feat/premium-inventory-v111`. Pedido do usuário: executar as sugestões 5 (exploração cavernas), 7 (imersão sonora) e 8 (final de campanha navegável). Foram implementados código real e testes, sem gerar APK.
+
+**Cavernas:** bolsões east/roots preservados, galerias conectadas ao sul, 2 caches novos, 4 nós minerais do nível 2, 2 grupos extras de ecos/selos e novos relicários por caverna, perigos de gás evitáveis. Flags de descobertas persistidas em save v3. Modelos gerados proceduralmente. Música/áudio: `scripts/ambient_synth.gd` com loops royalty-free originais de pássaros, insetos, chuva e gotejamento; 3 buses de áudio independentes com volumes salvos. **Fuga:** `scripts/voyage.gd`, modelo do barco se move ao longo da costa por mais de 100 m, 3 recifes, toque bombordo/estibordo, dano de casco, vitória somente após alcançar canal; suprimentos obrigatórios e persistência, tentativa repetida sem nova cobrança.
+
+**Prioridade seguinte:** teste visual real e FPS em Android físico, avaliação auditiva, QA real de controles multi-toque em viagem e possível melhorias de animação náutica. Não alegar estes testes como concluídos sem fazê-los. Apenas gerar APK quando explicitamente solicitado.
+
 # Checkpoint v1.1.0 — 13/10/2026 — interface de inventário premium e polimento da ilha
 
 Branch `feat/premium-inventory-v111`, construída sobre `feat/island-visual-refinement-v11`, por sua vez derivada de `release/gpt-survivor-v1-0-android`. Solicitação explícita do usuário: inventário visualmente igual à imagem enviada, inclusive cores, fonte, organização e estilo, com quatro áreas separadas, atalhos e comparação. Foi implementado no código-fonte do Godot um tema de painéis bronze/madeira, títulos em SystemFont serif fallback, quadro de slots 5 colunas e 21 itens, prévia 3D do personagem, duas posições de equipamento, receitas separadas das construções, progresso e custo legível, contraste de recursos suficientes/insuficientes e cinco atalhos mobile/teclado com equipamento persistente e upgrade automático da ferramenta preferida. Testes de gameplay e UI nativos foram atualizados; há um workflow novo de capturas reais com Xvfb para auditoria da aparência. Esses trabalhos estão junto com a ilha com solo, vegetação, conchas, mar e névoa refinados da v1.1.
