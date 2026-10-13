@@ -113,9 +113,15 @@ for title,contents in SETS.items():
                 record["source_resolution"]=res
         else:
             for map_kind in sorted(REQUIRED):
-                variants=files.get(map_kind,{})
+                alias = {
+                    "diff":("diff","Diffuse","diffuse","albedo","basecolor"),
+                    "nor_gl":("nor_gl","Normal (GL)","norGL"),
+                    "rough":("rough","Rough","roughness","Roughness"),
+                }[map_kind]
+                key=next((key for key in alias if key in files),None)
+                variants=files.get(key,{}) if key else {}
                 if not variants:
-                    record["warnings"].append("Missing map "+map_kind)
+                    record["warnings"].append("Missing map "+map_kind+"; available "+str(list(files.keys())))
                     continue
                 res=selected_resolution(variants)
                 fmt_items=variants[res]
