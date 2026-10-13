@@ -24,16 +24,19 @@ void fragment() {
     float metal = 0.0;
     float detail = texture(detail_noise,UV * 0.37).g;
     if (family < 1.5) {
-        float lines = sin(UV.x * 34.0 + detail * 4.0);
-        grain = 0.94 + lines * 0.035 + detail * 0.04;
-        rough = 0.90;
+        // Fibrous bark with offset longitudinal cracks and scar bands.
+        float fibers = sin(UV.x*26.0 + detail*6.5 + sin(UV.y*1.7)*0.65);
+        float cracks = smoothstep(0.82,0.985,sin(UV.x*11.0+detail*3.4)*0.5+0.5);
+        grain = 0.97 + fibers*0.055 - cracks*0.09 + detail*0.065;
+        rough = 0.92;
     } else if (family < 2.5) {
         grain = 0.94 + detail * 0.06;
         rough = 0.83;
     } else if (family < 3.5) {
         float flecks = texture(detail_noise,UV * 3.0).b;
-        grain = 0.88 + detail * 0.17 + flecks * 0.06;
-        rough = 0.94;
+        float veins = sin(UV.x*8.2 + UV.y*5.4 + detail*4.7);
+        grain = 0.88 + detail*0.16 + flecks*0.06 + veins*0.022;
+        rough = 0.92;
     } else if (family < 4.5) {
         grain = 0.95 + detail * 0.06;
         rough = 0.55;
