@@ -1,9 +1,10 @@
 extends Node3D
 class_name SurvivorFauna
 
-# Lightweight procedural wildlife: decorative actors do not alter old saves,
-# harvested nodes, fishing rules or the boat progression.
+# Procedural wildlife: crabs and boars provide optional food. Turtles, birds and
+# visible fish remain non-harvestable; existing progression and saves are preserved.
 var terrain: SurvivorTerrain
+var state: SurvivalState
 var player: SurvivorPlayer
 var animals: Array[Dictionary] = []
 var light_mode := false
@@ -31,6 +32,9 @@ func generate() -> void:
                 SurvivorModels.merge_static(node, "survivor_fauna_" + kind)
                 animals.append({
                     "kind": kind,
+                    "id": "wild_%s_%d" % [kind, index],
+                    "position": node.position,
+                    "radius": 1.1 if kind == "boar" else 0.65,
                     "node": node,
                     "heading": angle,
                     "timer": _rng.randf_range(1.0, 4.0),
@@ -40,6 +44,44 @@ func generate() -> void:
 
 func set_light_mode(enabled: bool) -> void:
     light_mode = enabled
+
+func _available(animal: Dictionary) -> bool:
+    if state == null:
+        return true
+    return state.elapsed >= float(state.harvested.get(str(animal.id), -1.0))
+
+func nearest_prey(pos: Vector3, reach: float = 5.0) -> Dictionary:
+    var result: Dictionary = {}
+    var closest := reach
+    for animal in animals:
+        if animal.kind not in ["crab", "boar"] or not _available(animal):
+            continue
+        var node: Node3D = animal.node
+        if not is_instance_valid(node) or not node.visible:
+            continue
+        var d := Vector2(pos.x - node.position.x, pos.z - node.position.z).length()
+        if d < closest:
+            closest = d
+            result = animal
+    return result
+
+func harvest_prey(entry: Dictionary) -> String:
+    if state == null or entry.is_empty() or entry.kind not in ["crab", "boar"]:
+        return "Animal indisponível."
+    if not _available(entry):
+        return "O animal já foi coletado."
+    var error := state.harvest_error(str(entry.kind))
+    if error != "":
+        return error
+    var meat := "raw_crab" if entry.kind == "crab" else "raw_meat"
+    var amount := 1 if entry.kind == "crab" else 2
+    state.add_item(meat, amount)
+    # Uses the existing v3 harvested-ID map; no migration or save field required.
+    state.harvested[str(entry.id)] = state.elapsed + 900.0
+    var node: Node3D = entry.node
+    if is_instance_valid(node):
+        node.visible = false
+    return "+%d %s • prepare na fogueira." % [amount, SurvivalState.ITEMS[meat]]
 
 func _habitat(kind: String, point: Vector2) -> bool:
     if point.distance_to(Vector2(0.0, 170.0)) < 28.0:
@@ -73,7 +115,7 @@ func _process(delta: float) -> void:
         var node: Node3D = animal.node
         var distance_vec := Vector2(node.position.x - player.position.x, node.position.z - player.position.z)
         var distance := distance_vec.length()
-        node.visible = distance < 82.0 and (not light_mode or index % 2 == 0)
+        node.visible = _available(animal) and distance < 82.0 and (not light_mode or index % 2 == 0)
         if not node.visible:
             continue
         var kind: String = animal.kind
@@ -105,6 +147,7 @@ func _process(delta: float) -> void:
         node.position.y = _surface_height(kind, Vector2(node.position.x, node.position.z))
         if kind in ["bird", "fish"]:
             node.position.y += sin(_motion_time * 2.8 + float(animal.phase)) * (0.38 if kind == "bird" else 0.10)
+        animal["position"] = node.position
         animals[index] = animal
 
 func _model(node: Node3D, kind: String) -> void:
