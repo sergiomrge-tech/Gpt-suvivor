@@ -1,5 +1,16 @@
 # GPT Survivor — Ilha: Último Voo
 
+## Atualização v0.7.1 — portas e janelas funcionais (beta)
+
+- **Abrigo modular expandido:** duas novas receitas repetíveis, **Porta de madeira** (3 tábuas, 2 madeiras e 1 corda) e **Parede com janela** (3 tábuas, 2 madeiras e 1 corda), após construir bancada e ao menos um piso.
+- **Modelagem real no Godot:** porta de ripas com dobradiça e maçaneta, janela de moldura com travessas e peitoril. Ícones SVG inéditos são exibidos diretamente na aba Construções.
+- **Passagem controlada:** interaja com a porta pelo botão **Explorar** para abrir/fechar. Aberta, a passagem fica livre; fechada, barra o personagem. A animação leva 0,32 segundos.
+- **Encaixes revisados:** porta/janela/parede compartilham encaixes no perímetro de pisos, sem permitir sobreposições no mesmo encaixe; várias faces adjacentes podem ser construídas; telhado aceita suporte de qualquer parede.
+- **Save preservado:** estado `door_open` validado no save v3, carregamento legado mantido, sem afetar os slots de equipamentos, coleta de recursos, vara de pesca ou condições da fuga.
+- **Fauna da v0.7:** caranguejos, tartarugas, javalis, aves e peixes permanecem modelados e movimentando-se pelo cenário. Ainda não há caça/drops nem interiores navegáveis de cavernas.
+- **Beta Android:** exportação ARM64 isolada com package `com.sergiomrge.gptsurvivor.beta.v071`. A assinatura de teste é diferente da versão estável; não reinstale por cima do jogo principal. Validar o resultado do GitHub Actions antes de instalar; desempenho e operação em telefone físico não foram medidos.
+
+
 ## Desenvolvimento v0.7.0 — fauna inicial (branch experimental)
 
 Esta branch adiciona animais originais modelados diretamente com primitivas e malhas do Godot: caranguejos na areia, tartarugas costeiras, javalis no interior, aves sobre a ilha e cardumes costeiros. A população usa seed fixa e regiões de habitat; os animais vagueiam, descansam e fogem ao perceber o personagem. Atualização de movimento em passos de ~0,12 s e ocultação por distância; o modo Leve reduz a fauna visível.
