@@ -61,7 +61,7 @@ func _execute() -> void:
     cam.make_current()
     for i in range(ASSETS.size()):
         var filename: String = ASSETS[i][0]
-        var path := "res://assets/characters/candidates/"+filename
+        var path := "res" + "://assets/characters/candidates/"+filename
         assert(ResourceLoader.exists(path),"Model unavailable: "+path)
         var source: PackedScene = load(path) as PackedScene
         assert(source != null)
