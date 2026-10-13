@@ -194,7 +194,7 @@ func run() -> void:
     game.player.animation_clock = PI * 0.5
     game.player._base_pose()
     check(absf(game.player.left_foot.rotation.x - game.player.right_foot.rotation.x) > 0.05, "Walk cycle rolls the left and right ankles asymmetrically")
-    check(game.player.left_foot.position.y > game.player.right_foot.position.y + 0.02, "Alternating step phase lifts only the rear swing foot from the beach")
+    check(game.player.right_foot.position.y > game.player.left_foot.position.y + 0.02, "Alternating step phase lifts only the rear swing foot from the beach")
     game.player.walking = saved_walking
     game.player.animation_clock = saved_clock
     game.player._base_pose()
