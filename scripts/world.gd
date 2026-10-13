@@ -9,6 +9,7 @@ var landmarks: Array[Dictionary] = []
 var _rng := RandomNumberGenerator.new()
 var _refresh_clock := 0.0
 var scenery: SurvivorScenery
+var fauna: SurvivorFauna
 var trails: SurvivorTrails
 var discoverables: Array[Dictionary] = []
 const DISCOVERIES := {
@@ -64,6 +65,10 @@ func generate() -> void:
     scenery.world = self
     add_child(scenery)
     scenery.generate()
+    fauna = SurvivorFauna.new()
+    fauna.terrain = terrain
+    add_child(fauna)
+    fauna.generate()
 
 func _reserved(p: Vector2) -> bool:
     if p.distance_to(Vector2(0, 170)) < 17.0:
