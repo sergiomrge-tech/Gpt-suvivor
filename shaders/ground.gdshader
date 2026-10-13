@@ -6,6 +6,7 @@ varying vec3 world_point;
 varying vec3 world_normal;
 uniform float sea_level = -0.48;
 uniform float rain_amount = 0.0;
+uniform float surface_microdetail = 1.0;
 void vertex() {
     world_point = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
     world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);
@@ -58,6 +59,22 @@ void fragment() {
     ground *= 0.967 + grain*0.066;
     float damp = rain_amount * (0.10 + macro * 0.085);
     ALBEDO = ground * (1.0-damp);
-    ROUGHNESS = mix(0.96,0.76,tide);
-    ROUGHNESS = mix(ROUGHNESS,0.62,rain_amount*0.57);
+    // Physically varied roughness: damp intertidal sand, dusty soil and stone.
+    float gravel = smoothstep(0.72,0.93,middle.b) * sand_to_vegetation;
+    ROUGHNESS = mix(0.96,0.78,tide);
+    ROUGHNESS = mix(ROUGHNESS,0.90,gravel*0.45);
+    ROUGHNESS = mix(ROUGHNESS,0.60,rain_amount*0.56);
+
+    // A small two-sample bump is reserved for the Complete mode.
+    // No terrain vertex displacement, collision or saved coordinates change.
+    if (surface_microdetail > 0.5) {
+        vec2 sample_uv = p / 1.85;
+        vec2 gradient = vec2(
+            texture(detail_noise,sample_uv+vec2(0.016,0.0)).b - fine.b,
+            texture(detail_noise,sample_uv+vec2(0.0,0.016)).b - fine.b
+        );
+        float bump = mix(0.53,0.37,sand_to_vegetation) * (1.0-rain_amount*0.36);
+        vec3 micro_normal = normalize(world_normal+vec3(-gradient.x*bump,0.0,-gradient.y*bump));
+        NORMAL = normalize(mat3(VIEW_MATRIX) * micro_normal);
+    }
 }
