@@ -3,7 +3,7 @@ class_name SurvivorRealWorldAssets
 
 # Textured CC0 external models are visual replacements only. All gameplay
 # locations, save identifiers and collision footprints belong to SurvivorWorld.
-const ROOT := "res://assets/real_world/models/"
+const ROOT := "res://assets/real_world/" + "models/"
 const SOURCES := {
     "palm_detailed":ROOT+"palm_detailed.glb",
     "palm_light":ROOT+"palm_light.glb",
