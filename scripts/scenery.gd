@@ -12,6 +12,9 @@ var forest_detail_count := 0
 var details_material: ShaderMaterial
 var light_mode := false
 var grass_material: ShaderMaterial
+var biome_batches: Array[Dictionary] = []
+var biome_counts := {"reeds":0, "ferns":0, "stone":0}
+var biome_material: ShaderMaterial
 
 func generate() -> void:
     var rng := RandomNumberGenerator.new()
@@ -56,7 +59,85 @@ func generate() -> void:
         batches.append({"node": node, "entries": entries})
         cover_count += entries.size()
     _generate_surface_details()
+    _generate_biome_habitats()
     set_light_mode(light_mode)
+
+
+# Independent placement seed: no resource IDs, loot, terrain height or prior
+# decoration RNG sequence changes. All samples are globally anchored so
+# loading the same save produces the same habitats.
+func _generate_biome_habitats() -> void:
+    biome_batches.clear()
+    biome_counts = {"reeds":0, "ferns":0, "stone":0}
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 340951
+    var patch_noise := FastNoiseLite.new()
+    patch_noise.seed = 74039
+    patch_noise.frequency = 0.038
+    var buckets: Dictionary = {}
+    for attempt in range(4200):
+        var p := Vector2(rng.randf_range(-211.0,211.0),rng.randf_range(-211.0,211.0))
+        var h := terrain.height_at(p.x,p.y)
+        if not terrain.is_land(p.x,p.y) or _protected(p):
+            continue
+        var density := patch_noise.get_noise_2d(p.x,p.y)
+        var family := -1
+        if h >= 0.9 and h <= 4.1 and density > -0.55:
+            family = 0 # Dune grasses: high and dry sand above wave wash.
+        elif h > 4.1 and h < 25.0 and density > -0.43:
+            var grade := maxf(absf(terrain.height_at(p.x+1.7,p.y)-h),absf(terrain.height_at(p.x,p.y+1.7)-h))
+            if h >= 12.0 and grade >= 0.28 and density > -0.22:
+                family = 2 # Small stony scatter emphasizes actual hill gradients.
+            else:
+                family = 1 # Ferns and broad tropical forest understory.
+        if family < 0:
+            continue
+        var key := Vector3i(floori(p.x/CHUNK_SIZE),floori(p.y/CHUNK_SIZE),family)
+        if not buckets.has(key):
+            buckets[key] = []
+        var scale := rng.randf_range(0.72,1.18)
+        var tint := Color(0.85,0.91,0.82) if family == 1 else (Color(0.96,0.91,0.76) if family == 0 else Color(0.91,0.96,0.93))
+        tint = tint.lerp(Color.WHITE, rng.randf_range(0.06,0.32))
+        var entry := {
+            "position":Vector3(p.x,h+0.025,p.y),
+            "angle":rng.randf_range(0.0,TAU),
+            "size":scale,
+            "tint":tint
+        }
+        buckets[key].append(entry)
+        match family:
+            0: biome_counts["reeds"] += 1
+            1: biome_counts["ferns"] += 1
+            2: biome_counts["stone"] += 1
+    var habitat_meshes := [
+        SurvivorBiomeProps.dune_reeds(),
+        SurvivorBiomeProps.forest_seedlings(),
+        SurvivorBiomeProps.coastal_stones()
+    ]
+    biome_material = ShaderMaterial.new()
+    biome_material.shader = load("res://shaders/biome_props.gdshader")
+    for key in buckets:
+        var entries: Array = buckets[key]
+        var center := Vector3((float(key.x)+0.5)*CHUNK_SIZE,0,(float(key.y)+0.5)*CHUNK_SIZE)
+        var multi := MultiMesh.new()
+        multi.transform_format = MultiMesh.TRANSFORM_3D
+        multi.use_custom_data = true
+        multi.mesh = habitat_meshes[key.z]
+        multi.instance_count = entries.size()
+        for i in range(entries.size()):
+            var item: Dictionary = entries[i]
+            var basis := Basis(Vector3.UP,float(item.angle)).scaled(Vector3.ONE*float(item.size))
+            multi.set_instance_transform(i,Transform3D(basis,item.position-center))
+            multi.set_instance_custom_data(i,item.tint)
+        var node := MultiMeshInstance3D.new()
+        node.name = ["DuneReeds","ForestFerns","ErodedStones"][key.z]
+        node.position = center
+        node.multimesh = multi
+        node.material_override = biome_material
+        node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+        node.visibility_range_end = 74.0 if key.z == 1 else 64.0
+        add_child(node)
+        biome_batches.append({"node":node, "entries":entries, "family":key.z})
 
 func _protected(p: Vector2) -> bool:
     if world.trails != null and world.trails.distance_to(p)<2.2:
@@ -88,7 +169,7 @@ func _grass_mesh() -> ArrayMesh:
     return st.commit()
 
 func clear_area(pos: Vector3, radius: float) -> void:
-    for batch in batches + detail_batches:
+    for batch in batches + detail_batches + biome_batches:
         for i in range(batch.entries.size()):
             var point: Vector3 = batch.entries[i].position
             if Vector2(point.x - pos.x, point.z - pos.z).length_squared() < radius * radius:
@@ -102,6 +183,9 @@ func set_weather(wind: float, rain: float) -> void:
         grass_material.set_shader_parameter("rain_amount",rain)
     if details_material != null:
         details_material.set_shader_parameter("rain_amount",rain)
+    if biome_material != null:
+        biome_material.set_shader_parameter("rain_amount",rain)
+        biome_material.set_shader_parameter("wind_strength",wind)
 
 func set_light_mode(value: bool) -> void:
     light_mode = value
@@ -109,6 +193,8 @@ func set_light_mode(value: bool) -> void:
         batch.node.multimesh.visible_instance_count = batch.entries.size() / 3 if value else -1
     for batch in detail_batches:
         batch.node.multimesh.visible_instance_count = batch.entries.size() / 4 if value else -1
+    for batch in biome_batches:
+        batch.node.multimesh.visible_instance_count = maxi(1, batch.entries.size() / 3) if value else -1
 
 # Two deterministic debris families. Small meshes are batched by spatial chunk
 # rather than creating thousands of Godot nodes and draw calls.
