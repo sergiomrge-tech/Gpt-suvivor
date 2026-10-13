@@ -284,7 +284,7 @@ func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
             distance = d
             result = entry
     for entry in structures + landmarks:
-        if entry.kind in ["wreck", "workbench", "dock", "floor_panel", "wall_panel", "window_panel", "roof_panel"]:
+        if entry.kind in ["wreck", "workbench", "dock", "floor_panel", "wall_panel", "window_panel", "roof_panel", "reinforced_wall", "reinforced_roof"]:
             continue
         var d := Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length()
         # Boat is placed off the shore; it remains reachable from the dock.
@@ -364,7 +364,7 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
                 supported = true
         if not supported:
             return "Encaixe a parede na borda de um piso modular."
-    if kind == "roof_panel":
+    if kind in SurvivalState.ROOF_MODULES:
         var supported_floor := false
         var supported_wall := false
         for entry in structures:
@@ -386,7 +386,7 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
             # Floor + roof at the same grid center and walls at the tile edges are valid.
             if kind == "floor_panel" and entry.kind == "floor_panel" and distance < 2.8:
                 return "Esse encaixe já está ocupado."
-            if kind == "roof_panel" and entry.kind == "roof_panel" and distance < 0.45:
+            if kind in SurvivalState.ROOF_MODULES and entry.kind in SurvivalState.ROOF_MODULES and distance < 0.45:
                 return "Esse encaixe já está ocupado."
             if kind in SurvivalState.WALL_MODULES and entry.kind in SurvivalState.WALL_MODULES and distance < 0.45:
                 return "Esse espaço de parede já está ocupado."
