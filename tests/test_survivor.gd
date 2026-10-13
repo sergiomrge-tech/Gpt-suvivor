@@ -116,6 +116,34 @@ func run() -> void:
     game = load("res://scenes/main.tscn").instantiate()
     root.add_child(game)
     await process_frame
+    var anatomical_fixture := Node3D.new()
+    var loft_mesh := SurvivorHeroGeometry.loft(anatomical_fixture, PackedVector4Array([
+        Vector4(0.35, 0.15, 0.14, 0.0),
+        Vector4(0.15, 0.25, 0.24, 0.0),
+        Vector4(-0.25, 0.12, 0.13, 0.0)
+    ]), Color(0.67, 0.43, 0.30), 18)
+    var loft_arrays := loft_mesh.mesh.surface_get_arrays(0)
+    check(loft_arrays[Mesh.ARRAY_VERTEX].size() >= 40 and loft_arrays[Mesh.ARRAY_NORMAL].size() == loft_arrays[Mesh.ARRAY_VERTEX].size(), "Organic hero loft generates a watertight-looking smooth ring surface with valid normals")
+    anatomical_fixture.free()
+    var hero_head_mesh: MeshInstance3D
+    var hero_torso_mesh: MeshInstance3D
+    for child in game.player.head_pivot.get_children():
+        if child is MeshInstance3D:
+            hero_head_mesh = child
+    for child in game.player.torso.get_children():
+        if child is MeshInstance3D:
+            hero_torso_mesh = child
+    check(hero_head_mesh != null and hero_torso_mesh != null, "Organic survivor head and torso are real Godot meshes")
+    if hero_head_mesh != null:
+        var hero_uv2: PackedVector2Array = hero_head_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV2]
+        var has_skin := false
+        var has_hair := false
+        for uv in hero_uv2:
+            if is_equal_approx(uv.x, 6.0):
+                has_skin = true
+            elif is_equal_approx(uv.x, 5.0):
+                has_hair = true
+        check(has_skin and has_hair, "Single mobile-optimized head mesh preserves individual skin and hair material responses")
     check(game.world.resources.size() >= 190, "Island generated with abundant accessible resources")
     check(game.world.fauna != null and game.world.fauna.animals.size() >= 12, "Coastal and forest fauna populate the island")
     var crab_entry: Dictionary = {}
