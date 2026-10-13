@@ -4,7 +4,9 @@ Criada branch `feat/hero-anatomy-animation-v17` sobre a `main` v1.6. Objetivo: r
 
 `scripts/hero_geometry.gd` cria a função `boot`, volumes contínuos de calçado com ponta e sola 3D, cano e cadarços. `scripts/player.gd` substitui caixas antigas por pivôs `left_foot`/`right_foot` como filhos de `left_knee`/`right_knee`, tem rolagem assimétrica de tornozelos sincronizada com marcha, melhora palmas/polegares e detalhes de roupa e rosto. O restante da animação de ação e hierarquia de `right_hand` permanece intacta. `scripts/models.gd` mantém o cache, com nova família 7 para couro; `shaders/surfaces.gdshader` responde com grão de couro gasto sem confundi-lo com a pele ou tecido.
 
-`tests/test_survivor.gd` testa os dois pivôs, mesh cache compartilhado, UV2 do couro, fase da marcha e ancoragem de ferramentas e pesca. `tests/capture_hero_v17.gd` e `.github/workflows/visual_hero_v17.yml` documentam sete capturas reais do framebuffer do jogo em Linux/Xvfb. Fazer a leitura do GitHub Actions final antes de atestar revisão estática/runtime. Captura renderizada não mede FPS, touch, nem garante qualidade fotorrealista em Android. Nenhum APK foi produzido ou requisitado.
+A inspeção das primeiras capturas reais mostrou um corpo ainda curto e largo: em resposta, a cabeça foi reduzida sem afetar o pescoço, o início das coxas deslocado para cima, joelhos e canelas prolongados até a mesma altura de solo, e os olhos/nariz e mangas receberam escala menos caricata. A câmera de inspeção adicional não fabrica poses; só aproxima um observador 3D do modelo original.
+
+`tests/test_survivor.gd` testa os dois pivôs, mesh cache compartilhado, UV2 do couro, fase da marcha e ancoragem de ferramentas e pesca. `tests/capture_hero_v17.gd` e `.github/workflows/visual_hero_v17.yml` documentam dez capturas reais do framebuffer do jogo em Linux/Xvfb. Fazer a leitura do GitHub Actions final antes de atestar revisão estática/runtime. Captura renderizada não mede FPS, touch, nem garante qualidade fotorrealista em Android. Nenhum APK foi produzido ou requisitado.
 
 # Checkpoint v1.6.0 — 13/10/2026
 

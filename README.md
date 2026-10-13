@@ -2,12 +2,13 @@
 
 ## v1.7.0 — Herói 3D: tornozelos articulados, botas orgânicas, mãos e materiais (fonte Godot; SEM APK)
 
+- **Proporções revistas após capturas reais**: cabeça visualmente menor, ombros e braços mais esguios, pernas prolongadas sem deslocar a sola do chão e olhos/nariz menos exagerados. O próprio render evidenciou aparência de boneco na primeira revisão, então essa correção integra a mesma v1.7.
 - **Pés e caminhada:** removidos os antigos sapatos em caixas retangulares. Cada canela possui agora um pivô de tornozelo independente; botas criadas em 3D com peito do pé arredondado, camada de solado, cano e cadarços, e correção heel-to-toe em marcha. Os pivôs são exclusivamente visuais, sem mudar a colisão.
 - **Silhueta e roupas:** gola e abertura da camisa, pregas assimétricas, costuras finas e alças do equipamento. Palma das mãos agora tem um volume contínuo, polegar e dedos, em vez da antiga esfera simples. Revisão discreta das maçãs do rosto, sobrancelhas, borda de cabelo e nariz.
 - **Materiais:** a malha combinada mantém tratamentos próprios para tecido (UV2 família 5), pele (6) e couro gasto (7), com microvariação procedural de relevo/cor e resposta à umidade. Nenhuma textura externa ou licença de terceiros foi adicionada.
 - **Jogabilidade intacta:** rotação e pivôs originais de braços, corpo e ferramentas mantidos. Corte, mineração, pesca, machado, picareta, lança, coleta e interação usam os encaixes anteriores; saves versão 3 e mundo v1.6 não mudam.
 - **Mobile:** botas idênticas compartilham o mesmo mesh cache; os segmentos de membros são fundidos para reduzir materiais/draw calls. O sistema preserva a câmera móvel e o preset gráfico Leve/Completo, mas desempenho real em Android ainda precisa ser medido.
-- **Validação:** testes nativos para malhas das botas, material de couro, pivôs dos pés, marcha e fixação de ferramentas. Workflow adicional realiza sete capturas reais do framebuffer Godot (frente, perfil, costas, caminhada, ação de machado, pesca e escala mobile).
+- **Validação:** testes nativos para malhas das botas, material de couro, pivôs dos pés, marcha e fixação de ferramentas. Workflow adicional realiza dez capturas reais do framebuffer Godot (frente, perfil, costas, caminhada, ação de machado, pesca, escala mobile e três planos de inspeção em câmera 3D real).
 - **Limitação artística:** refinamento real em geometria procedural, não um personagem humano fotorrealista de produção. O próximo salto requer malha humana esculpida, rig/skinning completo, texturas PBR detalhadas, animações capturadas ou produzidas, LODs e inspeção no dispositivo. Sem APK por decisão do projeto.
 
 ## v1.6.0 — Costa orgânica, sub-bosque e novos materiais 3D (somente código Godot, SEM APK)

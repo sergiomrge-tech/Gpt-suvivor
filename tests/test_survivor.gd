@@ -174,6 +174,10 @@ func run() -> void:
     game.player.animation_clock = saved_clock
     game.player._base_pose()
     check(game.player.tools.rod.get_parent() == game.player.right_hand and game.player.tools.axe.get_parent() == game.player.right_hand, "Fishing and tool grip pivots survive the anatomical hero upgrade")
+    check(game.player.head_pivot.scale.y < 0.78 and game.player.left_leg.position.y > 1.20, "Humanized relative anatomy replaces oversized head and shortened legs")
+    var foot_world_offset: float = game.player.left_foot.global_position.y - game.player.global_position.y
+    check(foot_world_offset >= 0.05 and foot_world_offset <= 0.31, "Lengthened legs still place the articulated ankle near the ground surface")
+
 
     check(game.world.resources.size() >= 190, "Island generated with abundant accessible resources")
     check(game.world.fauna != null and game.world.fauna.animals.size() >= 12, "Coastal and forest fauna populate the island")
