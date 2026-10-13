@@ -24,6 +24,7 @@ var departure_tween: Tween
 var light_visuals := false
 var soundscape: SurvivorSoundscape
 var climate: SurvivorClimate
+var voyage: SurvivorVoyage
 var running_mode := false
 var muted := false
 var capture_mode := false
@@ -46,6 +47,10 @@ func _ready() -> void:
     add_child(soundscape)
     climate = SurvivorClimate.new()
     add_child(climate)
+    voyage = SurvivorVoyage.new()
+    add_child(voyage)
+    voyage.reached_channel.connect(_on_voyage_success)
+    voyage.vessel_lost.connect(_on_voyage_failure)
     hud = SurvivorHUD.new()
     add_child(hud)
     hud.minimap.terrain = terrain
@@ -68,6 +73,7 @@ func _ready() -> void:
     hud.journal_requested.connect(func(): hud.show_journal())
     hud.zoom_requested.connect(change_zoom)
     hud.sprint_requested.connect(toggle_sprint)
+    hud.voyage_steer_requested.connect(func(direction: int): voyage.steer(direction))
     var settings := ConfigFile.new()
     if settings.load("user://visual.cfg") == OK:
         light_visuals = bool(settings.get_value("graphics", "light", false))
@@ -87,6 +93,8 @@ func _ready() -> void:
 func _create_world(next_state: SurvivalState) -> void:
     cancel_work()
     pending_discovery.clear()
+    if is_instance_valid(voyage): voyage.clear_course()
+    if is_instance_valid(hud): hud.hide_voyage()
     soundscape.set_active(false)
     if departure_tween != null and departure_tween.is_valid():
         departure_tween.kill()
@@ -148,6 +156,9 @@ func start_game(load_save: bool) -> void:
 func pause_game() -> void:
     if not playing:
         return
+    if voyage != null and voyage.active:
+        hud.toast("Concentre-se no leme até alcançar o canal seguro.")
+        return
     cancel_placement()
     cancel_work()
     pending_discovery.clear()
@@ -167,6 +178,13 @@ func paused() -> bool:
 
 func _process(delta: float) -> void:
     if player == null:
+        return
+    if voyage.active:
+        voyage.step(delta)
+        if voyage.active:
+            _update_voyage_camera(delta)
+            hud.update_voyage(voyage)
+            soundscape.update_environment(voyage.boat_node.position,terrain,world,delta)
         return
     _update_camera(delta)
     soundscape.set_frozen(paused())
@@ -229,6 +247,9 @@ func _process(delta: float) -> void:
             hud.activity_fraction = 1-fishing_remaining/3.0
 
 func _physics_process(delta: float) -> void:
+    if voyage != null and voyage.active:
+        player.move_vector = Vector2.ZERO
+        return
     if paused() or fishing_remaining > 0:
         return
     if player.is_busy():
@@ -269,6 +290,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
             resume_game()
         elif playing and hud.modal_mode == "":
             pause_game()
+        return
+    if voyage != null and voyage.active:
+        if event.physical_keycode in [KEY_A,KEY_LEFT]: voyage.steer(-1)
+        if event.physical_keycode in [KEY_D,KEY_RIGHT]: voyage.steer(1)
         return
     if paused():
         return
@@ -658,27 +683,68 @@ func fish_or_cancel() -> void:
         player.perform_action("fish",3.0,player.position+radial*6.0+Vector3(radial.z,0,-radial.x)*4.5+Vector3(0,terrain.sea_level+0.12-player.position.y,0))
         player.move_vector = Vector2.ZERO
 
+func _update_voyage_camera(delta: float) -> void:
+    if voyage.boat_node == null:
+        return
+    var focus: Vector3 = voyage.boat_node.position
+    var desired := focus + Vector3(0,24.0,24.0)
+    camera.position = camera.position.lerp(desired,minf(1.0,delta*4.2))
+    camera.look_at(focus)
+
 func escape_island() -> void:
-    if not state.boat_ready() or world.near_structure(player.position, "boat", 12).is_empty():
-        hud.toast("Aproxime-se do barco pronto para embarcar.")
+    if not state.boat_ready() or world.near_structure(player.position,"boat",12).is_empty():
+        hud.toast("Aproxime-se do barco completo para partir.")
+        return
+    if voyage.active:
+        return
+    if not bool(state.discoveries.get("voyage_prepared",false)):
+        if state.prepare_voyage():
+            hud.toast("Cocos, peixe, cordas e tábuas embarcados! Toque em Embarcar para partir.",5)
+            save_game(false)
+        else:
+            hud.toast(state.voyage_error(),5)
+        return
+    var boat: Dictionary = world.near_structure(player.position,"boat",12)
+    if boat.is_empty():
         return
     cancel_work()
-    soundscape.set_active(false)
+    cancel_placement()
+    player.visible = false
+    player.enabled = false
+    marker.visible = false
+    soundscape.set_active(true)
+    voyage.begin(boat.node)
+    hud.show_voyage()
+    _update_voyage_camera(1.0)
+    save_game(false)
+
+func _on_voyage_success() -> void:
+    if state.escaped:
+        return
     state.escaped = true
     playing = false
     player.enabled = false
-    hud.set_playing(false)
-    marker.visible = false
+    hud.hide_voyage()
+    soundscape.set_active(false)
     save_game(false)
-    var boat := world.near_structure(player.position, "boat", 12)
-    if not boat.is_empty():
-        player.visible = false
-        var radial := Vector3(boat.position.x, 0, boat.position.z).normalized()
-        departure_tween = create_tween()
-        departure_tween.tween_property(boat.node, "position", boat.node.position + radial * 35.0, 4.0)
-        departure_tween.tween_callback(func(): hud.show_end(true, state.elapsed))
-    else:
-        hud.show_end(true, state.elapsed)
+    departure_tween = create_tween()
+    if voyage.boat_node != null:
+        var original: Vector3 = voyage.boat_node.position
+        departure_tween.tween_property(voyage.boat_node,"position",original+voyage.outward*18.0,2.4)
+    departure_tween.tween_callback(func(): hud.show_end(true,state.elapsed))
+
+func _on_voyage_failure() -> void:
+    if voyage.boat_node != null:
+        voyage.boat_node.position = voyage.start_point
+        voyage.boat_node.rotation.y = 0.0
+    voyage.clear_course()
+    player.visible = true
+    player.enabled = true
+    hud.hide_voyage()
+    hud.set_playing(true)
+    _update_camera(1.0)
+    hud.toast("A embarcação atingiu recifes e voltou ao cais. Repare o percurso e tente outra vez.",6)
+    save_game(false)
 
 func save_game(show_message: bool = true) -> void:
     if capture_mode: return
