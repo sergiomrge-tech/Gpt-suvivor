@@ -4,7 +4,8 @@ class_name SurvivalState
 const SAVE_VERSION := 3
 const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "fishing_rod"]
 const MATERIAL_RECIPES := ["rope", "plank"]
-const MODULES := ["floor_panel", "wall_panel", "roof_panel"]
+const MODULES := ["floor_panel", "wall_panel", "door_panel", "window_panel", "roof_panel"]
+const WALL_MODULES := ["wall_panel", "door_panel", "window_panel"]
 const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal"]
 const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "fishing_rod":"main_hand"}
 const DAY_SECONDS := 1200.0
@@ -24,6 +25,8 @@ const RECIPES := {
     "boat": {"title": "Barco de fuga", "cost": {"wood": 40, "fiber": 10, "plank": 10, "rope": 10, "metal": 8}, "requires": ["house", "dock", "fishing_rod"], "description": "Construa junto ao cais e parta da ilha."},
     "floor_panel": {"title": "Piso modular", "cost": {"plank": 2, "wood": 2}, "requires": ["workbench"], "description": "Piso 3,2 × 3,2 m. Encaixa na grade de construção."},
     "wall_panel": {"title": "Parede modular", "cost": {"plank": 2, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Parede de madeira para cercar o piso, com encaixe e rotação."},
+    "door_panel": {"title": "Porta de madeira", "cost": {"plank": 3, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Abra e feche a porta tocando em Explorar; oferece passagem quando aberta."},
+    "window_panel": {"title": "Parede com janela", "cost": {"plank": 3, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Janela elevada com moldura e abertura para luz e ventilação."},
     "roof_panel": {"title": "Telhado modular", "cost": {"plank": 3, "fiber": 2, "rope": 1}, "requires": ["wall_panel"], "description": "Cobertura inclinada para sua casa modular."},
     "chest": {"title": "Baú do acampamento", "cost": {"wood": 5, "plank": 4, "rope": 2}, "requires": ["workbench"], "description": "Guarde recursos e retire-os quando precisar."},
     "bed": {"title": "Cama de folhas", "cost": {"wood": 6, "fiber": 5, "rope": 2}, "requires": ["house"], "description": "Descansar recupera a saúde."},
@@ -265,6 +268,11 @@ static func from_data(data: Dictionary) -> SurvivalState:
             if not (value is int or value is float) or not is_finite(float(value)) or absf(float(value)) > 240.0:
                 return null
         var building := {"kind": kind, "x": float(entry.x), "z": float(entry.z)}
+        if kind == "door_panel":
+            var door_open = entry.get("door_open", false)
+            if not door_open is bool:
+                return null
+            building["door_open"] = door_open
         if entry.has("rotation"):
             var angle = entry.rotation
             if not (angle is int or angle is float) or not is_finite(float(angle)) or absf(float(angle)) > TAU:
