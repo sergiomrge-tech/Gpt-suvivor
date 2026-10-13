@@ -23,6 +23,8 @@ var _saved_state: SurvivalState
 var departure_tween: Tween
 var light_visuals := false
 var soundscape: SurvivorSoundscape
+var climate: SurvivorClimate
+var running_mode := false
 var muted := false
 var capture_mode := false
 var pending_work: Dictionary = {}
@@ -42,6 +44,8 @@ func _ready() -> void:
     marker.visible = false
     soundscape = SurvivorSoundscape.new()
     add_child(soundscape)
+    climate = SurvivorClimate.new()
+    add_child(climate)
     hud = SurvivorHUD.new()
     add_child(hud)
     hud.minimap.terrain = terrain
@@ -62,6 +66,7 @@ func _ready() -> void:
     hud.sound_requested.connect(toggle_sound)
     hud.journal_requested.connect(func(): hud.show_journal())
     hud.zoom_requested.connect(change_zoom)
+    hud.sprint_requested.connect(toggle_sprint)
     var settings := ConfigFile.new()
     if settings.load("user://visual.cfg") == OK:
         light_visuals = bool(settings.get_value("graphics", "light", false))
@@ -99,6 +104,7 @@ func _create_world(next_state: SurvivalState) -> void:
     world.generate()
     apply_quality()
     player = SurvivorPlayer.new()
+    player.sprint_enabled = running_mode
     player.terrain = terrain
     player.world = world
     player.position = state.player_position
@@ -180,6 +186,7 @@ func _process(delta: float) -> void:
         hud.activity_name = ""
     state.advance(delta)
     terrain.set_time_of_day(fmod(8.0 / 24.0 + state.elapsed / SurvivalState.DAY_SECONDS, 1.0))
+    climate.update_weather(state.elapsed,player.position,terrain,world.scenery)
     action_cooldown = maxf(0, action_cooldown - delta)
     autosave_clock += delta
     if autosave_clock >= 60:
@@ -274,6 +281,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
         KEY_P: save_game()
         KEY_EQUAL, KEY_KP_ADD: change_zoom(-3)
         KEY_MINUS, KEY_KP_SUBTRACT: change_zoom(3)
+
+func toggle_sprint() -> void:
+    if not playing or paused():
+        return
+    running_mode = not running_mode
+    player.sprint_enabled = running_mode
+    hud.update_sprint(running_mode)
 
 func change_zoom(amount: float) -> void:
     camera_distance = clampf(camera_distance+amount,MIN_ZOOM_DISTANCE,MAX_ZOOM_DISTANCE)
@@ -590,6 +604,8 @@ func _notification(what: int) -> void:
 func apply_quality() -> void:
     terrain.sun.shadow_enabled = not light_visuals
     world.scenery.set_light_mode(light_visuals)
+    if is_instance_valid(climate):
+        climate.set_light_mode(light_visuals)
     hud.light_visuals = light_visuals
     if is_instance_valid(hud.quality_button):
         hud.quality_button.text = "Visual: Leve" if light_visuals else "Visual: Completo"
