@@ -233,9 +233,11 @@ func run() -> void:
         if batch.node.multimesh.visible_instance_count >= batch.node.multimesh.instance_count:
             limited = false
     check(not game.terrain.sun.shadow_enabled and limited and game.climate.particles.amount == 90, "Light mode reduces shadows, cover and weather particles")
+    check(is_equal_approx(float(game.terrain.ground_material.get_shader_parameter("surface_microdetail")),0.0), "Light graphics preset disables expensive terrain micro-normal samples")
     game.light_visuals = false
     game.apply_quality()
     check(game.terrain.sun.shadow_enabled and game.world.scenery.batches[0].node.multimesh.visible_instance_count == -1 and game.climate.particles.amount == 280, "Full mode restores shadows, groundcover and weather particles")
+    check(is_equal_approx(float(game.terrain.ground_material.get_shader_parameter("surface_microdetail")),1.0), "Full graphics preset restores finer sand and soil surface normals")
     var old_state := SurvivalState.new()
     old_state.buildings.append({"kind":"dock","x":20.0,"z":180.0})
     old_state.buildings.append({"kind":"boat","x":23.5,"z":185.0})
