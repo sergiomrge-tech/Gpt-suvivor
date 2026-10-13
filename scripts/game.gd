@@ -17,6 +17,8 @@ var running := false
 var collector_timer := 0.0
 var autosave_timer := 0.0
 var session_finished := false
+var camera_zoom := 1.0
+var fishing_cooldown := 0.0
 
 func _ready() -> void:
     terrain = TERRAIN_SCRIPT.new() as SurvivorTerrain
@@ -46,7 +48,7 @@ func _ready() -> void:
 
 func _position_camera(weight: float) -> void:
     var target: Vector3 = player.position + Vector3(0.0, 1.6, 0.0)
-    var target_camera: Vector3 = target + Vector3(0.0, 33.0, 25.0)
+    var target_camera: Vector3 = target + Vector3(0.0, 33.0, 25.0) * camera_zoom
     camera.global_position = camera.global_position.lerp(target_camera, weight)
     camera.look_at(target, Vector3.UP)
 
@@ -56,6 +58,7 @@ func _process(delta: float) -> void:
         return
     _position_camera(clampf(delta * 6.0, 0.0, 1.0))
     state.tick(delta)
+    fishing_cooldown = maxf(0.0, fishing_cooldown - delta)
     terrain.set_time_of_day(state.clock)
     var keyboard := Vector2.ZERO
     if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
@@ -70,7 +73,11 @@ func _process(delta: float) -> void:
     var near: Node3D = world.nearest_resource(player.position)
     var hint := ""
     if near != null:
-        hint = "[E] Coletar: " + world.resource_title(str(near.get_meta("resource_kind")))
+        var kind: String = str(near.get_meta("resource_kind"))
+        var tool: String = state.required_tool(kind)
+        hint = "[E] " + world.resource_title(kind)
+        if tool != "":
+            hint += " • " + ("PRONTO" if state.is_equipped(tool) else "Equipar " + SurvivorState.ITEM_NAMES[tool])
     hud.update_display(state, hint)
     collector_timer += delta
     autosave_timer += delta
@@ -97,8 +104,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
         KEY_H: _on_action("eat")
         KEY_T: _on_action("drink")
         KEY_B: _on_action("craft_menu")
+        KEY_I: _on_action("inventory")
         KEY_P: _on_action("save")
-        KEY_ESCAPE: _on_action("menu")
+        KEY_ESCAPE: _on_action("close_inventory" if hud.inventory_is_open() else "menu")
 
 func _start() -> void:
     state.reset()
