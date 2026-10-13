@@ -116,6 +116,15 @@ func run() -> void:
     game = load("res://scenes/main.tscn").instantiate()
     root.add_child(game)
     await process_frame
+    check(game.player.using_skinned_hero, "Godot loads actual MakeHuman skinned human instead of the obsolete handmade hero mesh")
+    check(game.player.rigged_hero != null and game.player.rigged_hero.skeleton != null, "Imported human contains playable Skeleton3D")
+    if game.player.rigged_hero != null and game.player.rigged_hero.skeleton != null:
+        var rig: SurvivorSkinnedActor = game.player.rigged_hero
+        check(rig.skeleton.get_bone_count() >= 50, "The new protagonist has 50+ real skinned anatomical joints")
+        check(rig.clips.has("idle") and rig.clips.has("walk") and rig.clips.has("run"), "The imported rig exposes authentic animation clips")
+        check(game.player.right_hand.get_parent() == rig.grip and rig.grip.get_parent() == rig.skeleton, "Every crafted tool and fishing rod follows the rigged right-hand bone")
+        check(not game.player.torso.visible and not game.player.left_leg.visible, "Superseded procedural body is hidden, not displayed over real skinned human")
+        check(is_equal_approx(rig.normalized_height,2.07), "New skeleton normalization preserves gameplay scale")
     var anatomical_fixture := Node3D.new()
     var loft_mesh := SurvivorHeroGeometry.loft(anatomical_fixture, PackedVector4Array([
         Vector4(0.35, 0.15, 0.14, 0.0),
@@ -124,6 +133,19 @@ func run() -> void:
     ]), Color(0.67, 0.43, 0.30), 18)
     var loft_arrays := loft_mesh.mesh.surface_get_arrays(0)
     check(loft_arrays[Mesh.ARRAY_VERTEX].size() >= 40 and loft_arrays[Mesh.ARRAY_NORMAL].size() == loft_arrays[Mesh.ARRAY_VERTEX].size(), "Organic hero loft generates a watertight-looking smooth ring surface with valid normals")
+    var source_contour := PackedVector4Array([
+        Vector4(0.43,0.16,0.15,0.0),
+        Vector4(0.21,0.27,0.23,0.0),
+        Vector4(-0.18,0.19,0.16,0.0)
+    ])
+    var refined_contour := SurvivorHeroGeometry.resample_profile(source_contour,3)
+    check(refined_contour.size() == (source_contour.size()-1)*3+1, "Smooth anatomy interpolates additional real Godot rings without losing original control points")
+    check(refined_contour[0].is_equal_approx(source_contour[0]) and refined_contour[refined_contour.size()-1].is_equal_approx(source_contour[source_contour.size()-1]), "Spline anatomy preserves exact original anatomical endpoints")
+    var ring_monotonic := true
+    for ring_index in range(refined_contour.size()-1):
+        if refined_contour[ring_index].x <= refined_contour[ring_index+1].x or refined_contour[ring_index].y <= 0.0 or refined_contour[ring_index].z <= 0.0:
+            ring_monotonic = false
+    check(ring_monotonic, "Anatomy smoothing cannot invert height or create negative radius")
     anatomical_fixture.free()
     var hero_head_mesh: MeshInstance3D
     var hero_torso_mesh: MeshInstance3D
@@ -141,9 +163,14 @@ func run() -> void:
         for uv in hero_uv2:
             if is_equal_approx(uv.x, 6.0):
                 has_skin = true
-            elif is_equal_approx(uv.x, 5.0):
+            elif is_equal_approx(uv.x, 8.0):
                 has_hair = true
         check(has_skin and has_hair, "Single mobile-optimized head mesh preserves individual skin and hair material responses")
+        var head_arrays := hero_head_mesh.mesh.surface_get_arrays(0)
+        check(head_arrays[Mesh.ARRAY_VERTEX].size() > 250, "Smooth face and scalp contain real contiguous anatomical polygons, not low resolution head primitives")
+    var body_mesh: MeshInstance3D = hero_torso_mesh
+    if body_mesh != null:
+        check(body_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() > 300, "Upper-body silhouette uses refined continuous geometry rather than broad flat rectangular slabs")
     var left_boot_mesh: MeshInstance3D
     var right_boot_mesh: MeshInstance3D
     for child in game.player.left_foot.get_children():
@@ -176,6 +203,7 @@ func run() -> void:
     game.player.animation_clock = PI * 0.5
     game.player._base_pose()
     check(absf(game.player.left_foot.rotation.x - game.player.right_foot.rotation.x) > 0.05, "Walk cycle rolls the left and right ankles asymmetrically")
+    check(game.player.right_foot.position.y > game.player.left_foot.position.y + 0.02, "Alternating step phase lifts only the rear swing foot from the beach")
     game.player.walking = saved_walking
     game.player.animation_clock = saved_clock
     game.player._base_pose()
@@ -185,6 +213,7 @@ func run() -> void:
     check(foot_world_offset >= 0.05 and foot_world_offset <= 0.31, "Lengthened legs still place the articulated ankle near the ground surface")
 
 
+    check(SurvivorModels.mesh_cache.has("hero_torso_v18") and SurvivorModels.mesh_cache.has("hero_head_v18_face"), "Smooth anatomical torso and recessed-eye face are cached as native Godot meshes")
     check(game.world.resources.size() >= 190, "Island generated with abundant accessible resources")
     check(game.world.fauna != null and game.world.fauna.animals.size() >= 12, "Coastal and forest fauna populate the island")
     var crab_entry: Dictionary = {}

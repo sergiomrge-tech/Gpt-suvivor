@@ -1,0 +1,41 @@
+name: Real MakeHuman survivor v1.9 Godot renders
+on:
+  push:
+    branches: [feat/makehuman-rigged-v19]
+    paths-ignore: [".github/workflows/import_makehuman.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: survivor-v19-real-human-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-human:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install official Godot 4.6.1
+        run: |
+          curl --fail --location --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo /tmp/godot >> "$GITHUB_PATH"
+      - name: Validate exact MakeHuman model and Godot import
+        run: |
+          python3 tests/verify_makehuman_asset.py assets/characters/makehuman_survivor.glb
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/import-v19.log
+          if grep -E "SCRIPT ERROR|Parse Error" /tmp/import-v19.log; then exit 1; fi
+      - name: Capture actual rigged hero, walking and fishing
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 240 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_hero_v19.gd
+          for name in 01_real_human_mobile_top_down 02_real_human_full_body_front 03_real_human_profile 04_skinned_walk_animation 05_right_hand_bone_equipped_fishing; do
+            test -s /tmp/gpt-survivor-real-human-v19/${name}.png
+          done
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-v19-real-rigged-human-captures
+          path: /tmp/gpt-survivor-real-human-v19/*.png
+          retention-days: 14

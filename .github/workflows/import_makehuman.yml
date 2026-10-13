@@ -1,0 +1,40 @@
+name: Import CC0 MakeHuman rigged survivor v1.9
+on:
+  push:
+    branches: [feat/makehuman-rigged-v19]
+    paths:
+      - .github/workflows/import_makehuman.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  vendor-human-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download pinned public MakeHuman-derived model
+        run: |
+          mkdir -p assets/characters
+          curl --fail --location --retry 4 --retry-delay 3 \
+            -o assets/characters/makehuman_survivor.glb \
+            https://raw.githubusercontent.com/kunalkushwaha/vsim/main/packages/assets/library/suited.glb
+      - name: Verify exact upstream Git blob and rig, animations and textures
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          b=Path("assets/characters/makehuman_survivor.glb").read_bytes()
+          digest=hashlib.sha1(b"blob "+str(len(b)).encode()+bytes([0])+b).hexdigest()
+          expected="95033d30a4b4bab4a4a0ce3eb176a4ce7d73d0b5"
+          assert digest==expected,(digest,expected)
+          print("PINNED_MAKEHUMAN_BLOB",digest)
+          PY
+          python3 tests/verify_makehuman_asset.py assets/characters/makehuman_survivor.glb
+      - name: Commit verified CC0 clothed human model to the feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/characters/makehuman_survivor.glb
+          git commit -m "asset(v1.9): import CC0 clothed 53-bone MakeHuman survivor, replacing unclothed base" || exit 1
+          git push origin HEAD:feat/makehuman-rigged-v19

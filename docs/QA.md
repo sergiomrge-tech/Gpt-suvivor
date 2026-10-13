@@ -1,3 +1,12 @@
+# QA — GPT Survivor v1.8.0 — 13/10/2026
+
+- **Funcionalidade preservada:** `SAVE_VERSION=3`, inventário premium, progressão, movimento, ferramenta equipada, pesca, terreno, cavernas e fuga de barco. Nenhum APK.
+- **Revisão facial real:** a inspeção revelou olhos/nariz salientes. O nariz agora é um loft anatômico contínuo e os olhos são discretos, com cache próprio e teste de integração `hero_head_v18_face`.
+- **Anatomia verificável:** contorno Catmull–Rom resampleado com alturas monotônicas e radii positivos; extremidades preservadas e malhas 3D reais do rosto e tórax; linha dos ombros corrigida na cena jogável.
+- **Material/física:** pele (6), cabelo (8), tecido (5), couro (7); shader compartilhado mantém draw calls reduzidos; a passada alterna elevação de pé com máxima de 0,045 m sem alterar a posição salva nem colisão.
+- **CI:** `.github/workflows/validate.yml` cobre parsing Godot 4.6.1, testes nativos, auditorias de referência/áudio e ZIP. `.github/workflows/visual_hero_v18.yml` valida 12 capturas genuínas de cenas, equipamentos e chuva. Conferir o último commit antes de considerar concluída.
+- **Limites:** obra procedural com melhoria real de topologia, ainda não photoreal; requer rig humano esculpido, texturas PBR licenciadas/originais, otimizações e QA real no Android. Sem screenshot falso e sem prometer benchmark sem aparelho.
+
 # QA — GPT Survivor v1.7.0 — 13/10/2026
 
 - **Fonte original:** Godot 4.6.1, projeto GL Compatibility, saves v3 preservados; nenhuma alteração à ilha, loot, interfaces, navio ou lógica de interação.

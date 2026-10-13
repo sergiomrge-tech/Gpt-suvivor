@@ -38,9 +38,12 @@ var step_distance := 0.0
 var fishing_line: MeshInstance3D
 var fishing_mesh: ImmediateMesh
 var bobber: MeshInstance3D
+var rigged_hero: SurvivorSkinnedActor
+var using_skinned_hero := false
 
 func _ready() -> void:
     _build_character()
+    _activate_skinned_hero()
     var listener := AudioListener3D.new()
     listener.position.y = 1.6
     add_child(listener)
@@ -48,6 +51,21 @@ func _ready() -> void:
 
 func is_busy() -> bool:
     return action_remaining > 0.0
+
+# The original movement, crafting and equipment code remains authoritative.
+# Only the rendered character and its equipment hand follow the imported rig.
+func _activate_skinned_hero() -> void:
+    rigged_hero = SurvivorSkinnedActor.new()
+    rigged_hero.name = "RealMakeHumanSurvivor"
+    body_pivot.add_child(rigged_hero)
+    if not rigged_hero.initialize(self,right_hand):
+        rigged_hero.queue_free()
+        rigged_hero = null
+        return
+    using_skinned_hero = true
+    torso.visible = false
+    left_leg.visible = false
+    right_leg.visible = false
 
 func _physics_process(delta: float) -> void:
     if terrain == null or not enabled:
@@ -96,8 +114,14 @@ func _base_pose() -> void:
     right_knee.rotation.x = maxf(0,swing)*lerpf(0.9,1.18,locomotion_blend)
     # Feet counter-rotate against the shin and roll gently heel-to-toe;
     # ankle pivots are visual only and preserve the original collision body.
-    left_foot.rotation.x = -left_knee.rotation.x * 0.56 + swing * (0.15 if walking else 0.0)
-    right_foot.rotation.x = -right_knee.rotation.x * 0.56 - swing * (0.15 if walking else 0.0)
+    left_foot.rotation.x = -left_knee.rotation.x * 0.56 + swing * (0.18 if walking else 0.0)
+    right_foot.rotation.x = -right_knee.rotation.x * 0.56 - swing * (0.18 if walking else 0.0)
+    # Heel clearance follows the swing-leg phase, whereas the planted leg
+    # remains near the terrain. No physics or resource locations are changed.
+    var lift_left := maxf(0.0,-sin(animation_clock))*0.045 if walking else 0.0
+    var lift_right := maxf(0.0,sin(animation_clock))*0.045 if walking else 0.0
+    left_foot.position.y = -0.52 + lift_left
+    right_foot.position.y = -0.52 + lift_right
     left_arm.rotation = Vector3(-swing*lerpf(0.65,0.78,locomotion_blend)-locomotion_blend*0.22,0,0.04)
     right_arm.rotation = Vector3(swing*lerpf(0.65,0.78,locomotion_blend)-locomotion_blend*0.22,0,-0.04)
     left_elbow.rotation.x = -0.15
@@ -107,6 +131,11 @@ func _base_pose() -> void:
     var shoulder_turn := sin(animation_clock) * (0.055 if walking else 0.006)
     var lateral_sway := sin(animation_clock) * (0.035 if walking else 0.005)
     torso.rotation = Vector3(((0.035 + locomotion_blend * 0.16) if walking else breathing), shoulder_turn, -lateral_sway)
+    # Different shoulder and hip phases keep strides from appearing rigid.
+    left_leg.rotation.z = 0.025*sin(animation_clock+0.55) if walking else 0.0
+    right_leg.rotation.z = 0.025*sin(animation_clock-0.55) if walking else 0.0
+    left_elbow.rotation.y = -0.045*sin(animation_clock) if walking else 0.0
+    right_elbow.rotation.y = 0.045*sin(animation_clock) if walking else 0.0
     head_pivot.rotation = Vector3(-torso.rotation.x * 0.32, -shoulder_turn * 0.56, lateral_sway * 0.44)
     body_pivot.rotation.x = 0.028 * locomotion_blend
     body_pivot.rotation.z = sin(animation_clock) * (0.021 if walking else 0.003)
@@ -228,18 +257,20 @@ func _build_character() -> void:
     body_pivot.name = "AnimatedBody"
     torso = _joint(body_pivot, Vector3(0, 1.45, 0))
     SurvivorHeroGeometry.loft(torso, PackedVector4Array([
-        Vector4(0.52, 0.13, 0.13, 0),
-        Vector4(0.42, 0.38, 0.22, -0.015),
-        Vector4(0.27, 0.49, 0.285, 0),
-        Vector4(0.06, 0.48, 0.30, 0),
-        Vector4(-0.20, 0.38, 0.265, 0),
-        Vector4(-0.41, 0.32, 0.245, 0),
-        Vector4(-0.48, 0.30, 0.225, 0)
+        Vector4(0.52, 0.135, 0.125, 0),
+        Vector4(0.45, 0.255, 0.183, -0.015),
+        Vector4(0.32, 0.365, 0.224, -0.005),
+        Vector4(0.17, 0.385, 0.248, 0.005),
+        Vector4(0.03, 0.369, 0.261, 0.008),
+        Vector4(-0.13, 0.317, 0.255, 0.014),
+        Vector4(-0.27, 0.302, 0.247, 0.015),
+        Vector4(-0.42, 0.295, 0.23, 0.0),
+        Vector4(-0.48, 0.283, 0.213, 0)
     ]), shirt, 24)
     # Shirt hem, folded sleeves, reinforced shoulder seams and a flatter pack.
     SurvivorModels.beam(torso, Vector3(-0.30, -0.405, 0.21), Vector3(0.30, -0.405, 0.21), 0.024, shirt_shadow)
     for side in [-1.0, 1.0]:
-        SurvivorModels.beam(torso, Vector3(side * 0.16, 0.46, 0.10), Vector3(side * 0.44, 0.29, 0.04), 0.018, shirt_shadow)
+        SurvivorModels.beam(torso, Vector3(side * 0.13, 0.46, 0.10), Vector3(side * 0.35, 0.29, 0.04), 0.014, shirt_shadow)
         SurvivorModels.beam(torso, Vector3(side * 0.28, -0.27, 0.25), Vector3(side * 0.29, -0.43, 0.23), 0.015, stitches)
         SurvivorModels.beam(torso, Vector3(side * 0.29, -0.34, -0.20), Vector3(side * 0.28, 0.40, -0.13), 0.052, leather)
     SurvivorHeroGeometry.loft(torso, PackedVector4Array([
@@ -253,14 +284,14 @@ func _build_character() -> void:
     # Open shirt neckline, displaced stitched collar and irregular creases
     # break the otherwise seamless tubular silhouette of the torso.
     for side in [-1.0, 1.0]:
-        SurvivorModels.beam(torso,Vector3(side*0.12,0.53,0.195),Vector3(side*0.22,0.39,0.248),0.024,shirt_shadow)
+        SurvivorModels.beam(torso,Vector3(side*0.12,0.51,0.166),Vector3(side*0.19,0.38,0.208),0.016,shirt_shadow)
         SurvivorModels.beam(torso,Vector3(side*0.17,-0.11,0.281),Vector3(side*0.32,-0.22,0.235),0.011,shirt.lightened(0.10))
-        SurvivorModels.beam(torso,Vector3(side*0.23,0.12,0.252),Vector3(side*0.35,0.07,0.206),0.009,shirt_shadow)
+        SurvivorModels.beam(torso,Vector3(side*0.21,0.12,0.242),Vector3(side*0.32,0.07,0.206),0.009,shirt_shadow)
     SurvivorModels.beam(torso,Vector3(0,0.40,0.295),Vector3(0,0.17,0.304),0.009,shirt_shadow)
     # Two cinch straps anchor the fabric to the already existing backpack.
     SurvivorModels.beam(torso,Vector3(-0.29,0.33,-0.10),Vector3(-0.24,-0.37,-0.23),0.031,leather)
     SurvivorModels.beam(torso,Vector3(0.29,0.33,-0.10),Vector3(0.24,-0.37,-0.23),0.031,leather)
-    SurvivorModels.merge_static(torso, "hero_torso_v17")
+    SurvivorModels.merge_static(torso, "hero_torso_v18")
 
     head_pivot = _joint(torso, Vector3(0, 0.67, 0))
     # Anatomical audit: the former oversized cranium read as a toy head.
@@ -269,14 +300,16 @@ func _build_character() -> void:
     SurvivorHeroGeometry.shaped_limb(head_pivot, 0.22, 0.15, 0.16, skin_shadow, 1.0)
     # Face is a single continuous jaw/cheek/cranium surface (not a ball).
     SurvivorHeroGeometry.loft(head_pivot, PackedVector4Array([
-        Vector4(0.62, 0.015, 0.015, -0.01),
-        Vector4(0.57, 0.19, 0.20, -0.02),
-        Vector4(0.47, 0.30, 0.265, -0.015),
-        Vector4(0.32, 0.315, 0.285, 0.0),
-        Vector4(0.19, 0.30, 0.275, 0.01),
-        Vector4(0.06, 0.255, 0.24, 0.014),
-        Vector4(-0.025, 0.175, 0.19, 0.015),
-        Vector4(-0.085, 0.06, 0.07, 0.005)
+        Vector4(0.62, 0.012, 0.012, -0.01),
+        Vector4(0.58, 0.165, 0.178, -0.02),
+        Vector4(0.50, 0.257, 0.225, -0.015),
+        Vector4(0.42, 0.278, 0.244, -0.005),
+        Vector4(0.33, 0.29, 0.252, 0.00),
+        Vector4(0.23, 0.278, 0.242, 0.015),
+        Vector4(0.13, 0.255, 0.224, 0.015),
+        Vector4(0.04, 0.19, 0.178, 0.02),
+        Vector4(-0.04, 0.125, 0.125, 0.01),
+        Vector4(-0.085, 0.035, 0.045, 0.005)
     ]), skin, 24)
     # Irregular close-cropped hair follows the scalp, with a natural hairline.
     SurvivorHeroGeometry.loft(head_pivot, PackedVector4Array([
@@ -285,15 +318,26 @@ func _build_character() -> void:
         Vector4(0.515, 0.286, 0.259, -0.035),
         Vector4(0.435, 0.308, 0.267, -0.055)
     ]), Color(0.19, 0.17, 0.14), 24)
-    # Compact ears, bridge, nostrils, eye sockets and lips; no protruding eyes.
-    SurvivorModels.sphere(head_pivot, 0.052, skin_shadow, Vector3(0, 0.245, 0.274), Vector3(0.55, 1.22, 0.53))
-    SurvivorModels.sphere(head_pivot, 0.046, skin, Vector3(0, 0.205, 0.298), Vector3(0.87, 0.52, 0.57))
+    # The previous dark eye-socket spheres and protruding circular nose made
+    # the face read like a toy. A contoured bridge and subdued recessed eyelids
+    # keep the same expression without oversize cartoon features.
+    SurvivorHeroGeometry.loft(head_pivot, PackedVector4Array([
+        Vector4(0.355,0.026,0.028,0.236),
+        Vector4(0.314,0.032,0.045,0.257),
+        Vector4(0.263,0.042,0.052,0.275),
+        Vector4(0.217,0.054,0.059,0.287),
+        Vector4(0.183,0.052,0.052,0.292),
+        Vector4(0.158,0.025,0.022,0.274)
+    ]), skin, 16)
     for side in [-1.0, 1.0]:
-        SurvivorModels.sphere(head_pivot, 0.086, skin, Vector3(side * 0.31, 0.255, -0.007), Vector3(0.46, 1.0, 0.67))
-        SurvivorModels.sphere(head_pivot, 0.051, skin_shadow, Vector3(side * 0.13, 0.312, 0.253), Vector3(1.3, 0.62, 0.30))
-        SurvivorModels.sphere(head_pivot, 0.032, Color(0.79, 0.75, 0.66), Vector3(side * 0.13, 0.311, 0.268), Vector3(1.18, 0.49, 0.30))
-        SurvivorModels.sphere(head_pivot, 0.017, Color(0.14, 0.15, 0.14), Vector3(side * 0.13, 0.311, 0.284), Vector3(0.91, 0.95, 0.44))
-        SurvivorModels.beam(head_pivot, Vector3(side * 0.068, 0.377, 0.254), Vector3(side * 0.202, 0.368, 0.222), 0.013, Color(0.20, 0.16, 0.13))
+        SurvivorModels.sphere(head_pivot, 0.071, skin, Vector3(side * 0.29, 0.252, -0.013), Vector3(0.43, 1.0, 0.64))
+        # Recessed eyes. White sclera is a small shallow surface, not a
+        # bright sphere floating in front of the cheeks.
+        SurvivorModels.sphere(head_pivot, 0.043, skin_shadow, Vector3(side * 0.130,0.308,0.240), Vector3(1.2,0.55,0.28))
+        SurvivorModels.sphere(head_pivot, 0.027, Color(0.67,0.62,0.53), Vector3(side * 0.130,0.305,0.249), Vector3(1.15,0.41,0.28))
+        SurvivorModels.sphere(head_pivot, 0.015, Color(0.18,0.16,0.15), Vector3(side * 0.130,0.305,0.260), Vector3(0.8,0.88,0.4))
+        SurvivorModels.beam(head_pivot,Vector3(side*0.077,0.323,0.249),Vector3(side*0.179,0.323,0.227),0.010,skin_shadow)
+        SurvivorModels.beam(head_pivot, Vector3(side * 0.077, 0.370, 0.250), Vector3(side * 0.200, 0.364, 0.222), 0.014, Color(0.22, 0.18, 0.15))
     SurvivorModels.beam(head_pivot, Vector3(-0.077, 0.091, 0.228), Vector3(0.077, 0.091, 0.228), 0.016, skin_shadow)
     # Subtle cheek/jaw plane transitions, scalp hair wisps and a believable
     # narrow mouth avoid the previous painted-on spherical facial appearance.
@@ -301,7 +345,7 @@ func _build_character() -> void:
         SurvivorModels.beam(head_pivot,Vector3(side*0.215,0.214,0.174),Vector3(side*0.105,0.115,0.232),0.010,skin_shadow.lightened(0.06))
         SurvivorModels.beam(head_pivot,Vector3(side*0.24,0.477,0.159),Vector3(side*0.12,0.43,0.236),0.012,Color(0.18,0.15,0.13))
         SurvivorModels.sphere(head_pivot,0.018,skin_shadow,Vector3(side*0.031,0.184,0.321),Vector3(0.9,0.50,0.26))
-    SurvivorModels.merge_static(head_pivot, "hero_head_v17")
+    SurvivorModels.merge_static(head_pivot, "hero_head_v18_face")
 
     # Raised pelvis + longer upper/lower legs, keeping ankle soles at the
     # original surface height. Anatomical shape changes never affect speed,
@@ -326,8 +370,8 @@ func _build_character() -> void:
         SurvivorHeroGeometry.boot(foot,leather,Color(0.18,0.16,0.14))
         SurvivorModels.merge_static(foot, "hero_boot_v17")
 
-    left_arm = _joint(torso, Vector3(-0.47, 0.30, 0))
-    right_arm = _joint(torso, Vector3(0.47, 0.30, 0))
+    left_arm = _joint(torso, Vector3(-0.395, 0.30, 0))
+    right_arm = _joint(torso, Vector3(0.395, 0.30, 0))
     left_elbow = _joint(left_arm, Vector3(0, -0.38, 0))
     right_elbow = _joint(right_arm, Vector3(0, -0.38, 0))
     for arm in [left_arm, right_arm]:

@@ -1,5 +1,15 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.8.0 — Silhueta orgânica e materiais separados do herói (fonte Godot; SEM APK)
+
+- **Correção de close-up do rosto**: removidos volumes esféricos salientes do nariz; substituído por contorno contínuo de ponte/ponta nasal e olhos menores parcialmente recuados, com delineamento de pálpebras. Trata-se de uma melhora de modelagem real, ainda não de um rosto humano de produção.
+- **Geometria anatômica mais contínua**: `SurvivorHeroGeometry.resample_profile` interpola os perfis existentes com Catmull–Rom controlado, criando novas faixas suaves de geometria em tórax, cabeça e membros. Os extremos e a altura de cada perfil são preservados, evitando inversões e quebras entre juntas.
+- **Proporções corrigidas no jogo**: tórax mais estreito, cintura de transição contínua, linha dos ombros menos exagerada e contorno de crânio/mandíbula refinado após inspeção das capturas nativas anteriores. Mantidos todos os pivôs de equipamentos, braços, pescoço, ferramentas e animações.
+- **Marcha com apoio visual**: pé de balanço recebe pequena elevação assimétrica, rolagem de tornozelo mais suave, contrarrotação de ombro/quadril e cotovelos em fases distintas. A física, velocidade, colisão e som dos passos permanecem iguais; ações continuam com os mesmos encaixes.
+- **Cabelo não é couro**: a malha mesclada preserva agora `UV2.x=5` para tecido, `6` para pele, `7` para couro e `8` para cabelo/sobrancelhas. A nova resposta procedural de fios evita o brilho/material de couro aplicado anteriormente ao cabelo, sem adicionar texturas externas ou novas APIs.
+- **Testes e capturas nativas**: validação de monotonicidade, radii e extremidades dos novos perfis, famílias de pele/cabelo, contorno do corpo e passada alternada. `visual_hero_v18.yml` captura 12 frames REAIS Godot 4.6.1: vistas de jogo, ação de machado, pesca, frente/perfil detalhados, botas, marcha em fase oposta e reação dos materiais sob chuva.
+- **Limitação importante**: esta é uma revisão real de geometria procedural, não a substituição por um humano fotorrealista. O próximo salto de qualidade exige modelagem humana autoral com retopologia, skinning de esqueleto, materiais PBR (albedo/normal/roughness) e animação produzida, com LOD e teste de desempenho em Android físico. Nenhum APK foi gerado.
+
 ## v1.7.0 — Herói 3D: tornozelos articulados, botas orgânicas, mãos e materiais (fonte Godot; SEM APK)
 
 - **Auditoria extra de câmera lateral**: a renderização ampliada revelou sola e volume dos calçados exagerados e mangas e punhos cilíndricos. A malha dos pés foi encurtada/afinada sem alterar o pivô do tornozelo, e as mangas e palmas foram suavizadas.
