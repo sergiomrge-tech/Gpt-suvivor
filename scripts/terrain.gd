@@ -142,6 +142,11 @@ func _build_lighting() -> void:
     env.ambient_light_color = Color(0.76, 0.87, 1.0)
     env.ambient_light_energy = 0.28
     env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+    # Thin distance haze adds scale without forcing expensive volumetric fog.
+    env.fog_enabled = true
+    env.fog_light_color = Color(0.68,0.78,0.82)
+    env.fog_density = 0.0026
+    env.fog_sun_scatter = 0.07
     env_node.environment = env
     atmosphere = env
     add_child(env_node)
@@ -185,4 +190,6 @@ func _update_atmosphere() -> void:
     var daytime := Color(0.49,0.72,0.88)
     atmosphere.background_color = night.lerp(daytime,daylight_amount).lerp(Color(0.22,0.31,0.39),cloud)
     atmosphere.ambient_light_color = Color(0.36,0.50,0.67).lerp(Color(0.80,0.88,0.98),daylight_amount)
+    atmosphere.fog_density = 0.0026 + rainfall_amount*0.0034 + storm_amount*0.0052
+    atmosphere.fog_light_color = Color(0.09,0.14,0.23).lerp(Color(0.69,0.79,0.82),daylight_amount).lerp(Color(0.36,0.43,0.47),cloud)
 
