@@ -241,6 +241,43 @@ static func building(parent: Node3D, kind: String) -> void:
                     stone(parent,0.45,4,Color(0.41,0.42,0.38),Vector3(side*2.7,0.1,z),Vector3(1,0.5,1))
             box(parent, Vector3(1.6, 0.25, 1.8), wood, Vector3(0, 0.12, 3.4))
             box(parent, Vector3(1.5, 0.2, 2.6), Color(0.62, 0.68, 0.46), Vector3(-1.4, 0.6, -0.8))
+        "chest":
+            # Wooden storage chest with brass hinges and edge reinforcements.
+            for i in range(6):
+                box(parent,Vector3(2.4,0.17,0.35),plank.lightened(float(i%3)*0.035),Vector3(0,0.26+float(i)*0.16,-0.45))
+                box(parent,Vector3(2.4,0.17,0.35),plank.lightened(float((i+1)%3)*0.035),Vector3(0,0.26+float(i)*0.16,0.45))
+            for i in range(3):
+                box(parent,Vector3(2.5,0.12,0.44),plank.lightened(float(i)*0.02),Vector3(0,1.32,(float(i)-1.0)*0.41))
+            for x in [-1.12,1.12]:
+                box(parent,Vector3(0.11,1.12,1.25),wood,Vector3(x,0.72,0))
+                for z in [-0.52,0.52]:
+                    box(parent,Vector3(0.16,1.17,0.08),Color(0.56,0.49,0.29),Vector3(x,0.73,z))
+            box(parent,Vector3(0.26,0.32,0.12),Color(0.78,0.67,0.37),Vector3(0,0.91,0.64))
+        "bed":
+            for x in [-1.25,1.25]:
+                for z in [-1.8,1.8]:
+                    beam(parent,Vector3(x,0,z),Vector3(x,0.82,z),0.18,wood)
+            for i in range(6):
+                box(parent,Vector3(2.75,0.18,0.65),plank.lightened(float(i%2)*0.025),Vector3(0,0.59,(float(i)-2.5)*0.64))
+            box(parent,Vector3(2.52,0.29,2.9),Color(0.48,0.59,0.36),Vector3(0,0.86,-0.18))
+            box(parent,Vector3(2.35,0.15,2.5),Color(0.76,0.73,0.49),Vector3(0,1.02,-0.27))
+            box(parent,Vector3(2.0,0.31,0.76),Color(0.84,0.81,0.65),Vector3(0,1.17,1.05))
+        "rain_collector":
+            # Raised basin, canvas funnel, intake and a latched storage barrel.
+            for x in [-1.3,1.3]:
+                for z in [-1.3,1.3]:
+                    beam(parent,Vector3(x,0,z),Vector3(x,2.5,z),0.13,wood)
+            triangles(parent,PackedVector3Array([
+                Vector3(-1.4,2.32,-1.4),Vector3(1.4,2.32,-1.4),Vector3(0,1.5,0),
+                Vector3(1.4,2.32,-1.4),Vector3(1.4,2.32,1.4),Vector3(0,1.5,0),
+                Vector3(1.4,2.32,1.4),Vector3(-1.4,2.32,1.4),Vector3(0,1.5,0),
+                Vector3(-1.4,2.32,1.4),Vector3(-1.4,2.32,-1.4),Vector3(0,1.5,0)
+            ]),Color(0.66,0.71,0.55))
+            box(parent,Vector3(1.16,1.1,1.16),Color(0.43,0.29,0.17),Vector3(0,0.65,0))
+            for y in [0.2,0.85,1.2]:
+                box(parent,Vector3(1.3,0.09,1.3),Color(0.55,0.61,0.54),Vector3(0,y,0))
+            sphere(parent,0.62,Color(0.18,0.43,0.49),Vector3(0,1.22,0),Vector3(1,0.12,1))
+            beam(parent,Vector3(0,1.5,0),Vector3(0,1.3,0),0.14,Color(0.41,0.45,0.43))
         "dock":
             for i in range(5):
                 var ramp := box(parent,Vector3(3.4,0.15,0.38),plank,Vector3(0,0.58-i*0.105,0.32+i*0.34))
