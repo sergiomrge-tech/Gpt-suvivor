@@ -12,6 +12,13 @@ const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut"
 const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "stone_spear":"utility", "fishing_rod":"main_hand", "reinforced_axe":"utility", "reinforced_pickaxe":"utility"}
 const DAY_SECONDS := 1200.0
 const START_POSITION := Vector3(0.0, 0.0, 170.0)
+const BOAT_STAGE_NAMES := ["", "Quilha", "Casco", "Convés", "Mastro", "Vela e leme"]
+const BOAT_STAGE_COSTS := {
+    2: {"wood":12, "plank":3, "rope":2},
+    3: {"wood":4, "plank":3, "rope":2},
+    4: {"wood":8, "plank":1, "rope":2},
+    5: {"fiber":10, "plank":1, "rope":3, "metal":8}
+}
 const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado", "raw_crab": "Caranguejo cru", "raw_meat": "Carne crua", "grilled_crab": "Caranguejo assado", "cooked_meat": "Carne assada", "rope": "Corda", "plank": "Tábua", "cave_crystal": "Cristal da caverna"}
 const RECIPES := {
     "stone_knife": {"title": "Faca de pedra", "cost": {"wood": 1, "stone": 2, "fiber": 1}, "requires": [], "description": "Feita à mão. Corta fibras: coleta 8 em vez de 5."},
@@ -28,7 +35,7 @@ const RECIPES := {
     "fishing_rod": {"title": "Vara de pesca", "cost": {"wood": 6, "fiber": 8}, "requires": ["workbench"], "description": "Pesque na costa ou no cais."},
     "house": {"title": "Casa", "cost": {"wood": 30, "stone": 10, "fiber": 10}, "requires": ["workbench"], "description": "Abrigo para descansar e recuperar saúde."},
     "dock": {"title": "Cais", "cost": {"wood": 20, "fiber": 10}, "requires": ["workbench"], "description": "Construa na praia. Ponto de pesca e embarque."},
-    "boat": {"title": "Barco de fuga", "cost": {"wood": 40, "fiber": 10, "plank": 10, "rope": 10, "metal": 8}, "requires": ["house", "dock", "fishing_rod"], "description": "Construa junto ao cais e parta da ilha."},
+    "boat": {"title": "Barco de fuga", "cost": {"wood": 16, "plank": 2, "rope": 1}, "requires": ["house", "dock", "fishing_rod"], "description": "Etapa 1/5: quilha. Toque no barco junto ao cais para montar casco, convés, mastro, vela e leme aos poucos."},
     "floor_panel": {"title": "Piso modular", "cost": {"plank": 2, "wood": 2}, "requires": ["workbench"], "description": "Piso 3,2 × 3,2 m. Encaixa na grade de construção."},
     "wall_panel": {"title": "Parede modular", "cost": {"plank": 2, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Parede de madeira para cercar o piso, com encaixe e rotação."},
     "door_panel": {"title": "Porta de madeira", "cost": {"plank": 3, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Abra e feche a porta tocando em Explorar; oferece passagem quando aberta."},
@@ -65,6 +72,41 @@ func owns(kind: String) -> bool:
     if kind in TOOLS:
         return int(inventory.get(kind, 0)) > 0
     return has_structure(kind)
+
+func boat_stage() -> int:
+    for entry in buildings:
+        if str(entry.get("kind","")) == "boat":
+            # Unversioned boats were complete in all older releases.
+            return int(entry.get("stage", 5))
+    return 0
+
+func boat_ready() -> bool:
+    return boat_stage() == 5
+
+func boat_upgrade_error() -> String:
+    var stage := boat_stage()
+    if stage == 0:
+        return "Primeiro construa a quilha do barco no cais."
+    if stage >= 5:
+        return "Barco pronto para embarcar."
+    var cost: Dictionary = BOAT_STAGE_COSTS[stage+1]
+    for item in cost:
+        if int(inventory.get(item,0)) < int(cost[item]):
+            return "Para %s faltam recursos: %s (%d/%d)." % [BOAT_STAGE_NAMES[stage+1], ITEMS.get(item,item), int(inventory.get(item,0)), int(cost[item])]
+    return ""
+
+func upgrade_boat() -> bool:
+    if boat_upgrade_error() != "":
+        return false
+    var stage := boat_stage()
+    var cost: Dictionary = BOAT_STAGE_COSTS[stage+1]
+    for item in cost:
+        inventory[item] = int(inventory.get(item,0)) - int(cost[item])
+    for entry in buildings:
+        if str(entry.get("kind","")) == "boat":
+            entry["stage"] = stage+1
+            return true
+    return false
 
 func equip_tool(kind: String) -> bool:
     if not TOOL_SLOTS.has(kind) or not owns(kind):
@@ -216,8 +258,11 @@ func objective() -> String:
         return "5/6 • Monte um cais na praia. Procure metal nos destroços e cavernas."
     if not bool(discoveries.get("sail_diagram", false)):
         return "6/6 • Explore a Caverna do Leste e encontre o esquema da vela."
-    if not owns("boat"):
-        return "6/6 • Fabrique 10 tábuas e 10 cordas; complete o barco junto ao cais."
+    var stage := boat_stage()
+    if stage == 0:
+        return "6/6 • Inicie a quilha do barco junto ao cais. A construção terá 5 etapas."
+    if stage < 5:
+        return "6/6 • Barco %d/5: %s. Reúna materiais e use Explorar no barco." % [stage,BOAT_STAGE_NAMES[stage+1]]
     return "O barco está pronto! Aproxime-se e toque em Embarcar."
 
 func to_data() -> Dictionary:
@@ -296,6 +341,12 @@ static func from_data(data: Dictionary) -> SurvivalState:
             if not (value is int or value is float) or not is_finite(float(value)) or absf(float(value)) > 240.0:
                 return null
         var building := {"kind": kind, "x": float(entry.x), "z": float(entry.z)}
+        if kind == "boat":
+            if entry.has("stage"):
+                var boat_stage_value = entry.get("stage")
+                if not boat_stage_value is int or int(boat_stage_value) < 1 or int(boat_stage_value) > 5:
+                    return null
+                building["stage"] = int(boat_stage_value)
         if kind == "door_panel":
             var door_open = entry.get("door_open", false)
             if not door_open is bool:
@@ -322,5 +373,5 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not discovered[id] is bool:
             return null
         state.discoveries[str(id)] = discovered[id]
-    state.escaped = bool(data.get("escaped", false)) and state.has_structure("boat")
+    state.escaped = bool(data.get("escaped", false)) and state.boat_ready()
     return state
