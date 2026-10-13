@@ -369,24 +369,77 @@ static func building(parent: Node3D, kind: String) -> void:
                 for z in [0, -4, -8.5]:
                     beam(parent, Vector3(x, -1, z), Vector3(x, 1.2, z), 0.18, wood)
         "boat":
-            var vertices := PackedVector3Array()
-            for i in range(12):
-                var z := -4.2 + i * 0.7
-                var next_z := z + 0.7
-                var width := maxf(0.18, sin((i + 0.3) / 12.6 * PI) * 1.8)
-                var next_width := maxf(0.18, sin((i + 1.3) / 12.6 * PI) * 1.8)
-                for side in [-1.0, 1.0]:
-                    var a := Vector3(side * width, 0.65, z)
-                    var b := Vector3(side * next_width, 0.65, next_z)
-                    var c := Vector3(0, -0.15, z)
-                    var d := Vector3(0, -0.15, next_z)
-                    vertices.append_array(PackedVector3Array([a, c, b, b, c, d]))
-                box(parent, Vector3(width * 2, 0.12, 0.65), plank, Vector3(0, 0.5, z))
-            triangles(parent, vertices, wood)
-            beam(parent, Vector3(0, 0.5, 0), Vector3(0, 7.4, 0), 0.13, wood)
-            beam(parent, Vector3(-0.1, 2.1, 0), Vector3(2.9, 2.1, 0), 0.09, wood)
-            triangles(parent, PackedVector3Array([Vector3(0.1, 7.1, 0), Vector3(2.8, 2.3, 0.2), Vector3(0.1, 2.3, 0)]), Color(0.9, 0.85, 0.68))
-            beam(parent, Vector3(0, 7.0, 0), Vector3(0, 0.8, -3.8), 0.025, Color(0.69, 0.6, 0.41))
+            boat_stage(parent,5)
+
+# Dynamic construction preview and structure share the same modular 3D geometry.
+# Each phase adds new hull elements while retaining the earlier visible parts.
+static func boat_stage(parent: Node3D, stage: int) -> void:
+    stage = clampi(stage,1,5)
+    var timber := Color(0.39,0.25,0.12)
+    var plank := Color(0.64,0.45,0.23)
+    var iron := Color(0.43,0.47,0.46)
+    # 1/5: timber keel, upward-curving bow and five cross ribs.
+    beam(parent,Vector3(0,-0.18,-4.45),Vector3(0,-0.18,4.40),0.22,timber)
+    beam(parent,Vector3(0,-0.18,-4.45),Vector3(0,1.12,-5.15),0.17,timber)
+    beam(parent,Vector3(0,-0.18,4.40),Vector3(0,0.75,4.66),0.15,timber)
+    for i in range(5):
+        var z := -3.6 + float(i)*1.75
+        var width := 1.15 + 0.55 * sin(float(i+1)/6.0*PI)
+        for side in [-1.0,1.0]:
+            beam(parent,Vector3(0,-0.12,z),Vector3(side*width,0.82,z),0.12,timber)
+            beam(parent,Vector3(side*width,0.82,z),Vector3(side*(width+0.06),1.15,z),0.095,timber)
+        beam(parent,Vector3(-width,0.76,z),Vector3(width,0.76,z),0.09,timber)
+    if stage >= 2:
+        # 2/5: overlapping hull strakes with a pointed bow.
+        var hull := PackedVector3Array()
+        for i in range(12):
+            var z := -4.2 + float(i)*0.7
+            var next_z := z + 0.7
+            var width := maxf(0.15,sin((float(i)+0.3)/12.6*PI)*1.85)
+            var next_width := maxf(0.15,sin((float(i)+1.3)/12.6*PI)*1.85)
+            for side in [-1.0,1.0]:
+                var a := Vector3(side*width,0.79,z)
+                var b := Vector3(side*next_width,0.79,next_z)
+                var c := Vector3(0,-0.19,z)
+                var d := Vector3(0,-0.19,next_z)
+                hull.append_array(PackedVector3Array([a,c,b,b,c,d]))
+        triangles(parent,hull,timber.lightened(0.08))
+        for side in [-1.0,1.0]:
+            beam(parent,Vector3(side*0.15,0.47,-4.33),
+                Vector3(side*0.15,0.60,4.20),0.05,plank)
+    if stage >= 3:
+        # 3/5: visible deck timbers and cross ties.
+        for i in range(12):
+            var z := -4.05 + float(i)*0.69
+            var width := maxf(0.45,sin((float(i)+0.5)/12.6*PI)*1.76)
+            box(parent,Vector3(width*1.9,0.13,0.62),
+                plank.lightened(float(i%3)*0.032),Vector3(0,0.67,z))
+        for side in [-1.0,1.0]:
+            beam(parent,Vector3(side*1.05,0.91,-2.75),
+                Vector3(side*1.05,0.91,2.80),0.062,iron)
+    if stage >= 4:
+        # 4/5: mast, spars and diagonal lashings.
+        beam(parent,Vector3(0,0.71,0),Vector3(0,7.35,0),0.15,timber)
+        beam(parent,Vector3(0,2.05,0),Vector3(2.72,2.05,0),0.095,timber)
+        beam(parent,Vector3(0,5.20,0),Vector3(2.05,5.20,0),0.065,timber)
+        for side in [-1.0,1.0]:
+            beam(parent,Vector3(0,6.80,0),Vector3(side*1.60,0.86,-2.12),
+                0.027,Color(0.64,0.55,0.38))
+    if stage >= 5:
+        # 5/5: sail, rudder and final coastal rigging; only then can one escape.
+        triangles(parent,PackedVector3Array([
+            Vector3(0.15,7.08,0),Vector3(2.63,2.24,0.07),Vector3(0.15,2.24,0),
+            Vector3(0.15,7.08,0),Vector3(2.03,5.02,0.07),Vector3(2.63,2.24,0.07)
+        ]),Color(0.92,0.88,0.69))
+        beam(parent,Vector3(0,6.93,0),Vector3(0,0.95,-3.82),
+            0.024,Color(0.71,0.60,0.41))
+        beam(parent,Vector3(0,0.53,4.10),Vector3(0,0.38,5.23),
+            0.11,timber)
+        box(parent,Vector3(0.18,1.28,0.95),plank.lightened(0.04),
+            Vector3(0,-0.04,5.00))
+        for side in [-1.0,1.0]:
+            box(parent,Vector3(0.07,0.09,0.44),iron,
+                Vector3(side*0.22,0.81,4.00))
 
 # Static props use one vertex-colored mesh instead of dozens of draw calls.
 static var merged_material: ShaderMaterial
