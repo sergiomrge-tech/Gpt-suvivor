@@ -1,3 +1,11 @@
+# Checkpoint v1.3.0 — 13/10/2026
+
+Branch `feat/cave-vents-voyage-hud-v13`, criada a partir da v1.2. Melhoria incremental real, sem APK: gases de caverna agora pulsam por ciclos determinísticos de 8 segundos, com janela ativa de 4,5 segundos e aviso por luz própria sem sombras extras. Caverna do Leste e Gruta das Raízes têm fases ligeiramente deslocadas, incentivando aguardar uma janela de travessia. `hazard_rate_at` recebe tempo opcional e não modifica o formato de saves v3; o jogo passa `state.elapsed` para preservar a fase após carregar.
+
+Na fuga marítima, foram incluídos balanço adicional do barco, cálculo de distância ao próximo recife, indicação de manobra/faixa segura e barra separada da integridade do casco na interface mobile. Mantidos os 3 recifes originais, controles por toque/teclado e reembarque sem nova cobrança. Código original da UI de inventário premium, equipamentos, receitas, barcos faseados e economia preservado. Testes adicionados para ciclo ativo/inativo do gás, luzes e leitura do painel náutico.
+
+**Validação inicial** da branch: 445/445 testes nativos Godot 4.6.1 aprovados, capturas reais de cavernas e navegação geradas no GitHub Actions. Workflow de validação reforçado para evitar teste de importação aparentemente verde com `rg` ausente no runner; será reconfirmado no commit final. Sem alegar testes em hardware Android, comparação pixel-perfect, audição ou medição real de FPS. Não disparar workflow Android ou produzir APK salvo pedido explícito.
+
 # Checkpoint v1.2.0 — 13/10/2026
 
 Branch `feat/deep-caves-atmosphere-voyage-v12`, criada da `feat/premium-inventory-v111`. Pedido do usuário: executar as sugestões 5 (exploração cavernas), 7 (imersão sonora) e 8 (final de campanha navegável). Foram implementados código real e testes, sem gerar APK.
