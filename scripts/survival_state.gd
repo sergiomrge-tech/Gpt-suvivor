@@ -2,19 +2,20 @@ extends RefCounted
 class_name SurvivalState
 
 const SAVE_VERSION := 3
-const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "fishing_rod"]
+const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear", "fishing_rod"]
 const MATERIAL_RECIPES := ["rope", "plank"]
 const MODULES := ["floor_panel", "wall_panel", "door_panel", "window_panel", "roof_panel"]
 const WALL_MODULES := ["wall_panel", "door_panel", "window_panel"]
-const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal"]
-const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "fishing_rod":"main_hand"}
+const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal", "raw_crab", "raw_meat", "grilled_crab", "cooked_meat"]
+const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "stone_spear":"utility", "fishing_rod":"main_hand"}
 const DAY_SECONDS := 1200.0
 const START_POSITION := Vector3(0.0, 0.0, 170.0)
-const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado", "rope": "Corda", "plank": "Tábua"}
+const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado", "raw_crab": "Caranguejo cru", "raw_meat": "Carne crua", "grilled_crab": "Caranguejo assado", "cooked_meat": "Carne assada", "rope": "Corda", "plank": "Tábua"}
 const RECIPES := {
     "stone_knife": {"title": "Faca de pedra", "cost": {"wood": 1, "stone": 2, "fiber": 1}, "requires": [], "description": "Feita à mão. Corta fibras: coleta 8 em vez de 5."},
     "stone_axe": {"title": "Machado de pedra", "cost": {"wood": 3, "stone": 2, "fiber": 2}, "requires": [], "description": "Feito à mão. Necessário para cortar árvores e coqueiros."},
     "stone_pickaxe": {"title": "Picareta de pedra", "cost": {"wood": 3, "stone": 3, "fiber": 2}, "requires": [], "description": "Feita à mão. Necessária para extrair pedra das rochas."},
+    "stone_spear": {"title": "Lança de pedra", "cost": {"wood": 4, "stone": 2, "fiber": 3}, "requires": [], "description": "Ferramenta de caça artesanal. Equipe para caçar javalis na mata."},
     "rope": {"title": "Corda", "cost": {"fiber": 1}, "requires": [], "description": "Trance fibras à mão. Usada nos móveis e no barco."},
     "plank": {"title": "Tábua", "cost": {"wood": 2}, "requires": ["workbench"], "description": "Prepare madeira na bancada. Usada nas peças do barco."},
     "campfire": {"title": "Fogueira", "cost": {"wood": 10, "stone": 6}, "requires": [], "description": "Asse peixes e ilumine o acampamento."},
@@ -31,11 +32,13 @@ const RECIPES := {
     "chest": {"title": "Baú do acampamento", "cost": {"wood": 5, "plank": 4, "rope": 2}, "requires": ["workbench"], "description": "Guarde recursos e retire-os quando precisar."},
     "bed": {"title": "Cama de folhas", "cost": {"wood": 6, "fiber": 5, "rope": 2}, "requires": ["house"], "description": "Descansar recupera a saúde."},
     "rain_collector": {"title": "Coletor de chuva", "cost": {"wood": 6, "plank": 2, "rope": 3}, "requires": ["workbench"], "description": "Armazena água durante as chuvas tropicais."},
-    "meal": {"title": "Assar peixe", "cost": {"raw_fish": 1}, "requires": ["campfire"], "description": "Prepare na fogueira. Recupera 38 de fome."}
+    "meal": {"title": "Assar peixe", "cost": {"raw_fish": 1}, "requires": ["campfire"], "description": "Prepare na fogueira. Recupera 38 de fome."},
+    "grilled_crab": {"title": "Assar caranguejo", "cost": {"raw_crab": 1}, "requires": ["campfire"], "description": "Caranguejo coletado nas praias. Recupera 26 de fome."},
+    "cooked_meat": {"title": "Assar carne", "cost": {"raw_meat": 1}, "requires": ["campfire"], "description": "Carne de javali. Recupera 48 de fome e um pouco de saúde."}
 }
 var equipment: Dictionary = {"main_hand":"", "utility":""}
-var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "fishing_rod": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0}
-var storage: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 0, "raw_fish": 0, "meal": 0}
+var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "raw_crab": 0, "raw_meat": 0, "grilled_crab": 0, "cooked_meat": 0, "fishing_rod": 0, "stone_spear": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0}
+var storage: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 0, "raw_fish": 0, "meal": 0, "raw_crab": 0, "raw_meat": 0, "grilled_crab": 0, "cooked_meat": 0}
 var rain_water := 0.0
 var buildings: Array[Dictionary] = []
 var harvested: Dictionary = {}
@@ -80,6 +83,8 @@ func harvest_error(kind: String) -> String:
         return "Equipe o machado de pedra em Mochila → Equipar para cortar árvores."
     if kind == "rock" and not is_equipped("stone_pickaxe"):
         return "Equipe a picareta em Mochila → Equipar para minerar rochas."
+    if kind == "boar" and not is_equipped("stone_spear"):
+        return "Equipe a lança de pedra em Mochila → Equipar para caçar javalis."
     return ""
 
 func craft_tool(kind: String) -> bool:
@@ -92,7 +97,7 @@ func craft_tool(kind: String) -> bool:
 func recipe_error(kind: String) -> String:
     if not RECIPES.has(kind):
         return "Receita desconhecida."
-    if kind not in ["meal", "rope", "plank"] and kind not in MODULES and owns(kind):
+    if kind not in ["meal", "grilled_crab", "cooked_meat", "rope", "plank"] and kind not in MODULES and owns(kind):
         return "Você já possui esse item."
     if kind == "boat" and not bool(discoveries.get("sail_diagram", false)):
         return "Encontre o esquema de vela na Caverna do Leste antes de construir o barco."
@@ -138,12 +143,24 @@ func transfer_storage(kind: String, to_chest: bool, count: int = 1) -> bool:
 func add_item(kind: String, count: int) -> void:
     inventory[kind] = int(inventory.get(kind, 0)) + count
 
+func ready_food_count() -> int:
+    return int(inventory.coconut) + int(inventory.meal) + int(inventory.grilled_crab) + int(inventory.cooked_meat)
+
 func consume() -> String:
     if int(inventory.meal) > 0 and hunger < 99.0:
         inventory.meal -= 1
         hunger = minf(100.0, hunger + 38.0)
         health = minf(100.0, health + 6.0)
         return "Peixe assado: +38 de fome."
+    if int(inventory.cooked_meat) > 0 and hunger < 99.0:
+        inventory.cooked_meat -= 1
+        hunger = minf(100.0, hunger + 48.0)
+        health = minf(100.0, health + 8.0)
+        return "Carne assada: +48 de fome e +8 de saúde."
+    if int(inventory.grilled_crab) > 0 and hunger < 99.0:
+        inventory.grilled_crab -= 1
+        hunger = minf(100.0, hunger + 26.0)
+        return "Caranguejo assado: +26 de fome."
     if int(inventory.coconut) > 0 and (thirst < 99.0 or hunger < 99.0):
         inventory.coconut -= 1
         hunger = minf(100.0, hunger + 15.0)
