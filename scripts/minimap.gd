@@ -26,6 +26,11 @@ func _draw() -> void:
         draw_rect(frame,Color(0.72,0.60,0.42),false,2.0)
         var to_map := func(p: Vector3) -> Vector2:
             return Vector2(size.x*0.5 + (p.x-center.x)/37.0*frame.size.x,size.y*0.5 + (p.z-center.z)/30.0*frame.size.y)
+        if world.caves.puzzles != null:
+            for entry in world.caves.puzzles.mechanisms:
+                if entry.cave != id or bool(world.state.discoveries.get(entry.id,false)):
+                    continue
+                draw_circle(to_map.call(entry.position),4.3,Color(0.24,0.86,0.89) if entry.kind == "cave_seal" else Color(1.0,0.63,0.30))
         draw_circle(to_map.call(SurvivorCaves.exit_position(id)),4.0,Color(0.39,0.83,0.73))
         for cache in world.caves.caches:
             if cache.cave == id and cache.node.visible:
