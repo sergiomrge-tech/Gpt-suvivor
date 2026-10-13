@@ -130,11 +130,11 @@ func is_equipped(kind: String) -> bool:
 
 func harvest_error(kind: String) -> String:
     if kind in ["palm", "tree"] and not (is_equipped("stone_axe") or is_equipped("reinforced_axe")):
-        return "Equipe o machado de pedra em Mochila → Equipar para cortar árvores."
+        return "Equipe o machado de pedra em Mochila → Equipamentos para cortar árvores."
     if kind == "rock" and not (is_equipped("stone_pickaxe") or is_equipped("reinforced_pickaxe")):
-        return "Equipe a picareta em Mochila → Equipar para minerar rochas."
+        return "Equipe a picareta em Mochila → Equipamentos para minerar rochas."
     if kind == "boar" and not is_equipped("stone_spear"):
-        return "Equipe a lança de pedra em Mochila → Equipar para caçar javalis."
+        return "Equipe a lança de pedra em Mochila → Equipamentos para caçar javalis."
     return ""
 
 func craft_tool(kind: String) -> bool:
@@ -248,7 +248,7 @@ func objective() -> String:
     if escaped:
         return "Você sobreviveu e deixou a ilha!"
     if not owns("stone_axe"):
-        return "Pegue troncos, pedras soltas e fibras. Mochila → Construções → Machado de pedra."
+        return "Pegue troncos, pedras soltas e fibras. Mochila → Receitas → Machado de pedra."
     if not owns("stone_pickaxe"):
         return "Fabrique a picareta na mochila para extrair pedra das rochas."
     if not owns("campfire"):
