@@ -350,8 +350,9 @@ func select_recipe(kind: String) -> void:
             return
         if state.pay_recipe(kind):
             state.add_item(kind, 1)
+            state.equip_tool(kind)
             queue_work(world.near_structure(player.position,"workbench",8),"craft",1.4,"station",2.35)
-            hud.toast("Vara pronta. Aproxime-se do mar e toque em Pescar.")
+            hud.toast("Vara pronta e equipada! Aproxime-se do mar e toque em Pescar.")
             save_game(false)
         return
     cancel_placement()
