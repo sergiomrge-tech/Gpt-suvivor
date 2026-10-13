@@ -61,8 +61,10 @@ func step(delta: float) -> void:
     distance += SPEED*dt
     current_lane = move_toward(current_lane,target_lane,dt*3.7)
     boat_node.position = start_point + outward*distance + sideways*current_lane
-    boat_node.position.y = start_point.y + sin(distance*0.42)*0.12
+    boat_node.position.y = start_point.y + sin(distance*0.42)*0.12 + sin(distance*0.23)*0.065
     boat_node.rotation.y = atan2(outward.x,outward.z) + (target_lane-current_lane)*0.035
+    boat_node.rotation.x = sin(distance*0.31)*0.027
+    boat_node.rotation.z = sin(distance*0.26)*0.022
     event_timer = maxf(0.0,event_timer-dt)
     if event_timer <= 0.0:
         last_event = ""
@@ -87,6 +89,28 @@ func step(delta: float) -> void:
 
 func progress() -> float:
     return clampf(distance/JOURNEY_LENGTH,0.0,1.0)
+
+func next_reef() -> Dictionary:
+    if not active:
+        return {}
+    for index in range(REEFS.size()):
+        if hit_reefs.has(index):
+            continue
+        var reef: Dictionary = REEFS[index]
+        var ahead := float(reef.at)-distance
+        if ahead >= 0.0:
+            return {"index":index,"distance":ahead,"lane":float(reef.lane)}
+    return {}
+
+func reef_hint() -> String:
+    var ahead := next_reef()
+    if ahead.is_empty():
+        return "ÁGUAS LIVRES • avance até o canal de saída"
+    var meters := int(ceil(float(ahead.distance)))
+    var reef_lane := float(ahead.lane)
+    if absf(target_lane-reef_lane) >= 3.0:
+        return "RECIFE A %d m • faixa escolhida segura" % meters
+    return "RECIFE A %d m • toque BOMBORDO ou ESTIBORDO" % meters
 
 func clear_course() -> void:
     active = false
