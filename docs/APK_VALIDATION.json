@@ -1,0 +1,20 @@
+{
+  "filename": "GPT_Survivor_v0_4_0_Android.apk",
+  "bytes": 26251869,
+  "sha256": "012194587d6214bdae42bbbb4c7acf64fd7df0db65dab6f1f1ef99e20b776a0a",
+  "package": "com.sergiomrge.gptsurvivor",
+  "version": "0.4.0",
+  "version_code": 400,
+  "sdk_min": 24,
+  "sdk_target": 35,
+  "architectures": [
+    "arm64-v8a"
+  ],
+  "crc": "passed",
+  "signature_v2_v3": "passed",
+  "zip_alignment_16kb": "passed",
+  "elf_alignment_16kb": "passed",
+  "audio_resources": 13,
+  "provider_authorities": "distinct",
+  "android_installation": "not tested; no connected device"
+}
