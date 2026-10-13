@@ -339,6 +339,10 @@ func interact() -> void:
                 hud.toast("Descanso: saúde recuperada.")
                 action_cooldown = 5
         "chest": hud.show_storage()
+        "door_panel":
+            var opened := world.toggle_door(target)
+            hud.toast("Porta aberta." if opened else "Porta fechada.")
+            save_game(false)
         "rain_collector":
             if state.rain_water >= 1.0:
                 state.rain_water -= 1.0
@@ -412,7 +416,7 @@ func _begin_placement(kind: String) -> void:
     footprint.name = "BuildFootprint"
     var size := 9.0 if kind == "house" else (3.2 if kind in SurvivalState.MODULES else 4.8)
     var pad := BoxMesh.new()
-    pad.size = Vector3(size,0.035,0.38 if kind == "wall_panel" else size)
+    pad.size = Vector3(size,0.035,0.38 if kind in SurvivalState.WALL_MODULES else size)
     footprint.mesh = pad
     footprint.position.y = 0.09
     preview.add_child(footprint)
@@ -462,7 +466,7 @@ func placement_point() -> Vector3:
     if selected_recipe in SurvivalState.MODULES:
         point.x = roundf(point.x / 3.2) * 3.2
         point.z = roundf(point.z / 3.2) * 3.2
-        if selected_recipe == "wall_panel":
+        if selected_recipe in SurvivalState.WALL_MODULES:
             point += Vector3(sin(preview_rotation),0,cos(preview_rotation)) * 1.6
     point.y = terrain.height_at(point.x, point.z)
     return point
