@@ -9,7 +9,8 @@ const COLOR_BG = Color(0.055, 0.12, 0.13, 0.87)
 const COLOR_BORDER = Color(0.75, 0.69, 0.48, 0.80)
 const COLOR_TEXT = Color(0.97, 0.95, 0.85)
 const RECIPE_NAMES = {
-    "spear": "Lança para pesca", "campfire": "Fogueira", "shelter": "Abrigo",
+    "knife": "Faca de pedra", "axe": "Machado de pedra",
+    "pickaxe": "Picareta de pedra", "fishing_rod": "Vara de pescar", "spear": "Lança", "campfire": "Fogueira", "shelter": "Abrigo",
     "collector": "Coletor de água", "workbench": "Bancada", "raft": "Jangada de fuga"
 }
 
@@ -17,8 +18,11 @@ var root: Control
 var playing_view: Control
 var menu_view: ColorRect
 var menu_content: VBoxContainer
-var craft_panel: PanelContainer
-var craft_list: VBoxContainer
+var inventory_panel: PanelContainer
+var inventory_list: VBoxContainer
+var active_state: SurvivorState
+var active_tab := "items"
+var inventory_signature := ""
 var vitals: Dictionary = {}
 var inventory_label: Label
 var nearby_label: Label
@@ -59,7 +63,7 @@ func _label(text: String, font_size: int = 18) -> Label:
 func _button(title: String, action: String) -> Button:
     var button := Button.new()
     button.text = title
-    button.custom_minimum_size = Vector2(126.0, 57.0)
+    button.custom_minimum_size = Vector2(122.0, 50.0)
     button.add_theme_font_size_override("font_size", 18)
     button.pressed.connect(func() -> void: action_requested.emit(action))
     return button
