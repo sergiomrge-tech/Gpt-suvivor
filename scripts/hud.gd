@@ -109,6 +109,9 @@ func _ready() -> void:
     bag.offset_bottom = 56
     bag.custom_minimum_size = Vector2(114,44)
     bag.add_theme_font_size_override("font_size",18)
+    bag.add_theme_stylebox_override("normal",_bag_style(BAG_PANEL,true))
+    bag.add_theme_font_override("font",_bag_font())
+    bag.add_theme_color_override("font_color",BAG_TEXT)
     game_controls.add_child(bag)
     objective_label = _label("",17)
     objective_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
@@ -456,7 +459,7 @@ func _new_modal(mode: String, title: String, description: String) -> void:
         var header := HBoxContainer.new()
         heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         header.add_child(heading)
-        var close := _button("×", func(): close_modal(); resume_requested.emit())
+        var close := _bag_button("×",func(): close_modal(); resume_requested.emit()) if mode in ["inventory","craft"] else _button("×",func(): close_modal(); resume_requested.emit())
         close.custom_minimum_size = Vector2(56, 56)
         header.add_child(close)
         modal_top.add_child(header)
@@ -492,7 +495,7 @@ func close_modal() -> void:
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
-    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.8 (desenvolvimento)")
+    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nGodot 3D • v1.1 (interface aprimorada)")
     if paused:
         panel_content.add_child(_button("Voltar ao jogo", func(): close_modal(); resume_requested.emit()))
         panel_content.add_child(_button("Salvar progresso", func(): save_requested.emit()))
@@ -638,6 +641,8 @@ func _inventory_grid() -> void:
     item_detail.custom_minimum_size.y = 62
     detail_box.add_child(item_detail)
     bag_column.add_child(_bag_button("CONSUMIR ALIMENTO",func(): close_modal(); consume_requested.emit()))
+    if selected_item != "" and item_buttons.has(selected_item):
+        _item_callback(selected_item).call()
     var character_column := VBoxContainer.new()
     character_column.custom_minimum_size.x = 280
     columns.add_child(character_column)
