@@ -67,6 +67,7 @@ func generate() -> void:
     scenery.generate()
     fauna = SurvivorFauna.new()
     fauna.terrain = terrain
+    fauna.state = state
     add_child(fauna)
     fauna.generate()
 
@@ -197,6 +198,8 @@ func refresh_resources() -> void:
         entry.node.visible = ready_time < 0.0 or (entry.kind != "metal" and state.elapsed >= ready_time)
 
 func harvest(entry: Dictionary) -> String:
+    if str(entry.get("kind", "")) in ["crab", "boar"]:
+        return fauna.harvest_prey(entry)
     if not is_instance_valid(entry.get("node")) or not entry.node.visible:
         return "Esse recurso já foi coletado."
     var error := state.harvest_error(str(entry.kind))
@@ -258,6 +261,10 @@ func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
         if d < max_reach and (result.is_empty() or d < distance):
             distance = d
             result = entry
+    if fauna != null:
+        var prey := fauna.nearest_prey(pos, distance)
+        if not prey.is_empty():
+            result = prey
     return result
 
 func near_structure(pos: Vector3, kind: String, reach: float = 12.0) -> Dictionary:
