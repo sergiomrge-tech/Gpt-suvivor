@@ -7,6 +7,12 @@ var coast_noise: FastNoiseLite
 var hill_noise: FastNoiseLite
 var sea_level := -0.48
 var sun: DirectionalLight3D
+var atmosphere: Environment
+var ground_material: ShaderMaterial
+var ocean_material: ShaderMaterial
+var daylight_amount := 1.0
+var rainfall_amount := 0.0
+var storm_amount := 0.0
 
 func _init() -> void:
     coast_noise = FastNoiseLite.new()
@@ -108,6 +114,7 @@ func _build_terrain() -> void:
     var material := ShaderMaterial.new()
     material.shader = load("res://shaders/ground.gdshader")
     material.set_shader_parameter("detail_noise", load("res://assets/materials/detail_noise.png"))
+    ground_material = material
     mesh_instance.material_override = material
     add_child(mesh_instance)
 
@@ -122,6 +129,7 @@ func _build_ocean() -> void:
     ocean.position.y = sea_level
     var water := ShaderMaterial.new()
     water.shader = load("res://shaders/ocean.gdshader")
+    ocean_material = water
     ocean.material_override = water
     add_child(ocean)
 
@@ -135,6 +143,7 @@ func _build_lighting() -> void:
     env.ambient_light_energy = 0.28
     env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
     env_node.environment = env
+    atmosphere = env
     add_child(env_node)
     sun = DirectionalLight3D.new()
     sun.rotation_degrees = Vector3(-58, 35, -8)
@@ -145,7 +154,35 @@ func _build_lighting() -> void:
     add_child(sun)
 
 func set_time_of_day(time_fraction: float) -> void:
-    var phase := time_fraction * TAU
-    var daylight := clampf(0.5 + 0.5 * cos(phase - PI), 0.17, 1.0)
-    sun.rotation_degrees.x = -15.0 - daylight * 58.0
-    sun.light_energy = 0.12 + daylight * 0.65
+    # Dawn and dusk use a broad warm transition; night keeps a readable cool fill.
+    var sun_height := sin((time_fraction - 0.25) * TAU)
+    daylight_amount = smoothstep(-0.17, 0.52, sun_height)
+    var dusk := (1.0 - smoothstep(0.09, 0.52, absf(sun_height))) * daylight_amount
+    sun.rotation_degrees.x = -8.0 - maxf(sun_height,0.0) * 65.0
+    sun.rotation_degrees.y = 35.0 + cos(time_fraction * TAU) * 28.0
+    sun.light_color = Color(1.0, 0.93, 0.77).lerp(Color(1.0,0.60,0.39),dusk*0.60)
+    _update_atmosphere()
+
+func set_weather(rain: float, storm: float) -> void:
+    rainfall_amount = clampf(rain, 0.0, 1.0)
+    storm_amount = clampf(storm, 0.0, 1.0)
+    if ground_material != null:
+        ground_material.set_shader_parameter("rain_amount",rainfall_amount)
+    if ocean_material != null:
+        ocean_material.set_shader_parameter("wind_strength",0.35 + rainfall_amount * 0.3 + storm_amount * 0.55)
+    if SurvivorModels.merged_material != null:
+        SurvivorModels.merged_material.set_shader_parameter("rain_amount",rainfall_amount)
+        SurvivorModels.merged_material.set_shader_parameter("wind_strength",0.45 + rainfall_amount * 0.60 + storm_amount * 0.35)
+    _update_atmosphere()
+
+func _update_atmosphere() -> void:
+    if atmosphere == null or sun == null:
+        return
+    var cloud := rainfall_amount * 0.24 + storm_amount * 0.35
+    sun.light_energy = (0.055 + daylight_amount * 0.82) * (1.0 - cloud)
+    atmosphere.ambient_light_energy = (0.13 + daylight_amount * 0.26) * (1.0 - cloud * 0.45)
+    var night := Color(0.045,0.085,0.16)
+    var daytime := Color(0.49,0.72,0.88)
+    atmosphere.background_color = night.lerp(daytime,daylight_amount).lerp(Color(0.22,0.31,0.39),cloud)
+    atmosphere.ambient_light_color = Color(0.36,0.50,0.67).lerp(Color(0.80,0.88,0.98),daylight_amount)
+
