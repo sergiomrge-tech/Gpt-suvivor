@@ -85,3 +85,60 @@ static func coastal_stones() -> ArrayMesh:
             _tri(st, a, shoulder, b, color.darkened(float(edge % 2) * 0.10), false)
             _tri(st, b, shoulder, next_shoulder, color.darkened(float(edge % 3) * 0.04), false)
     return _finish(st)
+
+# Naturally battered driftwood, split fibers, knots and irregular taper.
+# Used as scenery only; the gameplay's collectible logs are untouched.
+static func driftwood() -> ArrayMesh:
+    var st := SurfaceTool.new()
+    st.begin(Mesh.PRIMITIVE_TRIANGLES)
+    for stem in range(3):
+        var offset := Vector3(-0.22,0.0,(float(stem)-1.0)*0.20)
+        var length := 0.72 + float(stem%2)*0.45
+        var thick := 0.073 + float(stem%2)*0.032
+        var bark := Color(0.43,0.34,0.25).lerp(Color(0.57,0.49,0.38),float(stem)*0.25)
+        for segment in range(7):
+            var x0 := -length*0.5 + length*float(segment)/7.0
+            var x1 := -length*0.5 + length*float(segment+1)/7.0
+            var r0 := thick*(1.0-0.68*absf(x0)/length)
+            var r1 := thick*(1.0-0.68*absf(x1)/length)
+            for side in range(9):
+                var a0 := TAU*float(side)/9.0
+                var a1 := TAU*float(side+1)/9.0
+                var bend0 := sin(x0*4.0+float(stem))*0.045
+                var bend1 := sin(x1*4.0+float(stem))*0.045
+                var v00 := offset + Vector3(x0,r0*(1.0+sin(a0)*0.92),cos(a0)*r0+bend0)
+                var v01 := offset + Vector3(x0,r0*(1.0+sin(a1)*0.92),cos(a1)*r0+bend0)
+                var v10 := offset + Vector3(x1,r1*(1.0+sin(a0)*0.92),cos(a0)*r1+bend1)
+                var v11 := offset + Vector3(x1,r1*(1.0+sin(a1)*0.92),cos(a1)*r1+bend1)
+                _tri(st,v00,v10,v01,bark.darkened(float(side%4)*0.045),false)
+                _tri(st,v01,v10,v11,bark.lightened(float(segment%3)*0.025),false)
+        # Fine broken offshoot, never a smooth mass-produced cylinder.
+        var twig := offset + Vector3(length*0.10,thick*1.7,0.0)
+        _tri(st,twig+Vector3(-0.07,0,0.02),twig+Vector3(0.05,0.05,0.22),twig+Vector3(0.10,0,0.01),bark.darkened(0.16),false)
+    return _finish(st)
+
+# Humid tropical understory: low woody surface roots and moss mats.
+static func moss_roots() -> ArrayMesh:
+    var st := SurfaceTool.new()
+    st.begin(Mesh.PRIMITIVE_TRIANGLES)
+    for root in range(6):
+        var heading := TAU * float(root) / 6.0 + 0.24
+        var radial := Vector3(cos(heading),0,sin(heading))
+        var side := Vector3(-radial.z,0,radial.x)
+        var length := 0.49+float(root%3)*0.16
+        var bark := Color(0.28,0.24,0.17)
+        for part in range(5):
+            var t := float(part)/5.0
+            var next_t := float(part+1)/5.0
+            var a := radial*(length*t)+Vector3.UP*(0.15*(1.0-t)+0.018)
+            var b := radial*(length*next_t)+Vector3.UP*(0.15*(1.0-next_t)+0.018)
+            var w := 0.085*(1.0-t)+0.015
+            var w2 := 0.085*(1.0-next_t)+0.015
+            _tri(st,a-side*w,b-side*w2,a+side*w,bark,false)
+            _tri(st,a+side*w,b-side*w2,b+side*w2,bark.darkened(0.08),false)
+            if part >= 1 and part <= 3:
+                var moss := a+radial*0.065+Vector3.UP*0.025
+                var leaf_tint := Color(0.21,0.37,0.18).lerp(Color(0.30,0.44,0.22),float(root%3)*0.20)
+                _tri(st,a-side*w*0.7,moss+side*0.11,moss+Vector3.UP*0.14,leaf_tint)
+                _tri(st,a+side*w*0.7,moss+Vector3.UP*0.14,moss-side*0.10,leaf_tint.darkened(0.12))
+    return _finish(st)
