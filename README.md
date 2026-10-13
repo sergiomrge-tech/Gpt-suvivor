@@ -1,5 +1,15 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.6.0 — Costa orgânica, sub-bosque e novos materiais 3D (somente código Godot, SEM APK)
+
+**Refinamento efetivo no mapa 3D existente**:
+- Acrescentadas duas famílias originais de geometrias por `SurvivorBiomeProps`: **troncos desgastados trazidos pela maré** (volumes irregulares, fibras e galhos) e **raízes superficiais com musgo** no sub-bosque úmido. O segundo conjunto usa sua própria semente, preservando integralmente a distribuição da v1.5. Nenhum desses elementos dá loot nem cria colisão.
+- **Coqueiros remodelados** com onze frondes arqueadas e folíolos estreitos individuais, gerando sombra/silhueta mais natural. As malhas continuam unidas e cacheadas por variante, sem mudar ID, rendimento ou raio de coleta dos recursos.
+- **Materiais refinados**: solo tropical com húmus e manchas orgânicas, rochas com bandas minerais, cascas com fissuras longitudinais e granitos com veios discretos. Os shaders reutilizam as mesmas amostras de textura, sem novas dependências externas.
+- **Preservação**: geometria do terreno, elevações, coordenadas de recursos, costa, construções, trilhas, receitas, inventário e `SAVE_VERSION=3` seguem inalterados. Cenas decorativas são agrupadas por `MultiMesh`, têm distância máxima de desenho menor e continuam reduzidas no modo Leve.
+- **Capturas verdadeiras**: workflow de oito imagens do próprio Godot, incluindo duas novas áreas de madeira costeira e musgo/raízes; testes nativos abrangem as cinco famílias de habitats. Ainda é necessária avaliação artística humana da captura, além de testes de FPS, toque e temperatura em Android real. Estes procedimentos não afirmam fotorrealismo AAA.
+- **Sem APK**: a exportação Android permanece exclusivamente manual, conforme preferência do projeto.
+
 ## v1.5.0 — Refinamento geométrico da ilha e habitats tropicais (código Godot; SEM APK)
 
 - **Vegetação em camadas**: acrescentados juncos de dunas e samambaias de sub-bosque, ambos com malhas originais de folhas curvas, coloração por instância, vento e resposta à chuva. Distribuição fixa por altura e cobertura vegetal, evitando recursos, trilhas, construções e marcos.
