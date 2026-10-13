@@ -45,6 +45,17 @@
 - Materiais raros usados em receitas de equipamentos e do barco.
 - Melhorar terreno, rochas, árvores, fauna e texturas mantendo a identidade tropical.
 
+## v0.8.0 — Marco entregue no código
+
+- [x] Duas cavernas navegáveis com recursos únicos, minimapa próprio, transições e save interno.
+- [x] Quatro selos interativos, dois relicários e recompensas únicas (cristais + recursos).
+- [x] Estação de aprimoramento nível 2 pesquisada por descoberta do Leste.
+- [x] Ferramentas de metal reforçado, modelos próprios e coleta mais eficiente.
+- [x] Ícones de inventário, Diário de pesquisa, receitas com custos reais e persistência.
+- [x] Workflow de APK mantém disparo manual somente a pedido.
+- [ ] Medir FPS, testar toque/visuais no Android físico.
+- [ ] Novos biomas de cavernas profundas, materiais para paredes aprimoradas e enigmas expandidos.
+
 ## v0.9 — Barco montado peça a peça
 - Etapas: estrutura inicial → casco → piso → mastro → vela → leme.
 - Modelos e animações sincronizados com recursos consumidos e etapas registradas.
