@@ -1,5 +1,29 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v0.9.0 — passos mais suaves + barco construído em cinco etapas (código-fonte, SEM APK)
+
+### Áudio: passos confortáveis e baixos
+- O áudio de passos existentes em areia, grama e madeira agora é tratado no Godot na inicialização com **filtro passa-baixas**, rampa de entrada/saída de 10/55 ms, amplitude mais suave e **volume próprio de -23 dB**, independente do volume dos demais efeitos (que permanecem em -9 dB).
+- O processamento acontece **apenas uma vez no carregamento dos WAVs**, em cópias privadas de `AudioStreamWAV`; os arquivos originais não são sobrescritos. Pequenas variações de pitch (±3,5%) tornam as pisadas menos repetitivas.
+- O teste nativo verifica PCM suavizado, continuidade nas extremidades e ausência de alterações no áudio WAV original. **O resultado ainda precisa ser ouvido no Android físico** para aferir se o volume e o timbre agradam.
+
+### Barco de fuga por etapas
+- O barco agora é montado junto ao cais em **5 fases**, com modelo 3D próprio para cada uma: (1) **Quilha**, (2) **Casco**, (3) **Convés**, (4) **Mastro**, (5) **Vela e leme**. Cada fase acrescenta peças visíveis em vez de exibir o barco inteiro antes da conclusão. As malhas das peças de cada etapa são fundidas em uma malha estática para reduzir draw calls no celular.
+- A mochila cria primeiro a quilha: **16 madeiras, 2 tábuas e 1 corda**. Use **Explorar** próximo do barco incompleto para trabalhar nas fases seguintes:
+  - Casco: **12 madeiras + 3 tábuas + 2 cordas**.
+  - Convés: **4 madeiras + 3 tábuas + 2 cordas**.
+  - Mastro: **8 madeiras + 1 tábua + 2 cordas**.
+  - Vela e leme: **10 fibras + 1 tábua + 3 cordas + 8 metais**.
+- Cada etapa é cobrada **somente no contato da animação de trabalho**; cancelar antes desse contato deixa itens e progresso intactos. O HUD mostra a próxima etapa e o painel Acampamento mostra os custos e quantidades disponíveis.
+- **Não é possível embarcar** até finalizar as 5 etapas. O save mantém **versão 3** com campo opcional `stage` no barco. Barcos antigos sem esse campo continuam sendo reconhecidos como **já concluídos**; progresso parcial é salvo e restaurado.
+- A quantidade total de materiais para o barco permanece a mesma da receita antiga (40 madeiras, 10 tábuas, 10 cordas, 10 fibras e 8 metais), apenas distribuída entre as cinco fases.
+- Testes nativos: som modificado em memória, fases do barco, custo exato, cancelamento, colisão/posição perto do cais, modelo 3D com mastro tardio, não embarcar cedo, salvamento de estágio e restauração de saves antigos.
+
+**Limites conhecidos:** ainda falta ouvir o novo áudio e testar o toque/FPS em Android físico; a fuga continua com animação de partida curta, sem pilotagem marítima. Melhorias estruturais do abrigo (paredes reforçadas, etc.) permanecem futuras. Os testes de Godot e auditorias são executados no GitHub Actions, mas não equivalem à homologação física.
+
+**Preferência do usuário (13/10/2026): NÃO criar, compilar, assinar, entregar ou disparar APK até pedido explícito.** O workflow Android continua **manual (`workflow_dispatch`)**. Só este código-fonte e os testes são publicados no GitHub.
+
+
 ## v0.8.0 — cavernas, enigmas e oficina nível 2 (código-fonte, sem APK)
 
 **Progressão survival craft original**, combinando boas práticas de evolução de bancadas, ferramentas por categorias, recursos raros e exploração de jogos de sobrevivência, sem utilizar assets ou receitas de terceiros:
