@@ -203,7 +203,7 @@ func run() -> void:
     game.start_game(false)
     await process_frame
     check(game.playing and game.player.enabled, "New survival starts")
-    var original_cave_player := game.player.position
+    var original_cave_player: Vector3 = game.player.position
     game.player.position = Vector3(80,game.terrain.height_at(80,23.5),23.5)
     game.action_cooldown = 0
     game.interact()
@@ -211,7 +211,7 @@ func run() -> void:
     var cave_test_state := SurvivalState.new()
     game.world.caves.state = cave_test_state
     var first_cave_cache: Dictionary = game.world.caves.caches[0]
-    var cave_reward := game.world.caves.collect_cache(first_cave_cache)
+    var cave_reward: Dictionary = game.world.caves.collect_cache(first_cave_cache)
     check(not cave_reward.is_empty() and cave_test_state.discoveries.has(first_cave_cache.id), "Cave stash grants unique supplies and records the clue")
     var saved_cave_loot := SurvivalState.from_data(cave_test_state.to_data())
     check(saved_cave_loot != null and saved_cave_loot.discoveries.has(first_cave_cache.id), "Exploration reward survives save/load")

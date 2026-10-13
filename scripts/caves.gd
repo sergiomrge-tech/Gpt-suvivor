@@ -78,7 +78,7 @@ func _model_room(room: Node3D, id: String) -> void:
             var h := 2.2 + absf(sin(float(i)*1.7))*2.0
             SurvivorModels.sphere(room,2.0,rock,Vector3(side*18.1,h*0.38,z),Vector3(0.75,h*0.53,0.90))
         for i in range(5):
-            var x := side*(2.8+i*3.0)
+            var x: float = float(side)*(2.8+float(i)*3.0)
             SurvivorModels.sphere(room,1.2,damp,Vector3(x,0.15,14.1),Vector3(1.2,0.6,0.9))
     for pos in [Vector3(0,0,-4),Vector3(-12,0,2),Vector3(12,0,3)]:
         SurvivorModels.sphere(room,1.9,rock,pos+Vector3(0,0.75,0),Vector3(1.0,0.82,0.88))
