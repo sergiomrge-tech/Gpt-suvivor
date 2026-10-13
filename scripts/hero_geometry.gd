@@ -78,6 +78,16 @@ static func _foot_volume(parent: Node3D, color: Color, sole: bool) -> MeshInstan
             var v01 := Vector3(cos(theta1)*p0.y, p0.w + sin(theta1)*p0.z, p0.x)
             var v10 := Vector3(cos(theta0)*p1.y, p1.w + sin(theta0)*p1.z, p1.x)
             var v11 := Vector3(cos(theta1)*p1.y, p1.w + sin(theta1)*p1.z, p1.x)
+            # Physical close-up revealed clown-sized shoes. Reduce the toe
+            # overhang and sole width while keeping the ankle at ground height.
+            v00.x *= 0.81
+            v01.x *= 0.81
+            v10.x *= 0.81
+            v11.x *= 0.81
+            v00.z *= 0.68
+            v01.z *= 0.68
+            v10.z *= 0.68
+            v11.z *= 0.68
             if sole:
                 # Thin layered rubber edge underneath the boot, sharing the
                 # exact topological shape without a cuboid protruding at the toe.
@@ -113,7 +123,7 @@ static func boot(parent: Node3D, leather: Color, sole_color: Color) -> void:
     _foot_volume(parent, sole_color, true)
     # Individual lace bars make the top readable at the game camera distance.
     for lace in range(4):
-        var z := 0.035 + float(lace)*0.085
+        var z := 0.015 + float(lace)*0.061
         var y := -0.014 - float(lace)*0.019
         SurvivorModels.beam(parent,Vector3(-0.108,y,z),Vector3(0.108,y,z+0.022),0.010,Color(0.58,0.52,0.39))
     SurvivorModels.beam(parent,Vector3(-0.11,0.070,-0.08),Vector3(0.11,0.070,-0.08),0.016,sole_color.lightened(0.22))
