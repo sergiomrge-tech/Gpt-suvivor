@@ -181,6 +181,7 @@ func run() -> void:
     check(game.state.inventory.fiber == fiber_before+8,"Crafted knife improves fiber gathering from five to eight")
     var tools_saved := SurvivalState.from_data(game.state.to_data())
     check(tools_saved != null and tools_saved.owns("stone_axe") and tools_saved.owns("stone_knife") and tools_saved.owns("stone_pickaxe"),"Crafted tools survive save round-trip")
+    check(tools_saved != null and tools_saved.is_equipped("stone_knife") and not tools_saved.is_equipped("stone_axe"),"Equipped utility slot survives save round-trip")
     var legacy: Dictionary = game.state.to_data().duplicate(true)
     legacy.version = 1
     legacy.erase("equipment")
@@ -246,6 +247,14 @@ func run() -> void:
     game.hud._item_callback("stone_axe").call()
     check(game.hud.item_detail.text.contains("Machado de pedra") and game.hud.item_detail.text.contains("árvores"),"Inventory item selection shows quantity and actual tool function")
     check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 11,"Inventory grid opens with tool slots and blocks movement")
+    game.hud.show_inventory("equipment")
+    check(game.hud.modal_mode == "inventory" and game.hud.inventory_tab == "equipment","Separate equip tab opens inside backpack")
+    game.hud._equip_callback("stone_pickaxe").call()
+    check(game.state.is_equipped("stone_pickaxe") and not game.state.is_equipped("stone_axe"),"Equip tab switches utility tool")
+    game.hud._unequip_callback("utility").call()
+    check(not game.state.is_equipped("stone_pickaxe"),"Equip tab removes utility tool")
+    game.hud._equip_callback("stone_axe").call()
+    check(game.state.is_equipped("stone_axe"),"Equip tab restores axe for tree harvesting")
     game.hud.toggle_inventory()
     check(game.hud.modal_mode == "" and game.hud.joystick.active,"Backpack returns to compact HUD")
     var found_entry: Dictionary = game.world.discoverables[0]
