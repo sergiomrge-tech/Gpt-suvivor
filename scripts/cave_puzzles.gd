@@ -8,7 +8,11 @@ const SEALS := {
     "east_amber": {"cave":"east", "local":Vector3(-7,0,6), "title":"Selo âmbar"},
     "east_blue": {"cave":"east", "local":Vector3(7,0,-2), "title":"Selo azul"},
     "roots_amber": {"cave":"roots", "local":Vector3(-7,0,6), "title":"Selo das raízes"},
-    "roots_blue": {"cave":"roots", "local":Vector3(7,0,-2), "title":"Selo mineral"}
+    "roots_blue": {"cave":"roots", "local":Vector3(7,0,-2), "title":"Selo mineral"},
+    "east_deep_amber": {"cave":"east","local":Vector3(-8,0,-19),"title":"Eco da maré"},
+    "east_deep_blue": {"cave":"east","local":Vector3(8,0,-27),"title":"Eco da corrente"},
+    "roots_deep_amber": {"cave":"roots","local":Vector3(-8,0,-19),"title":"Eco da floresta"},
+    "roots_deep_blue": {"cave":"roots","local":Vector3(8,0,-27),"title":"Eco das raízes"}
 }
 const VAULTS := {
     "east_vault": {"cave":"east", "local":Vector3(0,0,-10),
@@ -18,7 +22,13 @@ const VAULTS := {
     "roots_vault": {"cave":"roots", "local":Vector3(0,0,-10),
         "title":"Relicário das raízes",
         "text":"A trava de pedra se abre. Minerais luminosos e fibras protegidas da umidade esperavam outro explorador.",
-        "reward":{"cave_crystal":1,"fiber":4}}
+        "reward":{"cave_crystal":1,"fiber":4}},
+    "east_deep_vault": {"cave":"east","local":Vector3(0,0,-33),"title":"Câmara da corrente",
+        "text":"A sequência de dois ecos iluminou a câmara submersa. Cristais preservados e metal refinado podem reforçar a oficina e a embarcação.",
+        "reward":{"cave_crystal":2,"metal":6}},
+    "roots_deep_vault": {"cave":"roots","local":Vector3(0,0,-33),"title":"Câmara das raízes",
+        "text":"Dois ecos ativaram a passagem do bosque subterrâneo. A antiga reserva fornece minerais e materiais para o acampamento.",
+        "reward":{"cave_crystal":2,"plank":6,"rope":4}}
 }
 var state: SurvivalState
 var mechanisms: Array[Dictionary] = []
@@ -88,7 +98,8 @@ func vault_unlocked(id: String) -> bool:
     if not VAULTS.has(id):
         return false
     var cave_id: String = VAULTS[id].cave
-    return bool(state.discoveries.get(cave_id+"_amber",false)) and bool(state.discoveries.get(cave_id+"_blue",false))
+    var suffix := "_deep" if id.contains("_deep_") else ""
+    return bool(state.discoveries.get(cave_id+suffix+"_amber",false)) and bool(state.discoveries.get(cave_id+suffix+"_blue",false))
 
 func activate_seal(entry: Dictionary) -> String:
     var id := str(entry.get("id",""))
@@ -98,7 +109,7 @@ func activate_seal(entry: Dictionary) -> String:
     var gem: MeshInstance3D = entry.node.get_node_or_null("Gem")
     if gem != null:
         gem.material_override = SurvivorModels.material(Color(0.36,0.94,0.76))
-    return "Selo ativado! Encontre o segundo selo para abrir o relicário."
+    return "Eco ativado! Encontre o segundo eco na galeria profunda." if id.contains("_deep_") else "Selo ativado! Encontre o segundo selo para abrir o relicário."
 
 func collect_vault(entry: Dictionary) -> Dictionary:
     var id := str(entry.get("id",""))
