@@ -168,7 +168,27 @@ func add_structure(entry: Dictionary) -> Node3D:
     if entry.kind == "boat":
         _build_boat_model(node,int(entry.get("stage",5)))
     else:
-        if entry.kind == "workbench":
+        if entry.kind == "campfire":
+            # Keep fire/glow/recipe state from original procedural fire, but
+            # replace its simple stone-only silhouette with a real cooking grate.
+            SurvivorModels.building(node,entry.kind)
+            SurvivorRealWorldAssets.attach(node,"camp_fire_grill",1.26,73.0)
+        elif entry.kind == "chest":
+            if not SurvivorRealWorldAssets.attach(node,"storage_chest",1.15,70.0):
+                SurvivorModels.building(node,entry.kind)
+        elif entry.kind == "rain_collector":
+            SurvivorModels.building(node,entry.kind)
+            var bucket := Node3D.new()
+            bucket.position = Vector3(1.46,0.0,0.7)
+            node.add_child(bucket)
+            SurvivorRealWorldAssets.attach(bucket,"wooden_bucket",0.85,55.0)
+        elif entry.kind == "tool_rack":
+            SurvivorModels.building(node,entry.kind)
+            var supplies := Node3D.new()
+            supplies.position = Vector3(-1.2,0.0,1.45)
+            node.add_child(supplies)
+            SurvivorRealWorldAssets.attach(supplies,"wooden_crate",0.95,50.0)
+        elif entry.kind == "workbench":
             if not SurvivorRealWorldAssets.attach(node,"workbench_carpenter",1.43,72.0):
                 SurvivorModels.building(node,entry.kind)
         elif entry.kind == "house":
