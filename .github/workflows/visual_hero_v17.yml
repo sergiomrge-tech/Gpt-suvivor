@@ -25,12 +25,12 @@ jobs:
         run: |
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/hero-import.log
           if grep -E 'SCRIPT ERROR|Parse Error' /tmp/hero-import.log; then exit 1; fi
-      - name: Render true game actor and action pose fixtures
+      - name: Render hero actions and true in-engine inspection close-ups
         env:
           LIBGL_ALWAYS_SOFTWARE: "1"
         run: |
           xvfb-run -a -s "-screen 0 1280x720x24" timeout 240 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_hero_v17.gd
-          for view in 01_hero_front_anatomy 02_hero_profile_proportions 03_hero_pack_and_boots 04_hero_walk_ankle_fixture 05_hero_chopping_fixture 06_hero_fishing_fixture 07_hero_mobile_gameplay_scale; do
+          for view in 01_hero_front_anatomy 02_hero_profile_proportions 03_hero_pack_and_boots 04_hero_walk_ankle_fixture 05_hero_chopping_fixture 06_hero_fishing_fixture 07_hero_mobile_gameplay_scale 08_real_camera_hero_closeup_front 09_real_camera_hero_closeup_side 10_real_camera_boots_closeup; do
             test -s "/tmp/survivor-hero-v17/${view}.png"
           done
       - uses: actions/upload-artifact@v4
