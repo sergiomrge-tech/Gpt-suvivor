@@ -188,7 +188,7 @@ func run() -> void:
     check(is_equal_approx(float(decor.details_material.get_shader_parameter("rain_amount")),0.45),"Scattered ground details darken with local rain instead of ignoring weather")
     decor.set_weather(0.2,0.0)
 
-    var clear_haze := game.terrain.atmosphere.fog_density
+    var clear_haze: float = game.terrain.atmosphere.fog_density
     check(game.terrain.atmosphere.fog_enabled and clear_haze < 0.005, "Subtle performance-conscious distance fog gives the tropical island atmospheric depth")
     game.terrain.set_weather(0.7,0.4)
     check(game.terrain.atmosphere.fog_density > clear_haze+0.002, "Storm weather gradually thickens the distance haze")
