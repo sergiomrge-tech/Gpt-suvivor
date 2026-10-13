@@ -469,10 +469,13 @@ func _inventory_grid() -> void:
     sun.rotation_degrees = Vector3(-35,-25,0)
     sun.light_energy = 1.2
     scene.add_child(sun)
-    var equipment := _label("Ferramentas\n",18)
-    for tool in SurvivalState.TOOLS:
-        equipment.text += "%s %s\n" % ["✓" if state.owns(tool) else "–",SurvivalState.RECIPES[tool].title]
+    var equipment := _label("EQUIPADOS\n",18)
+    for slot in ["main_hand","utility"]:
+        var item: String = str(state.equipment.get(slot,""))
+        var caption: String = "Mão principal" if slot == "main_hand" else "Ferramenta"
+        equipment.text += "%s: %s\n" % [caption, "Vazio" if item == "" else SurvivalState.RECIPES[item].title]
     character_column.add_child(equipment)
+    character_column.add_child(_button("Gerenciar equipamentos",func(): show_inventory("equipment")))
     character_column.add_child(_button("Diário da ilha",func(): show_journal()))
 
 func _equipment_panel() -> void:
