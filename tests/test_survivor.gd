@@ -436,6 +436,10 @@ func run() -> void:
     game.hud._item_callback("stone_axe").call()
     check(game.hud.item_detail.text.contains("Machado de pedra") and game.hud.item_detail.text.contains("árvores"),"Inventory item selection shows quantity and actual tool function")
     check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 21,"Inventory grid opens with tool slots and blocks movement")
+    check(game.hud.inventory_tabs.size() == 4 and game.hud.inventory_tabs.has("items") and game.hud.inventory_tabs.has("equipment") and game.hud.inventory_tabs.has("craft") and game.hud.inventory_tabs.has("recipes"),"Premium inventory has four real, separate, functional navigation tabs")
+    check(game.hud.item_buttons["stone_axe"].get_theme_stylebox("normal").border_color != game.hud.item_buttons["stone"].get_theme_stylebox("normal").border_color,"Selecting a tool highlights its actual inventory slot")
+    check(game.hud._comparison_text("stone_pickaxe").contains("FERRAMENTA"),"Equipped vs selected tool comparison displays the shared real equipment slot")
+
     game.hud.show_inventory("equipment")
     check(game.hud.modal_mode == "inventory" and game.hud.inventory_tab == "equipment","Separate equip tab opens inside backpack")
     game.hud._equip_callback("stone_pickaxe").call()
@@ -444,6 +448,10 @@ func run() -> void:
     check(not game.state.is_equipped("stone_pickaxe"),"Equip tab removes utility tool")
     game.hud._equip_callback("stone_axe").call()
     check(game.state.is_equipped("stone_axe"),"Equip tab restores axe for tree harvesting")
+    check(game.hud.shortcut_buttons.size() == 5 and game.hud.shortcut_bar != null,"Five quick tools are maintained as real HUD controls")
+    check(game.hud.shortcut_bar.name == "ToolShortcuts" and game.hud.shortcut_bar.get_child_count() == 5,"Bottom-of-screen equipment shortcuts have separate touch controls")
+    check(game.hud._active_shortcut_kind(0) == "stone_axe" and game.hud._active_shortcut_kind(1) == "stone_pickaxe","Shortcut keys resolve actual owned axe and pickaxe")
+
     game.hud.toggle_inventory()
     check(game.hud.modal_mode == "" and game.hud.joystick.active,"Backpack returns to compact HUD")
     var found_entry: Dictionary = game.world.discoverables[0]
@@ -755,8 +763,14 @@ func run() -> void:
     game.hud.action_button._input(action_touch)
     check(taps[0] == 1, "Dragging a button cancels its tap for scrolling")
     game.hud.show_crafting()
-    check(game.hud.build_buttons.has("stone_axe") and game.hud.build_buttons.has("stone_knife") and game.hud.build_buttons.has("stone_pickaxe") and game.hud.build_buttons.has("stone_spear"),"Inventory construction tab contains all basic tool recipes and spear")
-    check(game.hud.build_buttons.has("grilled_crab") and game.hud.build_buttons.has("cooked_meat"),"Campfire cooking recipes available in backpack")
+    check(game.hud.inventory_tab == "craft" and game.hud.inventory_tabs.size() == 4, "Premium navigation has exactly four separated backpack, gear, building and recipe pages")
+    check(game.hud.build_buttons.has("house") and game.hud.build_buttons.has("reinforced_wall") and game.hud.build_buttons.has("reinforced_roof"),"Constructions tab contains real camp structures and modular tier-two upgrades")
+    check(not game.hud.build_buttons.has("stone_axe"),"Tool recipes stay in Recipes instead of mixing into building pages")
+    game.hud.show_inventory("recipes")
+    check(game.hud.build_buttons.has("stone_axe") and game.hud.build_buttons.has("stone_knife") and game.hud.build_buttons.has("stone_pickaxe") and game.hud.build_buttons.has("stone_spear"),"Independent Recipes tab contains all basic tool recipes")
+    check(game.hud.build_buttons.has("grilled_crab") and game.hud.build_buttons.has("cooked_meat"),"Food preparation is available on the separate recipe page")
+    check(not game.hud.build_buttons.has("house"),"Camp buildings do not crowd recipe list")
+    check(not game.hud._recipe_unlocked("reinforced_axe"),"Advanced equipment is visually locked before research and workshop")
     action_touch.pressed = true
     game.hud.action_button._input(action_touch)
     action_touch.pressed = false
