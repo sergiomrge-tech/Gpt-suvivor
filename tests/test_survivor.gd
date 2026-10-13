@@ -15,6 +15,11 @@ func _initialize() -> void:
 
 func run() -> void:
     var state := SurvivalState.new()
+    check(SurvivorClimate.rainfall_at(100.0) == 0.0,"Clear weather stays rain-free")
+    check(SurvivorClimate.rainfall_at(220.0) > 0.5,"Scheduled tropical rain builds naturally")
+    check(SurvivorClimate.storm_at(312.0) > 0.5 and SurvivorClimate.label_at(312.0) == "Temporal","Storm peak drives UI weather description")
+    check(SurvivorClimate.wind_at(312.0) > SurvivorClimate.wind_at(100.0),"Storm increases foliage and wave wind")
+    check(SurvivorClimate.rainfall_at(600.0) == 0.0,"Rain stops during dry weather")
     check(state.recipe_error("boat") != "", "Boat locked at start")
     check(state.recipe_error("not_a_recipe") != "", "Unknown recipe rejected")
     check(not state.pay_recipe("campfire"), "Insufficient resources cannot be spent")
@@ -93,10 +98,10 @@ func run() -> void:
     for batch in game.world.scenery.batches:
         if batch.node.multimesh.visible_instance_count >= batch.node.multimesh.instance_count:
             limited = false
-    check(not game.terrain.sun.shadow_enabled and limited, "Light mode reduces cover and disables sun shadows")
+    check(not game.terrain.sun.shadow_enabled and limited and game.climate.particles.amount == 90, "Light mode reduces shadows, cover and weather particles")
     game.light_visuals = false
     game.apply_quality()
-    check(game.terrain.sun.shadow_enabled and game.world.scenery.batches[0].node.multimesh.visible_instance_count == -1, "Full mode restores shadows and groundcover")
+    check(game.terrain.sun.shadow_enabled and game.world.scenery.batches[0].node.multimesh.visible_instance_count == -1 and game.climate.particles.amount == 280, "Full mode restores shadows, groundcover and weather particles")
     var old_state := SurvivalState.new()
     old_state.buildings.append({"kind":"dock","x":20.0,"z":180.0})
     old_state.buildings.append({"kind":"boat","x":23.5,"z":185.0})
@@ -137,6 +142,19 @@ func run() -> void:
     game.start_game(false)
     await process_frame
     check(game.playing and game.player.enabled, "New survival starts")
+    check(game.climate != null and game.climate.particles.mesh != null,"Dynamic rain particles initialize in the scene")
+    game.toggle_sprint()
+    check(game.player.sprint_enabled and game.hud.run_button.text == "Andar","Mobile sprint toggle enables running gait")
+    game.player.locomotion_blend = 1.0
+    game.player._base_pose()
+    check(game.player.torso.rotation.x > 0.10,"Running leans torso forward")
+    game.toggle_sprint()
+    check(not game.player.sprint_enabled and game.hud.run_button.text == "Correr","Run toggle reverts to normal walking")
+    game.climate.update_weather(310.0,game.player.position,game.terrain,game.world.scenery)
+    check(game.climate.intensity > 0.9 and game.terrain.rainfall_amount > 0.9 and game.world.scenery.grass_material != null,"Climate drives atmospheric wetness and vegetation together")
+    game.climate.update_weather(0.0,game.player.position,game.terrain,game.world.scenery)
+    check(game.climate.intensity == 0.0 and game.terrain.rainfall_amount == 0.0,"Clear weather resets wetness")
+
     check(game.world.walkable(game.player.position, game.player.position), "Spawn is unobstructed")
     game.capture_mode = true
     check(not game.state.owns("stone_axe") and not game.state.owns("stone_pickaxe") and not game.state.owns("stone_knife"),"New survival starts without free tools")
@@ -392,6 +410,38 @@ func run() -> void:
     game.state.player_position = game.player.position
     var full := SurvivalState.from_data(game.state.to_data())
     check(full != null and full.buildings.size() == 5 and full.owns("fishing_rod") and full.discoveries.get("sail_diagram",false), "Camp, tools and cave clue survive save round-trip")
+    var modular_state := SurvivalState.new()
+    modular_state.buildings.append({"kind":"workbench","x":20.0,"z":120.0})
+    modular_state.add_item("wood",30)
+    modular_state.add_item("plank",20)
+    modular_state.add_item("rope",8)
+    modular_state.add_item("fiber",12)
+    check(modular_state.pay_recipe("floor_panel"),"First floor consumes real crafting materials")
+    modular_state.buildings.append({"kind":"floor_panel","x":32.0,"z":135.0,"rotation":0.0})
+    check(modular_state.pay_recipe("floor_panel"),"Additional modular floor is repeatable")
+    modular_state.buildings.append({"kind":"floor_panel","x":35.2,"z":135.0,"rotation":0.0})
+    check(modular_state.pay_recipe("wall_panel"),"Wall unlocks after first modular floor")
+    modular_state.buildings.append({"kind":"wall_panel","x":32.0,"z":136.6,"rotation":0.0})
+    check(modular_state.pay_recipe("roof_panel"),"Roof unlocks after modular wall")
+    modular_state.buildings.append({"kind":"roof_panel","x":32.0,"z":135.0,"rotation":0.0})
+    var modular_saved := SurvivalState.from_data(modular_state.to_data())
+    check(modular_saved != null and modular_saved.buildings.size() == 5 and modular_saved.inventory.plank == 11,"Repeated modular pieces and costs survive save/load")
+    var grid_world := SurvivorWorld.new()
+    grid_world.terrain = game.terrain
+    grid_world.state = modular_state
+    root.add_child(grid_world)
+    var floor_cell := Vector3(32.0,game.terrain.height_at(32.0,135.0),135.0)
+    var wall_cell := Vector3(32.0,game.terrain.height_at(32.0,136.6),136.6)
+    check(grid_world.placement_error("wall_panel",wall_cell,wall_cell) != "","Modular wall requires nearby floor support")
+    check(grid_world.placement_error("floor_panel",floor_cell,floor_cell) == "","Flat land allows initial foundation")
+    grid_world.add_structure({"kind":"floor_panel","x":32.0,"z":135.0})
+    check(grid_world.placement_error("wall_panel",wall_cell,wall_cell) == "","Wall snaps to foundation perimeter")
+    grid_world.add_structure({"kind":"wall_panel","x":32.0,"z":136.6})
+    check(not grid_world.walkable(wall_cell,wall_cell),"Placed modular wall blocks player traversal")
+    check(grid_world.placement_error("roof_panel",floor_cell,floor_cell) == "","Roof requires supported wall and foundation")
+    grid_world.add_structure({"kind":"roof_panel","x":32.0,"z":135.0})
+    check(grid_world.placement_error("roof_panel",floor_cell,floor_cell) != "","Roof socket cannot be occupied twice")
+    grid_world.queue_free()
     var supplemental := SurvivalState.new()
     supplemental.buildings.append({"kind":"chest","x":10.0,"z":20.0,"rotation":PI*0.5})
     supplemental.buildings.append({"kind":"rain_collector","x":14.0,"z":20.0})
