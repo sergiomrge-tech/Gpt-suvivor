@@ -121,7 +121,7 @@ func _build_terrain() -> void:
     material.shader = load("res://shaders/ground.gdshader")
     material.set_shader_parameter("detail_noise", load("res://assets/materials/detail_noise.png"))
     # A = beach, B = dense forest floor, C = exposed coastal rock.
-    var root := "res://assets/real_world/textures/"
+    var root := "res://assets/real_world/" + "textures/"
     var scans := {
         "pbr_sand_diff":root+"aerial_beach_01/aerial_beach_01_diff.jpg",
         "pbr_sand_normal":root+"aerial_beach_01/aerial_beach_01_nor_gl.jpg",
