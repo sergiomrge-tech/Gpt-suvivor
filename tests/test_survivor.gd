@@ -204,6 +204,7 @@ func run() -> void:
     check(foot_world_offset >= 0.05 and foot_world_offset <= 0.31, "Lengthened legs still place the articulated ankle near the ground surface")
 
 
+    check(SurvivorModels.mesh_cache.has("hero_torso_v18") and SurvivorModels.mesh_cache.has("hero_head_v18_face"), "Smooth anatomical torso and recessed-eye face are cached as native Godot meshes")
     check(game.world.resources.size() >= 190, "Island generated with abundant accessible resources")
     check(game.world.fauna != null and game.world.fauna.animals.size() >= 12, "Coastal and forest fauna populate the island")
     var crab_entry: Dictionary = {}

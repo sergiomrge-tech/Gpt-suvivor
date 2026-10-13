@@ -2,6 +2,7 @@
 
 ## v1.8.0 — Silhueta orgânica e materiais separados do herói (fonte Godot; SEM APK)
 
+- **Correção de close-up do rosto**: removidos volumes esféricos salientes do nariz; substituído por contorno contínuo de ponte/ponta nasal e olhos menores parcialmente recuados, com delineamento de pálpebras. Trata-se de uma melhora de modelagem real, ainda não de um rosto humano de produção.
 - **Geometria anatômica mais contínua**: `SurvivorHeroGeometry.resample_profile` interpola os perfis existentes com Catmull–Rom controlado, criando novas faixas suaves de geometria em tórax, cabeça e membros. Os extremos e a altura de cada perfil são preservados, evitando inversões e quebras entre juntas.
 - **Proporções corrigidas no jogo**: tórax mais estreito, cintura de transição contínua, linha dos ombros menos exagerada e contorno de crânio/mandíbula refinado após inspeção das capturas nativas anteriores. Mantidos todos os pivôs de equipamentos, braços, pescoço, ferramentas e animações.
 - **Marcha com apoio visual**: pé de balanço recebe pequena elevação assimétrica, rolagem de tornozelo mais suave, contrarrotação de ombro/quadril e cotovelos em fases distintas. A física, velocidade, colisão e som dos passos permanecem iguais; ações continuam com os mesmos encaixes.
