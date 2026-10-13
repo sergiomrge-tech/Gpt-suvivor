@@ -38,9 +38,16 @@ void fragment() {
         grain = 0.95 + detail * 0.06;
         rough = 0.55;
         metal = 0.22;
+    } else if (family < 5.5) {
+        // Tight diagonal weave on weathered cotton, without extra textures.
+        float weave = sin(UV.x * 104.0) * cos(UV.y * 118.0);
+        grain = 0.945 + detail * 0.055 + weave * 0.012;
+        rough = 0.88;
     } else {
-        grain = 0.98 + sin(UV.x*95.0) * sin(UV.y*95.0) * 0.015;
-        rough = 0.91;
+        // Subtle pore-scale variation and less chalky skin response.
+        float pores = texture(detail_noise, UV * 2.1).r;
+        grain = 0.973 + (pores - 0.5) * 0.035;
+        rough = 0.74;
     }
     ALPHA = 1.0;
     ALPHA_SCISSOR_THRESHOLD = 0.5;
