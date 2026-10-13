@@ -331,17 +331,17 @@ func _build_character() -> void:
     left_elbow = _joint(left_arm, Vector3(0, -0.38, 0))
     right_elbow = _joint(right_arm, Vector3(0, -0.38, 0))
     for arm in [left_arm, right_arm]:
-        SurvivorHeroGeometry.shaped_limb(arm, 0.215, 0.147, 0.135, shirt, 1.0)
+        SurvivorHeroGeometry.shaped_limb(arm, 0.245, 0.126, 0.108, shirt, 1.0)
         SurvivorHeroGeometry.shaped_limb(arm, 0.385, 0.113, 0.098, skin, 0.96)
         SurvivorModels.beam(arm, Vector3(-0.16, -0.20, 0), Vector3(0.16, -0.20, 0), 0.020, shirt_shadow)
         SurvivorModels.merge_static(arm, "hero_upper_arm_v17")
     for elbow in [left_elbow, right_elbow]:
         SurvivorHeroGeometry.shaped_limb(elbow, 0.32, 0.104, 0.086, skin, 0.92)
         SurvivorHeroGeometry.loft(elbow,PackedVector4Array([
-            Vector4(-0.315,0.104,0.081,0.012),
-            Vector4(-0.360,0.126,0.081,0.018),
-            Vector4(-0.423,0.113,0.074,0.028),
-            Vector4(-0.453,0.078,0.056,0.035)
+            Vector4(-0.315,0.089,0.078,0.012),
+            Vector4(-0.360,0.103,0.078,0.018),
+            Vector4(-0.423,0.091,0.066,0.028),
+            Vector4(-0.453,0.067,0.052,0.035)
         ]),skin,16)
         SurvivorModels.beam(elbow,Vector3(0.11,-0.352,0.042),Vector3(0.152,-0.429,0.103),0.028,skin)
         for finger in range(4):
