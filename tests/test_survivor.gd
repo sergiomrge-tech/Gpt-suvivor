@@ -146,8 +146,10 @@ func run() -> void:
     game.toggle_sprint()
     check(game.player.sprint_enabled and game.hud.run_button.text == "Andar","Mobile sprint toggle enables running gait")
     game.player.locomotion_blend = 1.0
+    game.player.walking = true
     game.player._base_pose()
     check(game.player.torso.rotation.x > 0.10,"Running leans torso forward")
+    game.player.walking = false
     game.toggle_sprint()
     check(not game.player.sprint_enabled and game.hud.run_button.text == "Correr","Run toggle reverts to normal walking")
     game.climate.update_weather(310.0,game.player.position,game.terrain,game.world.scenery)
