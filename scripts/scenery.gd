@@ -15,6 +15,9 @@ var grass_material: ShaderMaterial
 var biome_batches: Array[Dictionary] = []
 var biome_counts := {"reeds":0, "ferns":0, "stone":0, "driftwood":0, "roots":0}
 var biome_material: ShaderMaterial
+# Truly imported Poly Haven skinned-free plants (not procedural place-holders).
+var real_forest_nodes: Array[Node3D] = []
+var real_forest_counts := {"fern":0,"calathea":0,"pachira":0}
 
 func generate() -> void:
     var rng := RandomNumberGenerator.new()
@@ -60,6 +63,7 @@ func generate() -> void:
         cover_count += entries.size()
     _generate_surface_details()
     _generate_biome_habitats()
+    _generate_imported_forest()
     set_light_mode(light_mode)
 
 
@@ -173,6 +177,46 @@ func _generate_biome_habitats() -> void:
         add_child(node)
         biome_batches.append({"node":node, "entries":entries, "family":key.z})
 
+# Favors the interior jungle. All seeds are independent of resource placement
+# and cannot affect the existing palm/tree/loot coordinates or pathfinding.
+func _generate_imported_forest() -> void:
+    real_forest_nodes.clear()
+    real_forest_counts = {"fern":0,"calathea":0,"pachira":0}
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 960324
+    var areas := [Vector2(-55,72),Vector2(45,80),Vector2(66,-26),Vector2(-45,-36),
+                  Vector2(14,-87),Vector2(-110,2),Vector2(52,-85)]
+    var species := [
+        {"kind":"pachira","limit":7,"height":8.1,"range":98.0},
+        {"kind":"calathea","limit":18,"height":1.75,"range":65.0},
+        {"kind":"fern","limit":31,"height":1.25,"range":60.0}
+    ]
+    for entry in species:
+        var key: String = entry.kind
+        if not SurvivorRealWorldAssets.available(key):
+            continue
+        var quantity: int = entry.limit
+        for item in range(quantity):
+            for attempt in range(30):
+                var center: Vector2 = areas[(item+attempt)%areas.size()]
+                var p := center+Vector2(rng.randf_range(-19.0,19.0),rng.randf_range(-19.0,19.0))
+                var h := terrain.height_at(p.x,p.y)
+                if h < 5.7 or h > 22.5 or not terrain.is_land(p.x,p.y) or _protected(p):
+                    continue
+                var placement := Node3D.new()
+                placement.name = "Imported_"+key+"_%d"%item
+                placement.position = Vector3(p.x,h,p.y)
+                placement.rotation.y = rng.randf_range(-PI,PI)
+                add_child(placement)
+                var height: float = entry.height
+                var view_range: float = entry.range
+                if SurvivorRealWorldAssets.attach(placement,key,height*rng.randf_range(0.86,1.14),view_range):
+                    real_forest_nodes.append(placement)
+                    real_forest_counts[key] += 1
+                    break
+                placement.queue_free()
+                break
+
 func _protected(p: Vector2) -> bool:
     if world.trails != null and world.trails.distance_to(p)<2.2:
         return true
@@ -203,6 +247,9 @@ func _grass_mesh() -> ArrayMesh:
     return st.commit()
 
 func clear_area(pos: Vector3, radius: float) -> void:
+    for model in real_forest_nodes:
+        if Vector2(model.position.x-pos.x,model.position.z-pos.z).length_squared() < radius*radius:
+            model.visible = false
     for batch in batches + detail_batches + biome_batches:
         for i in range(batch.entries.size()):
             var point: Vector3 = batch.entries[i].position
@@ -229,6 +276,18 @@ func set_light_mode(value: bool) -> void:
         batch.node.multimesh.visible_instance_count = batch.entries.size() / 4 if value else -1
     for batch in biome_batches:
         batch.node.multimesh.visible_instance_count = maxi(1, batch.entries.size() / 3) if value else -1
+    # Hide medium-distance photogrammetric plant duplicates on budget phones.
+    for i in range(real_forest_nodes.size()):
+        if value and i % 3 != 0:
+            real_forest_nodes[i].visible = false
+        elif not value:
+            var p := real_forest_nodes[i].position
+            var safe := true
+            for entry in world.structures:
+                if Vector2(p.x-entry.position.x,p.z-entry.position.z).length() < (5.0 if entry.kind=="house" else 2.8):
+                    safe = false
+                    break
+            real_forest_nodes[i].visible = safe
 
 # Two deterministic debris families. Small meshes are batched by spatial chunk
 # rather than creating thousands of Godot nodes and draw calls.

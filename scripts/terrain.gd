@@ -51,6 +51,7 @@ func set_surface_detail(enabled: bool) -> void:
     # Micro-normal texture samples are skipped on the low-power mobile preset.
     if ground_material != null:
         ground_material.set_shader_parameter("surface_microdetail", 1.0 if enabled else 0.0)
+        ground_material.set_shader_parameter("real_pbr_full_detail",enabled)
 
 func set_trail_mask(mask: Texture2D) -> void:
     var material := get_node("IslandTerrain").material_override as ShaderMaterial
@@ -119,6 +120,29 @@ func _build_terrain() -> void:
     var material := ShaderMaterial.new()
     material.shader = load("res://shaders/ground.gdshader")
     material.set_shader_parameter("detail_noise", load("res://assets/materials/detail_noise.png"))
+    # A = beach, B = dense forest floor, C = exposed coastal rock.
+    var root := "res" + "://assets/real_world/textures/"
+    var scans := {
+        "pbr_sand_diff":root+"aerial_beach_01/aerial_beach_01_diff.jpg",
+        "pbr_sand_normal":root+"aerial_beach_01/aerial_beach_01_nor_gl.jpg",
+        "pbr_sand_rough":root+"aerial_beach_01/aerial_beach_01_rough.jpg",
+        "pbr_jungle_diff":root+"coast_sand_05/coast_sand_05_diff.jpg",
+        "pbr_jungle_normal":root+"coast_sand_05/coast_sand_05_nor_gl.jpg",
+        "pbr_jungle_rough":root+"coast_sand_05/coast_sand_05_rough.jpg",
+        "pbr_rock_diff":root+"seaside_rock/seaside_rock_diff.jpg",
+        "pbr_rock_normal":root+"seaside_rock/seaside_rock_nor_gl.jpg",
+        "pbr_rock_rough":root+"seaside_rock/seaside_rock_rough.jpg"
+    }
+    var scans_ready := true
+    for shader_key in scans:
+        if not ResourceLoader.exists(scans[shader_key]):
+            scans_ready = false
+            break
+    if scans_ready:
+        for shader_key in scans:
+            material.set_shader_parameter(shader_key,load(scans[shader_key]))
+    material.set_shader_parameter("real_pbr_assets_ready",scans_ready)
+    material.set_shader_parameter("real_pbr_full_detail",true)
     ground_material = material
     mesh_instance.material_override = material
     add_child(mesh_instance)

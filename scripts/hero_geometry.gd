@@ -7,15 +7,46 @@ class_name SurvivorHeroGeometry
 static func _ring_point(profile: Vector4, theta: float) -> Vector3:
     return Vector3(cos(theta) * profile.y, profile.x, sin(theta) * profile.z + profile.w)
 
+# Smooth anatomical contour transitions without adding separate spheres or
+# disconnected seams. Catmull-Rom interpolation uses the original ordered
+# profiles as the exact boundaries of the mesh.
+static func resample_profile(profile: PackedVector4Array, subdivisions: int = 2) -> PackedVector4Array:
+    assert(profile.size() >= 2)
+    var count := maxi(1,subdivisions)
+    var result := PackedVector4Array()
+    for index in range(profile.size()-1):
+        var before: Vector4 = profile[maxi(0,index-1)]
+        var a: Vector4 = profile[index]
+        var b: Vector4 = profile[index+1]
+        var after: Vector4 = profile[mini(profile.size()-1,index+2)]
+        for sub in range(count):
+            var t := float(sub)/float(count)
+            var t2 := t*t
+            var t3 := t2*t
+            var smoothed: Vector4 = (2.0*a + (b-before)*t +
+                (2.0*before-5.0*a+4.0*b-after)*t2 +
+                (-before+3.0*a-3.0*b+after)*t3)*0.5
+            # Spline interpolation must not invert anatomy or run beyond its
+            # original silhouette at joints. Preserve monotonic height.
+            smoothed.x = lerpf(a.x,b.x,t)
+            smoothed.y = clampf(smoothed.y,0.008,maxf(a.y,b.y)*1.07)
+            smoothed.z = clampf(smoothed.z,0.008,maxf(a.z,b.z)*1.07)
+            result.append(smoothed)
+    result.append(profile[profile.size()-1])
+    return result
+
 static func loft(parent: Node3D, profile: PackedVector4Array, color: Color, sides: int = 20) -> MeshInstance3D:
     assert(profile.size() >= 2)
     var divisions: int = maxi(12, sides)
+    # Two smoothly interpolated rings between sculpted control contours.
+    # For an 18-sided limb this remains inexpensive on mobile hardware.
+    var shape: PackedVector4Array = resample_profile(profile,2)
     var st := SurfaceTool.new()
     st.begin(Mesh.PRIMITIVE_TRIANGLES)
     st.set_smooth_group(0)
-    for level in range(profile.size() - 1):
-        var upper: Vector4 = profile[level]
-        var lower: Vector4 = profile[level + 1]
+    for level in range(shape.size() - 1):
+        var upper: Vector4 = shape[level]
+        var lower: Vector4 = shape[level + 1]
         for side in range(divisions):
             var angle0 := TAU * float(side) / float(divisions)
             var angle1 := TAU * float(side + 1) / float(divisions)
@@ -25,17 +56,17 @@ static func loft(parent: Node3D, profile: PackedVector4Array, color: Color, side
             var d := _ring_point(lower, angle1)
             # Profiles are ordered top -> bottom. Consistent outward winding
             # prevents the body from vanishing with back-face culling enabled.
-            st.set_uv(Vector2(float(side) / float(divisions), float(level) / float(profile.size())))
+            st.set_uv(Vector2(float(side) / float(divisions), float(level) / float(shape.size()-1)))
             st.add_vertex(a)
-            st.set_uv(Vector2(float(side + 1) / float(divisions), float(level) / float(profile.size())))
+            st.set_uv(Vector2(float(side + 1) / float(divisions), float(level) / float(shape.size()-1)))
             st.add_vertex(b)
-            st.set_uv(Vector2(float(side) / float(divisions), float(level + 1) / float(profile.size())))
+            st.set_uv(Vector2(float(side) / float(divisions), float(level + 1) / float(shape.size()-1)))
             st.add_vertex(c)
-            st.set_uv(Vector2(float(side + 1) / float(divisions), float(level) / float(profile.size())))
+            st.set_uv(Vector2(float(side + 1) / float(divisions), float(level) / float(shape.size()-1)))
             st.add_vertex(b)
-            st.set_uv(Vector2(float(side + 1) / float(divisions), float(level + 1) / float(profile.size())))
+            st.set_uv(Vector2(float(side + 1) / float(divisions), float(level + 1) / float(shape.size()-1)))
             st.add_vertex(d)
-            st.set_uv(Vector2(float(side) / float(divisions), float(level + 1) / float(profile.size())))
+            st.set_uv(Vector2(float(side) / float(divisions), float(level + 1) / float(shape.size()-1)))
             st.add_vertex(c)
     st.index()
     st.generate_normals()

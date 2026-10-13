@@ -52,13 +52,20 @@ void fragment() {
         float pores = texture(detail_noise, UV * 2.1).r;
         grain = 0.973 + (pores - 0.5) * 0.035;
         rough = 0.74;
-    } else {
-        // Worn backpack/boot leather: stretched seams, small scuffs and
-        // rain-darkened grain distinct from the surrounding cotton fabric.
+    } else if (family < 7.5) {
+        // Backpack/boot leather differs from clothing and skin: scarred,
+        // slightly glossy on worn edges, lower luster when dusty.
         float pores = texture(detail_noise, UV * 0.92).r;
         float scratches = sin(UV.x * 38.0 + pores * 4.0) * cos(UV.y * 19.0);
         grain = 0.93 + pores * 0.09 + scratches * 0.018;
         rough = 0.78;
+    } else {
+        // Short cropped hair and brows are not leather. Fine directional
+        // strand response uses no additional imported texture, with a
+        // nonmetallic highlight kept faint on the Compatibility renderer.
+        float strands = pow(abs(sin(UV.y * 71.0 + detail * 3.1)),5.0);
+        grain = 0.89 + detail * 0.16 + strands * 0.055;
+        rough = 0.69;
     }
     ALPHA = 1.0;
     ALPHA_SCISSOR_THRESHOLD = 0.5;
