@@ -550,7 +550,7 @@ func run() -> void:
     check(not game.state.escaped and game.playing, "Escape is rejected until full hull, deck, mast, sail and rudder are finished")
     var partial_save := SurvivalState.from_data(game.state.to_data())
     check(partial_save != null and partial_save.boat_stage() == 1 and not partial_save.boat_ready(), "Partial keel survives save without becoming a completed boat")
-    var invalid_boat_save := game.state.to_data().duplicate(true)
+    var invalid_boat_save: Dictionary = game.state.to_data().duplicate(true)
     invalid_boat_save.buildings[invalid_boat_save.buildings.size()-1]["stage"] = 8
     check(SurvivalState.from_data(invalid_boat_save) == null, "Invalid boat stage cannot be imported from corrupted save")
     check(built_boat.node.has_node("BoatModel"), "Real boat stage meshes are created under a persistent node")
@@ -558,13 +558,13 @@ func run() -> void:
     var keel_mesh: MeshInstance3D = keel_model.get_child(0) as MeshInstance3D
     var keel_height := keel_mesh.get_aabb().size.y
     game.cancel_work()
-    var prebuild := game.state.inventory.duplicate(true)
+    var prebuild: Dictionary = game.state.inventory.duplicate(true)
     game.queue_work(built_boat,"build",1.65,"boat_upgrade",10.0)
     check(game.state.boat_stage() == 1 and game.state.inventory == prebuild, "Queued boat upgrade pays nothing before tool contact")
     game.cancel_work()
     check(game.state.inventory == prebuild and game.state.boat_stage() == 1, "Cancelled boat upgrade leaves supplies and progress untouched")
     for next_stage in range(2,6):
-        var supply_before := game.state.inventory.duplicate(true)
+        var supply_before: Dictionary = game.state.inventory.duplicate(true)
         game.queue_work(built_boat,"build",1.65,"boat_upgrade",10.0)
         game._physics_process(0.016)
         game.player.enabled = true
