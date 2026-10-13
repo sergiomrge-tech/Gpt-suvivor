@@ -181,7 +181,7 @@ func harvest(entry: Dictionary) -> String:
             state.add_item("stone", 6)
             result = "+6 pedras"
         "fiber":
-            var count := 8 if state.owns("stone_knife") else 5
+            var count := 8 if state.is_equipped("stone_knife") else 5
             state.add_item("fiber", count)
             result = "+%d fibras" % count
         "loose_log":
