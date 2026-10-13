@@ -29,9 +29,20 @@ void fragment() {
     vec3 sand = mix(honey,pale,clamp(0.20 + macro * 0.64 + (fine.g-0.5)*0.16,0.0,1.0));
     float tide = 1.0-smoothstep(sea_level+0.23,sea_level+1.65,h);
     float fringe = smoothstep(sea_level+0.6,sea_level+1.22,h) * (1.0-smoothstep(sea_level+2.1,sea_level+3.3,h));
-    sand *= 1.0 - tide * 0.24;
+    // Moisture rides the actual waterline; irregular slow wavelets leave a
+    // moving dark ribbon rather than an immobile concentric painted border.
+    float beach_angle = atan(p.y, p.x);
+    float swash = 0.16 * sin(TIME * 0.58 + beach_angle * 21.0 + middle.b * 2.8);
+    float damp_band = 1.0 - smoothstep(sea_level + 0.54 + swash, sea_level + 1.62 + swash, h);
+    sand *= 1.0 - tide * 0.17 - damp_band * 0.085;
     sand *= 1.0 - fringe * middle.b * 0.055;
-    float tiny_shells = smoothstep(0.82,0.97,fine.r)* (1.0-sand_to_vegetation);
+    // Wind-cut sand striations shift direction and fade in the grass belt.
+    float ripple = sin(p.x * 13.5 + p.y * 8.3 + middle.r * 3.9 + 1.3 * sin(p.y * 0.20));
+    float dune_strength = (1.0 - sand_to_vegetation) * (1.0 - damp_band * 0.72);
+    sand *= 1.0 + ripple * 0.012 * dune_strength;
+    // Salt-crust and broken shell flecks preferentially accumulate higher
+    // than the wet intertidal sand, not as uniformly scattered noise.
+    float tiny_shells = smoothstep(0.82,0.97,fine.r)* (1.0-sand_to_vegetation) * (1.0-damp_band*0.76);
     sand = mix(sand,vec3(0.94,0.85,0.67),tiny_shells * 0.11);
 
     // Multiple vegetation hues form patchwork instead of a flat green paint.
@@ -43,7 +54,9 @@ void fragment() {
     undergrowth = mix(undergrowth,vec3(0.20,0.38,0.26),moss*0.17);
 
     float slope = 1.0 - clamp(world_normal.y,0.0,1.0);
-    float rock_exposure = smoothstep(0.20,0.60,slope) * smoothstep(6.0,17.0,h);
+    // Patchy rock faces interrupt forest soil on actual steep terrain.
+    float geological_band = smoothstep(0.10,0.42,slope + (middle.b-0.5)*0.14);
+    float rock_exposure = geological_band * smoothstep(9.0,22.0,h) * (0.58+0.42*broad.b);
     float stone_fleck = smoothstep(0.80,0.94,fine.r) * smoothstep(0.32,0.70,middle.r);
     vec3 stone = mix(vec3(0.37,0.40,0.36),vec3(0.48,0.48,0.40),broad.b);
     stone *= 0.92+0.13*grain;
