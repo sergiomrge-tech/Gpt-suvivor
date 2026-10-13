@@ -19,6 +19,7 @@ signal sound_requested
 signal journal_requested
 signal quality_requested
 signal zoom_requested(amount: float)
+signal sprint_requested
 signal resume_requested
 
 var root: Control
@@ -33,6 +34,7 @@ var inventory_tab := "items"
 var item_buttons: Dictionary = {}
 var objective_label: Label
 var time_label: Label
+var run_button: Button
 var action_button: Button
 var fishing_button: Button
 var rotate_button: Button
@@ -133,6 +135,15 @@ func _ready() -> void:
     joystick.offset_top = -274
     joystick.offset_bottom = -54
     game_controls.add_child(joystick)
+    # Reachable sprint toggle outside the joystick's touch ownership area.
+    run_button = _button("Correr",func(): sprint_requested.emit())
+    run_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+    run_button.offset_left = 338
+    run_button.offset_right = 458
+    run_button.offset_top = -125
+    run_button.offset_bottom = -63
+    run_button.add_theme_font_size_override("font_size",17)
+    game_controls.add_child(run_button)
     var actions := VBoxContainer.new()
     actions.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
     actions.offset_left = -210
@@ -637,6 +648,10 @@ func _recipe_grid(title: String,kinds: Array) -> void:
         status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         body.add_child(status)
 
+func update_sprint(value: bool) -> void:
+    if is_instance_valid(run_button):
+        run_button.text = "Andar" if value else "Correr"
+
 func update_zoom(distance: float) -> void:
     if is_instance_valid(zoom_in_button): zoom_in_button.disabled = distance <= 12.0
     if is_instance_valid(zoom_out_button): zoom_out_button.disabled = distance >= 48.0
@@ -685,7 +700,7 @@ func _process(delta: float) -> void:
     action_button.disabled = target.is_empty() and placement_kind == ""
     objective_label.text = state.objective()
     var hour := fmod(8.0 + state.elapsed / SurvivalState.DAY_SECONDS * 24.0, 24.0)
-    time_label.text = "Dia %d • %02d:%02d" % [1 + int(state.elapsed / SurvivalState.DAY_SECONDS), int(hour), int(fmod(hour, 1) * 60)]
+    time_label.text = "Dia %d • %02d:%02d\n%s" % [1 + int(state.elapsed / SurvivalState.DAY_SECONDS), int(hour), int(fmod(hour, 1) * 60), SurvivorClimate.label_at(state.elapsed)]
     if placement_kind != "":
         action_button.text = "Confirmar"
         fishing_button.text = "Cancelar"
