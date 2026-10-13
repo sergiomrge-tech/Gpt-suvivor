@@ -18,6 +18,7 @@ const VEINS := {
     "roots_vein_1":{"cave":"roots","local":Vector3(-13,0,-25),"reward":{"cave_crystal":1,"stone":4}},
     "roots_vein_2":{"cave":"roots","local":Vector3(12,0,-31),"reward":{"cave_crystal":1,"metal":3}}
 }
+const HAZARD_POINTS := {"east":Vector2(0,-24),"roots":Vector2(0,-24)}
 const WIDTH := 17.0
 const DEPTH := 13.0
 var state: SurvivalState
@@ -151,6 +152,11 @@ func _model_deep_chamber(room: Node3D,id: String,rock: Color,damp: Color) -> voi
                 SurvivorModels.beam(room,Vector3(side*17.5,3.6,z),Vector3(side*13.5,0.2,z+2),0.28,Color(0.30,0.21,0.11))
             else:
                 SurvivorModels.stone(room,0.60,i+31,Color(0.17,0.42,0.49),Vector3(side*14,0.45,z),Vector3(0.8,1.5,0.7))
+    # Distinct purple mineral gases and spore mounds visibly mark risk areas.
+    for i in range(6):
+        var angle := TAU*float(i)/6.0
+        SurvivorModels.stone(room,0.42,34+i,Color(0.55,0.29,0.47) if id == "east" else Color(0.56,0.56,0.22),
+            Vector3(cos(angle)*2.2,0.26,sin(angle)*2.2-24.0),Vector3(0.8,1.3,0.8))
     # Rock arches and pointed crystal clusters introduce a readable deep biome.
     for z in [-19.0,-31.0]:
         for side in [-1.0,1.0]:
@@ -174,6 +180,15 @@ func _model_cache(node: Node3D, id: String) -> void:
     SurvivorModels.box(node,Vector3(1.55,0.12,1.13),Color(0.59,0.42,0.20),Vector3(0,0.85,0))
     SurvivorModels.sphere(node,0.17,Color(0.31,0.81,0.88) if id.begins_with("east") else Color(0.86,0.73,0.33),Vector3(0,1.18,0))
     SurvivorModels.merge_static(node,"cache_"+id)
+
+func hazard_rate_at(pos: Vector3) -> float:
+    var cave_id := cave_at(pos)
+    if cave_id == "":
+        return 0.0
+    var local: Vector3 = pos-CENTERS[cave_id]
+    if Vector2(local.x,local.z).distance_to(HAZARD_POINTS[cave_id]) < 2.8:
+        return 1.2 if cave_id == "east" else 1.65
+    return 0.0
 
 func is_inside(pos: Vector3) -> bool:
     return is_cave_position(pos)
