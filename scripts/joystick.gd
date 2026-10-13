@@ -5,17 +5,17 @@ signal direction_changed(direction: Vector2)
 
 var direction := Vector2.ZERO
 var active_pointer := -999
-const RADIUS = 69.0
+const RADIUS = 84.0
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_STOP
-    custom_minimum_size = Vector2(190, 190)
+    custom_minimum_size = Vector2(236, 236)
 
 func _draw() -> void:
     var center: Vector2 = size * 0.5
     draw_circle(center, RADIUS + 9.0, Color(0.05, 0.09, 0.10, 0.37))
     draw_arc(center, RADIUS, 0.0, TAU, 56, Color(0.94, 0.89, 0.68, 0.55), 3.0, true)
-    draw_circle(center + direction * RADIUS, 30.0, Color(0.95, 0.90, 0.69, 0.72))
+    draw_circle(center + direction * RADIUS, 37.0, Color(0.95, 0.90, 0.69, 0.72))
 
 func _update_direction(pos: Vector2) -> void:
     direction = ((pos - size * 0.5) / RADIUS).limit_length(1.0)
