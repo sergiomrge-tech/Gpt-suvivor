@@ -14,7 +14,9 @@ var discoverables: Array[Dictionary] = []
 const DISCOVERIES := {
     "pilot_bag":{"title":"A mochila do piloto","text":"Entre os destroços, você encontra uma mochila com suprimentos secos e uma anotação: água doce deve existir onde a vegetação fica mais densa. O piloto havia marcado uma nascente a oeste da praia.","point":Vector2(-4,172),"reward":{"wood":4,"fiber":3}},
     "cave_note":{"title":"Marcas na rocha","text":"Um pequeno diário descreve uma antiga passagem por esta ilha. A última página fala de rochas com peças metálicas presas entre as raízes e de uma praia ampla, boa para montar uma embarcação. A tinta está gasta, mas a esperança continua legível.","point":Vector2(78,24),"reward":{"metal":2}},
-    "tool_crate":{"title":"Ferramentas esquecidas","text":"A caixa guardava ferragens e cordas. Quem esteve aqui também tentou construir alguma coisa. Você reaproveita o que resistiu à umidade e deixa uma marca no diário: desta vez, o barco vai chegar ao mar.","point":Vector2(-88,-53),"reward":{"metal":2,"fiber":5}}
+    "tool_crate":{"title":"Ferramentas esquecidas","text":"A caixa guardava ferragens e cordas. Quem esteve aqui também tentou construir alguma coisa. Você reaproveita o que resistiu à umidade e deixa uma marca no diário: desta vez, o barco vai chegar ao mar.","point":Vector2(-88,-53),"reward":{"metal":2,"fiber":5}},
+    "distress_log":{"title":"Registro do resgate","text":"Nos destroços há um registro do rádio. A rota foi desviada pela tempestade; uma embarcação leve pode alcançar o canal seguro ao leste. A mensagem aponta para a Caverna do Leste.","point":Vector2(-12,174),"reward":{"metal":2}},
+    "sail_diagram":{"title":"Esquema da vela","text":"Perto da entrada da Caverna do Leste, você encontra desenhos da armação de um barco. As cordas e tábuas da bancada serão essenciais para terminar a vela e navegar para fora da ilha.","point":Vector2(75,27),"reward":{"fiber":2}}
 }
 
 func generate() -> void:
@@ -138,6 +140,8 @@ func add_structure(entry: Dictionary) -> Node3D:
     if entry.kind == "dock":
         # Point away from the center of the island into the ocean.
         node.rotation.y = atan2(-node.position.x, -node.position.z)
+    elif entry.kind != "boat":
+        node.rotation.y = float(entry.get("rotation", 0.0))
     add_child(node)
     SurvivorModels.building(node, entry.kind)
     if entry.kind != "campfire":
@@ -146,6 +150,15 @@ func add_structure(entry: Dictionary) -> Node3D:
     if scenery != null:
         scenery.clear_area(node.position, 5.0 if entry.kind == "house" else 2.8)
     return node
+
+func remove_structure(kind: String) -> void:
+    for index in range(structures.size() - 1, -1, -1):
+        if str(structures[index].kind) == kind:
+            var node: Node3D = structures[index].node
+            structures.remove_at(index)
+            if is_instance_valid(node):
+                node.queue_free()
+            return
 
 func _process(delta: float) -> void:
     _refresh_clock += delta
@@ -248,7 +261,9 @@ func walkable(pos: Vector3, previous: Vector3) -> bool:
             if absf(local.x) > 3.0 and absf(local.x) < 7.0 or local.z < -9.5 and absf(local.x) < 7.0:
                 return false
     for entry in structures:
-        var local: Vector3 = pos - entry.position
+        var local: Vector3 = entry.node.to_local(Vector3(pos.x,entry.position.y,pos.z))
+        if entry.kind in ["chest", "rain_collector"] and Vector2(local.x,local.z).length() < 1.0:
+            return false
         if entry.kind == "workbench" and absf(local.x) < 1.9 and absf(local.z) < 1.1:
             return false
         if entry.kind == "house":
@@ -257,7 +272,7 @@ func walkable(pos: Vector3, previous: Vector3) -> bool:
                     return false
     return true
 
-func placement_error(kind: String, pos: Vector3, player_pos: Vector3) -> String:
+func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kind: String = "") -> String:
     if pos.distance_to(player_pos) > 15.0:
         return "Construa perto do personagem."
     if kind == "boat":
@@ -275,6 +290,8 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3) -> String:
         if entry.node.visible and entry.radius > 0 and Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length() < radius + float(entry.radius):
             return "Limpe os recursos desse local antes de construir."
     for entry in structures:
+        if ignore_kind != "" and entry.kind == ignore_kind:
+            continue
         if Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length() < radius + (4.5 if entry.kind == "house" else 2.4):
             return "Deixe espaço entre as construções."
     for entry in landmarks:
