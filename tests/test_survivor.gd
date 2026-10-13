@@ -450,10 +450,22 @@ func run() -> void:
     check(game.state.is_equipped("stone_axe"),"Equip tab restores axe for tree harvesting")
     check(game.hud.shortcut_buttons.size() == 5 and game.hud.shortcut_bar != null,"Five quick tools are maintained as real HUD controls")
     check(game.hud.shortcut_bar.name == "ToolShortcuts" and game.hud.shortcut_bar.get_child_count() == 5,"Bottom-of-screen equipment shortcuts have separate touch controls")
+    var quick_taps := [""]
+    game.hud.shortcut_requested.connect(func(kind: String): quick_taps[0] = kind)
+    game.hud._activate_shortcut(1)
+    check(quick_taps[0] == "stone_pickaxe", "Second bottom tool button dispatches real pickaxe equipment instead of a decorative tap")
+    game.hud.update_shortcuts()
+    check(game.hud.shortcut_buttons[1].disabled == false and game.hud.shortcut_buttons[0].disabled == false, "Owned axe and pickaxe shortcuts are touch enabled")
+
     check(game.hud._active_shortcut_kind(0) == "stone_axe" and game.hud._active_shortcut_kind(1) == "stone_pickaxe","Shortcut keys resolve actual owned axe and pickaxe")
 
     game.hud.toggle_inventory()
     check(game.hud.modal_mode == "" and game.hud.joystick.active,"Backpack returns to compact HUD")
+    game._quick_equip("stone_pickaxe")
+    check(game.state.is_equipped("stone_pickaxe"),"Gameplay shortcut equipping updates authoritative utility slot")
+    game._quick_equip("stone_axe")
+    check(game.state.is_equipped("stone_axe"),"Gameplay shortcut switching restores actual equipped axe")
+
     var found_entry: Dictionary = game.world.discoverables[0]
     var discovery_wood: int = game.state.inventory.wood
     var found: Dictionary=game.world.discover(found_entry)
@@ -769,6 +781,10 @@ func run() -> void:
     game.hud.show_inventory("recipes")
     check(game.hud.build_buttons.has("stone_axe") and game.hud.build_buttons.has("stone_knife") and game.hud.build_buttons.has("stone_pickaxe") and game.hud.build_buttons.has("stone_spear"),"Independent Recipes tab contains all basic tool recipes")
     check(game.hud.build_buttons.has("grilled_crab") and game.hud.build_buttons.has("cooked_meat"),"Food preparation is available on the separate recipe page")
+    var taps_before := quick_taps[0]
+    game.hud._activate_shortcut(0)
+    check(quick_taps[0] == taps_before, "Inventory modal blocks background hotbar gestures while reviewing recipes")
+
     check(not game.hud.build_buttons.has("house"),"Camp buildings do not crowd recipe list")
     check(not game.hud._recipe_unlocked("reinforced_axe"),"Advanced equipment is visually locked before research and workshop")
     action_touch.pressed = true
