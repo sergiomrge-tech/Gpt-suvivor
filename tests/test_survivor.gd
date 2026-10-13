@@ -144,6 +144,37 @@ func run() -> void:
             elif is_equal_approx(uv.x, 5.0):
                 has_hair = true
         check(has_skin and has_hair, "Single mobile-optimized head mesh preserves individual skin and hair material responses")
+    var left_boot_mesh: MeshInstance3D
+    var right_boot_mesh: MeshInstance3D
+    for child in game.player.left_foot.get_children():
+        if child is MeshInstance3D:
+            left_boot_mesh = child
+    for child in game.player.right_foot.get_children():
+        if child is MeshInstance3D:
+            right_boot_mesh = child
+    check(game.player.left_foot.get_parent() == game.player.left_knee and game.player.right_foot.get_parent() == game.player.right_knee, "Boot pivots are independently articulated under the animated shins")
+    check(left_boot_mesh != null and right_boot_mesh != null, "Both sculpted boots are real Godot meshes, not old rectangular shoe boxes")
+    if left_boot_mesh != null and right_boot_mesh != null:
+        var boot_arrays := left_boot_mesh.mesh.surface_get_arrays(0)
+        var boot_uv2: PackedVector2Array = boot_arrays[Mesh.ARRAY_TEX_UV2]
+        var has_leather := false
+        for boot_uv in boot_uv2:
+            if is_equal_approx(boot_uv.x, 7.0):
+                has_leather = true
+                break
+        check(boot_arrays[Mesh.ARRAY_VERTEX].size() > 300 and has_leather, "Sculpted boot geometry merges original toe, sole and leather material into one mobile-friendly draw mesh")
+        check(left_boot_mesh.mesh == right_boot_mesh.mesh, "Both identical boots reuse the cached mesh rather than rebuilding topology")
+    var saved_clock: float = game.player.animation_clock
+    var saved_walking: bool = game.player.walking
+    game.player.walking = true
+    game.player.animation_clock = PI * 0.5
+    game.player._base_pose()
+    check(absf(game.player.left_foot.rotation.x - game.player.right_foot.rotation.x) > 0.05, "Walk cycle rolls the left and right ankles asymmetrically")
+    game.player.walking = saved_walking
+    game.player.animation_clock = saved_clock
+    game.player._base_pose()
+    check(game.player.tools.rod.get_parent() == game.player.right_hand and game.player.tools.axe.get_parent() == game.player.right_hand, "Fishing and tool grip pivots survive the anatomical hero upgrade")
+
     check(game.world.resources.size() >= 190, "Island generated with abundant accessible resources")
     check(game.world.fauna != null and game.world.fauna.animals.size() >= 12, "Coastal and forest fauna populate the island")
     var crab_entry: Dictionary = {}
