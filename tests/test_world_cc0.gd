@@ -44,7 +44,10 @@ func run() -> void:
                 for piece in plane.find_children("*","MeshInstance3D",true,false):
                     if bool(piece.get_meta("wreck_detached",false)):
                         detached += 1
-            check(detached >= 1,"Actual imported mesh instance is tilted and displaced as crash wreckage")
+            check(detached >= 4,"Real GLB wing, wingtip, canopy and propeller elements detach into visible wreckage")
+            var wing_pivot: Node = plane.find_child("FracturedRightWingActualGLB",true,false) if plane != null else null
+            check(wing_pivot != null and (wing_pivot as Node3D).position.z > 4.5,"Detached wing now uses a fracture pivot at its root and lies away from the fuselage")
+            check(plane.find_child("ShatteredCockpitCanopy",true,false)!=null and plane.find_child("BrokenPropellerBlade",true,false)!=null,"Cockpit canopy and propeller are also damaged, not intact")
             break
     var real_palm_count := 0
     for resource in world.resources:
@@ -53,6 +56,10 @@ func run() -> void:
     check(real_palm_count >= 50,"At least fifty resources use real CC0 palm trees")
     var counts := world.scenery.real_forest_counts
     check(int(counts["fern"])>=10 and int(counts["calathea"])>=6 and int(counts["pachira"])>=3,"Actual Poly Haven assets distributed in jungle B")
+    check(world.scenery.tropical_floor_count >= 170 and world.scenery.tropical_floor_batches.size()>=5,"Dense jungle B contains 170+ additional real Poly Haven fern mesh instances, grouped into multiple rendering sectors")
+    for sector in world.scenery.tropical_floor_batches:
+        check(sector.node.multimesh.mesh != null,"True original CC0 fern mesh is reused through MultiMesh without generating low-poly substitutes")
+        break
     check(game.terrain.ground_material.get_shader_parameter("real_pbr_assets_ready"),"CC0 A+B+C diffuse, normal and roughness maps fully linked")
     var prior_wood: int = game.state.inventory.wood
     var source: Dictionary = {}
@@ -81,6 +88,12 @@ func run() -> void:
     world.scenery.clear_area(Vector3(-55,world.terrain.height_at(-55,72),72),2.8)
     world.scenery.set_light_mode(true)
     check(world.scenery.light_mode,"Leve mode accessible with CC0 vegetation")
+    var floor_culled := true
+    for bucket in world.scenery.tropical_floor_batches:
+        if bucket.node.multimesh.visible_instance_count > bucket.entries.size()/3+1:
+            floor_culled = false
+            break
+    check(floor_culled,"Mobile Leve preset reduces close-ground real fern draw instances")
     world.scenery.set_light_mode(false)
     check(not world.scenery.light_mode,"Full render mode restores CC0 foliage")
     print("CC0_WORLD_TESTS: %d/%d passed; palm=%d forest=%s" % [
