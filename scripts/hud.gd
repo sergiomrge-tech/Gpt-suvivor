@@ -5,6 +5,8 @@ signal action_requested
 signal build_requested(kind: String)
 signal confirm_build_requested
 signal cancel_build_requested
+signal equipment_requested(kind: String)
+signal unequip_requested(slot: String)
 signal fishing_requested
 signal consume_requested
 signal save_requested
@@ -322,7 +324,7 @@ func close_modal() -> void:
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
-    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.4.1")
+    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.4.2")
     if paused:
         panel_content.add_child(_button("Voltar ao jogo", func(): close_modal(); resume_requested.emit()))
         panel_content.add_child(_button("Salvar progresso", func(): save_requested.emit()))
@@ -356,10 +358,10 @@ func show_inventory(tab: String = "items") -> void:
     if not is_playing or state == null: return
     inventory_tab = tab
     item_buttons.clear()
-    _new_modal("craft" if tab == "craft" else "inventory", "MOCHILA", "Recursos, ferramentas e construções. As ferramentas fabricadas são usadas automaticamente na coleta.")
+    _new_modal("craft" if tab == "craft" else "inventory", "MOCHILA", "Organize itens e equipe as ferramentas antes de usá-las na ilha.")
     var tabs := HBoxContainer.new()
     modal_top.add_child(tabs)
-    for entry in [["Itens", "items"], ["Construções", "craft"]]:
+    for entry in [["Itens", "items"], ["Equipar", "equipment"], ["Construções", "craft"]]:
         var tab_button := _button(entry[0],_inventory_tab_callback(entry[1]))
         tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         if tab == entry[1]:
@@ -367,7 +369,9 @@ func show_inventory(tab: String = "items") -> void:
         tabs.add_child(tab_button)
     var summary := _label("Madeira %d  •  Pedra %d  •  Fibra %d  •  Metal %d" % [state.inventory.wood,state.inventory.stone,state.inventory.fiber,state.inventory.metal],19)
     modal_top.add_child(summary)
-    if tab == "craft":
+    if tab == "equipment":
+        _equipment_panel()
+    elif tab == "craft":
         _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe"])
         _recipe_grid("Acampamento e bancada",["campfire","workbench","fishing_rod","house","dock","boat","meal"])
     else:
@@ -465,11 +469,64 @@ func _inventory_grid() -> void:
     sun.rotation_degrees = Vector3(-35,-25,0)
     sun.light_energy = 1.2
     scene.add_child(sun)
-    var equipment := _label("Ferramentas\n",18)
-    for tool in SurvivalState.TOOLS:
-        equipment.text += "%s %s\n" % ["✓" if state.owns(tool) else "–",SurvivalState.RECIPES[tool].title]
+    var equipment := _label("EQUIPADOS\n",18)
+    for slot in ["main_hand","utility"]:
+        var item: String = str(state.equipment.get(slot,""))
+        var caption: String = "Mão principal" if slot == "main_hand" else "Ferramenta"
+        equipment.text += "%s: %s\n" % [caption, "Vazio" if item == "" else SurvivalState.RECIPES[item].title]
     character_column.add_child(equipment)
+    character_column.add_child(_button("Gerenciar equipamentos",func(): show_inventory("equipment")))
     character_column.add_child(_button("Diário da ilha",func(): show_journal()))
+
+func _equipment_panel() -> void:
+    panel_content.add_child(_label("EQUIPAMENTOS DO PERSONAGEM",23))
+    panel_content.add_child(_label("É preciso equipar a ferramenta correta. A vara fica na mão principal; machado, picareta e faca usam o espaço de ferramenta.",18))
+    var slots := HBoxContainer.new()
+    slots.add_theme_constant_override("separation",14)
+    panel_content.add_child(slots)
+    for entry in [["main_hand","MÃO PRINCIPAL"],["utility","FERRAMENTA"]]:
+        var slot: String = entry[0]
+        var container := PanelContainer.new()
+        container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        container.add_theme_stylebox_override("panel",_style(Color(0.13,0.25,0.23)))
+        slots.add_child(container)
+        var body := VBoxContainer.new()
+        body.add_theme_constant_override("separation",10)
+        container.add_child(body)
+        body.add_child(_label(entry[1],20))
+        var held: String = str(state.equipment.get(slot,""))
+        var title: String = "VAZIO" if held == "" else str(SurvivalState.RECIPES[held].title)
+        body.add_child(_label(title,21))
+        if held != "":
+            var icon := TextureRect.new()
+            icon.texture = _icon(held)
+            icon.custom_minimum_size = Vector2(0,54)
+            icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+            icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+            body.add_child(icon)
+            body.add_child(_button("Desequipar",_unequip_callback(slot)))
+    panel_content.add_child(_label("ESCOLHER FERRAMENTA",22))
+    var choices := GridContainer.new()
+    choices.columns = 2
+    choices.add_theme_constant_override("h_separation",12)
+    choices.add_theme_constant_override("v_separation",10)
+    panel_content.add_child(choices)
+    for kind in SurvivalState.TOOLS:
+        var available: bool = state.owns(kind)
+        var equipped: bool = state.is_equipped(kind)
+        var status: String = "EQUIPADO" if equipped else ("EQUIPAR" if available else "FABRICAR PRIMEIRO")
+        var button := _button("%s • %s" % [SurvivalState.RECIPES[kind].title,status],_equip_callback(kind))
+        button.custom_minimum_size = Vector2(0,65)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.disabled = not available or equipped
+        choices.add_child(button)
+    panel_content.add_child(_label("Pesca: equipe a VARA DE PESCAR na mão principal; vá à praia ou ao cais e toque PESCAR.",18))
+
+func _equip_callback(kind: String) -> Callable:
+    return func(): equipment_requested.emit(kind)
+
+func _unequip_callback(slot: String) -> Callable:
+    return func(): unequip_requested.emit(slot)
 
 func _item_callback(kind: String) -> Callable:
     return func():
@@ -563,8 +620,8 @@ func _process(delta: float) -> void:
     activity_label.text = activity_name
     activity_progress.visible = activity_name != ""
     activity_progress.value = activity_fraction
-    fishing_button.visible = placement_kind != "" or state.owns("fishing_rod")
-    fishing_button.disabled = placement_kind == "" and not can_fish
+    fishing_button.visible = true
+    fishing_button.disabled = false
     action_button.disabled = target.is_empty() and placement_kind == ""
     objective_label.text = state.objective()
     var hour := fmod(8.0 + state.elapsed / SurvivalState.DAY_SECONDS * 24.0, 24.0)

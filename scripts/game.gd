@@ -46,6 +46,8 @@ func _ready() -> void:
     hud.action_requested.connect(interact)
     hud.build_requested.connect(select_recipe)
     hud.fishing_requested.connect(fish_or_cancel)
+    hud.equipment_requested.connect(_equip_item)
+    hud.unequip_requested.connect(_unequip_item)
     hud.consume_requested.connect(consume)
     hud.save_requested.connect(save_game)
     hud.menu_requested.connect(pause_game)
@@ -348,8 +350,9 @@ func select_recipe(kind: String) -> void:
             return
         if state.pay_recipe(kind):
             state.add_item(kind, 1)
+            state.equip_tool(kind)
             queue_work(world.near_structure(player.position,"workbench",8),"craft",1.4,"station",2.35)
-            hud.toast("Vara pronta. Aproxime-se do mar e toque em Pescar.")
+            hud.toast("Vara pronta e equipada! Aproxime-se do mar e toque em Pescar.")
             save_game(false)
         return
     cancel_placement()
@@ -432,14 +435,28 @@ func craft_meal() -> void:
     else:
         hud.toast(state.recipe_error("meal"))
 
+func _equip_item(kind: String) -> void:
+    if not playing: return
+    if state.equip_tool(kind):
+        hud.show_inventory("equipment")
+        hud.toast("%s equipada." % SurvivalState.RECIPES[kind].title)
+    else:
+        hud.toast("Fabrique esse equipamento primeiro.")
+
+func _unequip_item(slot: String) -> void:
+    if not playing: return
+    if state.unequip_slot(slot):
+        hud.show_inventory("equipment")
+        hud.toast("Equipamento removido.")
+
 func fish_or_cancel() -> void:
     if paused():
         return
     if selected_recipe != "":
         cancel_placement()
         return
-    if not state.owns("fishing_rod"):
-        hud.toast("Fabrique a vara perto da bancada primeiro.")
+    if not state.is_equipped("fishing_rod"):
+        hud.toast("Abra Mochila → Equipar e coloque a vara na MÃO PRINCIPAL para pescar.")
         return
     if not terrain.is_shore(player.position.x, player.position.z) and world.near_structure(player.position, "dock", 8).is_empty():
         hud.toast("Aproxime-se do mar ou do cais para pescar.")

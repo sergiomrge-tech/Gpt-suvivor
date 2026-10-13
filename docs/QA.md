@@ -1,3 +1,17 @@
+# QA atual — v0.4.2 — 13/10/2026
+
+Validação automatizada [GitHub Actions #38405960285](https://github.com/sergiomrge-tech/Gpt-suvivor/actions/runs/38405960285): **sucesso**, Godot 4.6.1; **149/149 verificações nativas aprovadas**. Importação do projeto sem erro, auditoria de **128 arquivos** sem referências quebradas/inesperadas e 13/13 arquivos de áudio válidos.
+
+Cobertura adicional da v0.4.2:
+- abas **Itens / Equipar / Construções**, espaços **Mão principal / Ferramenta** e eventos da UI para equipar, trocar e desequipar;
+- bloqueio de árvores e rochas sem ferramenta equipada; bônus de fibras somente com faca equipada;
+- migração de saves anteriores sem equipamento, persistência da ferramenta atualmente equipada e prevenção de equipamento inválido;
+- vara fabricada na bancada equipada automaticamente; tentativa de pescar sem a vara equipada bloqueada; pesca com vara equipada mantida.
+
+O workflow também gerou arquivo ZIP do **código-fonte**, na área de Artifacts da execução. A v0.4.2 **não possui APK exportado nem assinado nesta sessão**. Para atualizar o app instalado sem desinstalar, o próximo APK precisa ser assinado pela **mesma chave privada** da v0.4/0.4.1, mantida fora do GitHub. Testes de toque, compatibilidade com o save real, FPS e instalação em Android físico continuam pendentes.
+
+## QA da versão anterior
+
 # QA atual — v0.4.1 — 13/10/2026
 
 Godot 4.6.1 Linux: 141/141 verificações nativas aprovadas. Novas verificações cobrem recursos iniciais acessíveis, restrição de árvore/rocha sem ferramenta, fabricação com custos exatos, cancelamento anterior ao contato, rejeição de duplicatas, bônus da faca, persistência das ferramentas, migração v1→v2, zoom limitado, joystick reposicionado, grade do inventário, descrição de itens e painel limitado ao viewport.

@@ -3,6 +3,7 @@ class_name SurvivalState
 
 const SAVE_VERSION := 2
 const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "fishing_rod"]
+const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "fishing_rod":"main_hand"}
 const DAY_SECONDS := 1200.0
 const START_POSITION := Vector3(0.0, 0.0, 170.0)
 const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado"}
@@ -18,6 +19,7 @@ const RECIPES := {
     "boat": {"title": "Barco de fuga", "cost": {"wood": 60, "fiber": 20, "metal": 8}, "requires": ["house", "dock", "fishing_rod"], "description": "Construa junto ao cais e parta da ilha."},
     "meal": {"title": "Assar peixe", "cost": {"raw_fish": 1}, "requires": ["campfire"], "description": "Prepare na fogueira. Recupera 38 de fome."}
 }
+var equipment: Dictionary = {"main_hand":"", "utility":""}
 var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "fishing_rod": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0}
 var buildings: Array[Dictionary] = []
 var harvested: Dictionary = {}
@@ -40,17 +42,35 @@ func owns(kind: String) -> bool:
         return int(inventory.get(kind, 0)) > 0
     return has_structure(kind)
 
+func equip_tool(kind: String) -> bool:
+    if not TOOL_SLOTS.has(kind) or not owns(kind):
+        return false
+    equipment[str(TOOL_SLOTS[kind])] = kind
+    return true
+
+func unequip_slot(slot: String) -> bool:
+    if not equipment.has(slot):
+        return false
+    equipment[slot] = ""
+    return true
+
+func is_equipped(kind: String) -> bool:
+    if not TOOL_SLOTS.has(kind):
+        return false
+    return str(equipment.get(TOOL_SLOTS[kind], "")) == kind and owns(kind)
+
 func harvest_error(kind: String) -> String:
-    if kind in ["palm", "tree"] and not owns("stone_axe"):
-        return "Precisa de machado de pedra. Pegue troncos, pedras soltas e fibras; abra Mochila → Construções."
-    if kind == "rock" and not owns("stone_pickaxe"):
-        return "Precisa de picareta de pedra. Fabrique em Mochila → Construções."
+    if kind in ["palm", "tree"] and not is_equipped("stone_axe"):
+        return "Equipe o machado de pedra em Mochila → Equipar para cortar árvores."
+    if kind == "rock" and not is_equipped("stone_pickaxe"):
+        return "Equipe a picareta em Mochila → Equipar para minerar rochas."
     return ""
 
 func craft_tool(kind: String) -> bool:
     if not kind in TOOLS or not pay_recipe(kind):
         return false
     add_item(kind, 1)
+    equip_tool(kind)
     return true
 
 func recipe_error(kind: String) -> String:
@@ -123,7 +143,7 @@ func objective() -> String:
     return "O barco está pronto! Aproxime-se e toque em Embarcar."
 
 func to_data() -> Dictionary:
-    return {"version": SAVE_VERSION, "inventory": inventory, "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
+    return {"version": SAVE_VERSION, "inventory": inventory, "equipment": equipment.duplicate(true), "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
 
 static func from_data(data: Dictionary) -> SurvivalState:
     if int(data.get("version", 0)) not in [1, SAVE_VERSION]:
@@ -137,6 +157,25 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not (value is int or value is float) or not is_finite(float(value)):
             return null
         state.inventory[key] = clampi(int(value), 0, 100000)
+    var gear = data.get("equipment", null)
+    if gear is Dictionary:
+        for slot in state.equipment:
+            var kind: String = str(gear.get(slot, ""))
+            if kind != "" and (not TOOL_SLOTS.has(kind) or TOOL_SLOTS[kind] != slot or not state.owns(kind)):
+                return null
+            state.equipment[slot] = kind
+    elif gear == null:
+        # Old v1/v2 saves used every owned tool automatically.
+        if state.owns("stone_axe"):
+            state.equip_tool("stone_axe")
+        elif state.owns("stone_pickaxe"):
+            state.equip_tool("stone_pickaxe")
+        elif state.owns("stone_knife"):
+            state.equip_tool("stone_knife")
+        if state.owns("fishing_rod"):
+            state.equip_tool("fishing_rod")
+    else:
+        return null
     for stat in ["health", "hunger", "thirst", "elapsed"]:
         var value = data.get(stat, 100.0 if stat != "elapsed" else 0.0)
         if not (value is int or value is float) or not is_finite(float(value)):
