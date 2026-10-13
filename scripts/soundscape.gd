@@ -21,6 +21,11 @@ var streams: Dictionary = {}
 var sea: AudioStreamPlayer
 var wind: AudioStreamPlayer
 var fire: AudioStreamPlayer3D
+var birds: AudioStreamPlayer
+var insects: AudioStreamPlayer
+var rain: AudioStreamPlayer
+var cave: AudioStreamPlayer
+var mixer_levels: Dictionary = {"Ambiente":1.0,"Efeitos":1.0,"Passos":1.0}
 var voices: Array[AudioStreamPlayer3D] = []
 var voice_cursor := 0
 var muted := false
@@ -35,7 +40,7 @@ func _ready() -> void:
     # Headless test sessions have no output mixer; do not allocate looping
     # playbacks there. Assets and routing remain available for validation.
     output_available = DisplayServer.get_name() != "headless"
-    for bus in ["Ambiente","Efeitos"]:
+    for bus in ["Ambiente","Efeitos","Passos"]:
         if AudioServer.get_bus_index(bus) < 0:
             AudioServer.add_bus()
             AudioServer.set_bus_name(AudioServer.bus_count-1,bus)
@@ -50,8 +55,14 @@ func _ready() -> void:
             stream.loop_begin = 0
             stream.loop_end = stream.data.size()/2
         streams[kind] = stream
+    for kind in ["birds","insects","rain","cave"]:
+        streams[kind] = SurvivorAmbientSynth.make(kind)
     sea = _ambient("sea",-21)
     wind = _ambient("wind",-24)
+    birds = _ambient("birds",-55)
+    insects = _ambient("insects",-58)
+    rain = _ambient("rain",-60)
+    cave = _ambient("cave",-60)
     fire = AudioStreamPlayer3D.new()
     fire.bus = "Ambiente"
     fire.stream = streams.fire
@@ -85,6 +96,15 @@ func _soften_footstep(pcm: PackedByteArray, sample_rate: int) -> PackedByteArray
         out.encode_s16(i*2,sample)
     return out
 
+func set_mixer_level(bus_name: String, level: float) -> void:
+    if not mixer_levels.has(bus_name):
+        return
+    var value := clampf(level,0.0,1.0)
+    mixer_levels[bus_name] = value
+    var index := AudioServer.get_bus_index(bus_name)
+    if index >= 0:
+        AudioServer.set_bus_volume_db(index,linear_to_db(maxf(value,0.0001)))
+
 func _ambient(kind: String,volume: float) -> AudioStreamPlayer:
     var player := AudioStreamPlayer.new()
     player.stream = streams[kind]
@@ -96,11 +116,10 @@ func _ambient(kind: String,volume: float) -> AudioStreamPlayer:
 func set_active(value: bool) -> void:
     active = value
     if active and not muted and output_available:
-        if not sea.playing: sea.play()
-        if not wind.playing: wind.play()
+        for loop in [sea,wind,birds,insects,rain,cave]:
+            if not loop.playing: loop.play()
     else:
-        sea.stop()
-        wind.stop()
+        for loop in [sea,wind,birds,insects,rain,cave]: loop.stop()
         fire.stop()
         for voice in voices: voice.stop()
 
@@ -110,7 +129,7 @@ func set_muted(value: bool) -> void:
 
 func set_frozen(value: bool) -> void:
     frozen = value
-    for player in [sea,wind,fire]+voices:
+    for player in [sea,wind,birds,insects,rain,cave,fire]+voices:
         player.stream_paused = value
 
 func play_effect(kind: String,point: Vector3,pitch: float = 1.0) -> void:
@@ -125,9 +144,11 @@ func play_effect(kind: String,point: Vector3,pitch: float = 1.0) -> void:
     voice.stream = streams[kind]
     if kind.begins_with("step_"):
         # Gentle, close-to-the-player foley without intrusive thumps or spikes.
+        voice.bus = "Passos"
         voice.volume_db = FOOTSTEP_VOLUME_DB
         voice.pitch_scale = randf_range(0.965,1.035)
     else:
+        voice.bus = "Efeitos"
         voice.volume_db = -9.0
         voice.pitch_scale = clampf(pitch,0.85,1.15)
     voice.play()
@@ -137,6 +158,14 @@ func update_environment(point: Vector3,terrain: SurvivorTerrain,world: SurvivorW
     var distance := absf(Vector2(point.x,point.z).length()-coastal_radius)
     var desired := lerpf(-16,-34,clampf(distance/90.0,0,1))
     sea.volume_db = lerpf(sea.volume_db,desired,minf(1,delta*2))
+    var in_cave := world.caves != null and world.caves.is_inside(point)
+    var rainfall := SurvivorClimate.rainfall_at(world.state.elapsed)
+    var sheltered := not world.near_structure(point,"house",9).is_empty()
+    birds.volume_db = lerpf(birds.volume_db,-33.0 if not in_cave and terrain.daylight_amount > 0.35 and rainfall < 0.2 else -66.0,minf(1.0,delta*2.0))
+    insects.volume_db = lerpf(insects.volume_db,-38.0 if not in_cave and terrain.daylight_amount < 0.25 and rainfall < 0.2 else -66.0,minf(1.0,delta*2.0))
+    rain.volume_db = lerpf(rain.volume_db,(-34.0 if sheltered else -28.0) if not in_cave and rainfall > 0.15 else -66.0,minf(1.0,delta*2.0))
+    cave.volume_db = lerpf(cave.volume_db,-33.0 if in_cave else -66.0,minf(1.0,delta*2.0))
+    if in_cave: sea.volume_db = lerpf(sea.volume_db,-66.0,minf(1.0,delta*3.0))
     var camp := world.near_structure(point,"campfire",25)
     if not muted and active and output_available and not camp.is_empty():
         fire.position = camp.position+Vector3(0,0.8,0)
@@ -147,7 +176,7 @@ func update_environment(point: Vector3,terrain: SurvivorTerrain,world: SurvivorW
 func shutdown() -> void:
     active = false
     frozen = false
-    for player in [sea,wind,fire]+voices:
+    for player in [sea,wind,birds,insects,rain,cave,fire]+voices:
         if is_instance_valid(player):
             player.stream_paused = false
             player.stop()
