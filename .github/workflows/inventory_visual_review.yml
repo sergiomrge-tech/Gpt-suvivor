@@ -1,0 +1,40 @@
+name: Review real Godot inventory screens
+on:
+  push:
+    branches:
+      - feat/premium-inventory-v111
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inventory-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.6.1
+        run: |
+          curl --fail --location --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo /tmp/godot >> "$GITHUB_PATH"
+      - name: Import resources
+        run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit
+      - name: Capture actual gameplay UI in X11 software renderer
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          mkdir -p /tmp/survivor-captures-v041
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 240 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_inventory.gd
+          test -s /tmp/survivor-captures-v041/02_mochila.png
+          test -s /tmp/survivor-captures-v041/03_equipamentos.png
+          test -s /tmp/survivor-captures-v041/04_construcoes.png
+          test -s /tmp/survivor-captures-v041/05_receitas.png
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-real-inventory-captures
+          path: /tmp/survivor-captures-v041/*.png
+          retention-days: 7
