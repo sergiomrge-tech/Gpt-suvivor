@@ -68,6 +68,28 @@ func run() -> void:
     game.apply_quality()
     await _settle()
     await _shot("07_hero_mobile_gameplay_scale")
+    # Close-up inspection is still a REAL Godot camera, with authentic world
+    # lighting and unmodified character meshes; only the HUD is hidden.
+    var inspection_camera := Camera3D.new()
+    inspection_camera.fov = 38.0
+    game.add_child(inspection_camera)
+    inspection_camera.global_position = game.player.global_position+Vector3(1.0,2.25,5.8)
+    inspection_camera.look_at(game.player.global_position+Vector3(0,1.45,0),Vector3.UP)
+    inspection_camera.make_current()
+    game.hud.visible = false
+    game.light_visuals = false
+    game.apply_quality()
+    game.player.body_pivot.rotation.y = 0.0
+    await _settle()
+    await _shot("08_real_camera_hero_closeup_front")
+    game.player.body_pivot.rotation.y = PI*0.50
+    await _settle()
+    await _shot("09_real_camera_hero_closeup_side")
+    game.player.body_pivot.rotation.y = 0.0
+    inspection_camera.global_position = game.player.global_position+Vector3(0.65,0.92,2.45)
+    inspection_camera.look_at(game.player.global_position+Vector3(0,0.53,0),Vector3.UP)
+    await _settle()
+    await _shot("10_real_camera_boots_closeup")
     print("HERO V17 MESHES: left_ankle=",game.player.left_foot.get_child_count()," right_ankle=",game.player.right_foot.get_child_count())
     print("RENDER: ",Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)," calls (software renderer, not Android FPS)")
     game.soundscape.shutdown()
