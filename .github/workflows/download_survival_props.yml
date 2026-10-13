@@ -1,0 +1,44 @@
+name: Acquire CC0 survival construction and crafting props
+on:
+  push:
+    branches: [feat/cc0-world-structures-lot2]
+    paths:
+      - tests/world_assets/download_survival_props.py
+      - .github/workflows/download_survival_props.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download authored commercial-ready CC0 camping and craft props
+        run: python3 tests/world_assets/download_survival_props.py
+      - name: Verify downloaded original assets and manifest
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,hashlib
+          root=pathlib.Path("assets/survival_props")
+          rows=json.loads((root/"CATALOG.json").read_text())["items"]
+          for item in rows:
+              assert item["license"]=="CC0"
+              for entry in item["files"]:
+                  blob=(root/entry["path"]).read_bytes()
+                  assert len(blob)==entry["size"] and hashlib.sha256(blob).hexdigest()==entry["sha256"]
+              print("SURVIVAL_PROP_VERIFIED",item["id"],item["kind"])
+          assert len(rows)==11, len(rows)
+          PY
+      - name: Commit verified original models to lot2 branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/survival_props
+          git commit -m "assets(lot2): add verified CC0 firepit chest canoe and wooden props"
+          git push origin HEAD:feat/cc0-world-structures-lot2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GPT-Survivor-Additional-CC0-Construction-Camping-Models
+          path: assets/survival_props/
+          retention-days: 21
