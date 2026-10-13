@@ -1,5 +1,15 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.5.0 — Refinamento geométrico da ilha e habitats tropicais (código Godot; SEM APK)
+
+- **Vegetação em camadas**: acrescentados juncos de dunas e samambaias de sub-bosque, ambos com malhas originais de folhas curvas, coloração por instância, vento e resposta à chuva. Distribuição fixa por altura e cobertura vegetal, evitando recursos, trilhas, construções e marcos.
+- **Geologia real no cenário**: fragmentos de rocha multifacetados em encostas e áreas de mata, com posicionamento baseado na inclinação da elevação real. Como são pequenos elementos decorativos, não alteram colisão, lógica de coleta ou locais de construção.
+- **Copas de árvores reconstruídas**: antigas massas esféricas substituídas por troncos afunilados, galhos distribuídos em alturas diferentes e centenas de folhas 3D por árvore. Toda a malha é reunida/cacheada para reduzir draw calls; madeira e radius de coleta não mudam.
+- **Praias e mar**: faixa de areia úmida com variação lenta do avanço das ondas, ripples orientados pelo vento, exposição geológica localizada e água tropical com bancos de areia, arrebentação irregular e reflexos ajustados. Nenhuma mudança na elevação, costa navegável, posicionamento dos recifes ou progressão.
+- **Android**: instanciamento espacial por MultiMesh e corte por distância; qualidade Leve limita densidade da vegetação nova. O efeito de microrrelevo v1.4 permanece seletivo no modo Completo.
+- **Verificação**: testes nativos verificam famílias de habitats, lotes, exclusões nas trilhas, efeito do clima, versão de save e geometria ramificada das árvores. Novo fluxo `visual_biomes_v15.yml` captura seis frames reais Godot da praia, areia, sub-bosque, região alta, chuva e qualidade leve.
+- **Limite visual**: mais geometria e materiais melhoram a naturalidade, mas esta versão não representa terreno ou flora fotorrealistas de produção. Texturas físicas de alta qualidade, fotogrametria, escultura e otimização em dispositivos reais ainda são trabalhos seguintes. Nem o FPS Android nem a qualidade fotográfica são afirmados sem teste. Nenhum APK será criado sem solicitação.
+
 ## v1.4.0 — Primeira etapa de anatomia 3D e materiais realistas (fonte Godot; SEM APK)
 
 - **Personagem remodelado em código 3D real**: novo gerador de malhas por perfis contínuos com normais suavizadas, substituindo o antigo corpo baseado quase exclusivamente em caixas/esferas/cilindros. Tórax afunilado com ombros e cintura, cabeça com maxilar e crânio próprios, braços e pernas afunilados, botas, mochila mais plana e detalhes discretos de roupa/rosto. Mantidos os mesmos pontos de articulação e encaixes de ferramentas.
