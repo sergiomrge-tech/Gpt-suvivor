@@ -475,6 +475,56 @@ func _inventory_grid() -> void:
     character_column.add_child(equipment)
     character_column.add_child(_button("Diário da ilha",func(): show_journal()))
 
+func _equipment_panel() -> void:
+    panel_content.add_child(_label("EQUIPAMENTOS DO PERSONAGEM",23))
+    panel_content.add_child(_label("É preciso equipar a ferramenta correta. A vara fica na mão principal; machado, picareta e faca usam o espaço de ferramenta.",18))
+    var slots := HBoxContainer.new()
+    slots.add_theme_constant_override("separation",14)
+    panel_content.add_child(slots)
+    for entry in [["main_hand","MÃO PRINCIPAL"],["utility","FERRAMENTA"]]:
+        var slot: String = entry[0]
+        var container := PanelContainer.new()
+        container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        container.add_theme_stylebox_override("panel",_style(Color(0.13,0.25,0.23)))
+        slots.add_child(container)
+        var body := VBoxContainer.new()
+        body.add_theme_constant_override("separation",10)
+        container.add_child(body)
+        body.add_child(_label(entry[1],20))
+        var held: String = str(state.equipment.get(slot,""))
+        var title: String = "VAZIO" if held == "" else str(SurvivalState.RECIPES[held].title)
+        body.add_child(_label(title,21))
+        if held != "":
+            var icon := TextureRect.new()
+            icon.texture = _icon(held)
+            icon.custom_minimum_size = Vector2(0,54)
+            icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+            icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+            body.add_child(icon)
+            body.add_child(_button("Desequipar",_unequip_callback(slot)))
+    panel_content.add_child(_label("ESCOLHER FERRAMENTA",22))
+    var choices := GridContainer.new()
+    choices.columns = 2
+    choices.add_theme_constant_override("h_separation",12)
+    choices.add_theme_constant_override("v_separation",10)
+    panel_content.add_child(choices)
+    for kind in SurvivalState.TOOLS:
+        var available: bool = state.owns(kind)
+        var equipped: bool = state.is_equipped(kind)
+        var status: String = "EQUIPADO" if equipped else ("EQUIPAR" if available else "FABRICAR PRIMEIRO")
+        var button := _button("%s • %s" % [SurvivalState.RECIPES[kind].title,status],_equip_callback(kind))
+        button.custom_minimum_size = Vector2(0,65)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.disabled = not available or equipped
+        choices.add_child(button)
+    panel_content.add_child(_label("Pesca: equipe a VARA DE PESCAR na mão principal; vá à praia ou ao cais e toque PESCAR.",18))
+
+func _equip_callback(kind: String) -> Callable:
+    return func(): equipment_requested.emit(kind)
+
+func _unequip_callback(slot: String) -> Callable:
+    return func(): unequip_requested.emit(slot)
+
 func _item_callback(kind: String) -> Callable:
     return func():
         if not is_instance_valid(item_detail): return
