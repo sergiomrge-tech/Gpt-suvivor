@@ -1,7 +1,7 @@
 name: Native Godot realistic island CC0 world review
 on:
   push:
-    branches: [feat/cc0-aviation-palms-crafting-world, feat/cc0-world-structures-lot2]
+    branches: [feat/cc0-aviation-palms-crafting-world, feat/cc0-world-structures-lot2, feat/survivor-integrated-cc0-world-and-hero]
     paths-ignore: [".github/workflows/download_cc0_world.yml"]
   workflow_dispatch:
 permissions:
