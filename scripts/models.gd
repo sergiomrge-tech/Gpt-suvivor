@@ -596,6 +596,21 @@ static func canopy_tree(parent: Node3D,variant: int) -> void:
         beam(parent,Vector3(0,height*0.55,0),branch,0.15,trunk)
         stone(parent,1.7,variant+i,Color(0.16+(i%2)*0.025,0.35+(i%3)*0.025,0.18),branch+Vector3(0,0.7,0),Vector3(1.25,0.60,1.15))
     stone(parent,2.0,variant+8,Color(0.17,0.37,0.19),Vector3(0,height+1.0,0),Vector3(1.1,0.70,1.1))
+    # Layered edge leaves break up the spherical canopy silhouette.
+    var foliage := PackedVector3Array()
+    for layer in range(3):
+        for leaflet in range(11):
+            var angle := float(leaflet)*TAU/11.0+float(layer)*0.73+float(variant)*0.1
+            var radial := Vector3(cos(angle),0,sin(angle))
+            var side := Vector3(-radial.z,0,radial.x)
+            var center := radial*(1.6+float(layer)*0.36)+Vector3(0,height+1.03-float(layer)*0.58,0)
+            var tip := center+radial*(0.85+float((leaflet+variant)%3)*0.12)+Vector3.UP*0.11
+            var half_width := 0.30+float(leaflet%3)*0.08
+            foliage.append_array(PackedVector3Array([
+                center-side*half_width,tip,center+side*half_width,
+                center+side*half_width,tip+Vector3.UP*0.04,center-side*half_width
+            ]))
+    triangles(parent,foliage,Color(0.16,0.35+float(variant%3)*0.025,0.16))
 
 static func fern(parent: Node3D,variant: int) -> void:
     for frond in range(6):
