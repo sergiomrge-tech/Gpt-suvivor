@@ -33,6 +33,11 @@ jobs:
           for view in 01_hero_front_anatomy 02_hero_profile_proportions 03_hero_pack_and_boots 04_hero_walk_ankle_fixture 05_hero_chopping_fixture 06_hero_fishing_fixture 07_hero_mobile_gameplay_scale 08_real_camera_hero_closeup_front 09_real_camera_hero_closeup_side 10_real_camera_boots_closeup 11_organic_contour_stride_reversal 12_skin_fabric_leather_in_rain; do
             test -s "/tmp/survivor-hero-v18/${view}.png"
           done
+      - name: Cross-check original survival gameplay and source audits
+        run: |
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_survivor.gd
+          python3 tests/audit_project.py
+          python3 tests/audit_audio.py
       - uses: actions/upload-artifact@v4
         if: success()
         with:
