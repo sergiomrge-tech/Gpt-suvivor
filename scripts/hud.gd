@@ -390,9 +390,10 @@ func show_inventory(tab: String = "items") -> void:
     if tab == "equipment":
         _equipment_panel()
     elif tab == "craft":
-        _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe"])
+        _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe","stone_spear"])
         _recipe_grid("Materiais • corda à mão, tábuas na bancada",["rope","plank"])
-        _recipe_grid("Acampamento",["campfire","workbench","fishing_rod","house","chest","bed","rain_collector","dock","boat","meal"])
+        _recipe_grid("Acampamento",["campfire","workbench","fishing_rod","house","chest","bed","rain_collector","dock","boat"])
+        _recipe_grid("Cozinha • fogueira",SurvivalState.FOOD_RECIPES)
         _recipe_grid("Casa modular • pisos, paredes, portas, janelas e telhados na grade de 3,2 m",SurvivalState.MODULES)
     elif tab == "camp":
         _camp_panel()
@@ -420,7 +421,7 @@ func _inventory_grid() -> void:
     grid.add_theme_constant_override("h_separation",8)
     grid.add_theme_constant_override("v_separation",8)
     bag_column.add_child(grid)
-    for kind in ["wood","stone","fiber","metal","rope","plank","coconut","raw_fish","meal","stone_knife","stone_axe","stone_pickaxe","fishing_rod"]:
+    for kind in ["wood","stone","fiber","metal","rope","plank","coconut","raw_fish","meal","raw_crab","raw_meat","grilled_crab","cooked_meat","stone_knife","stone_axe","stone_pickaxe","stone_spear","fishing_rod"]:
         var title: String = SurvivalState.ITEMS.get(kind,SurvivalState.RECIPES.get(kind,{}).get("title",kind))
         var amount: int = state.inventory.get(kind,0)
         var slot := _button("%s\n×%d" % [title,amount],_item_callback(kind))
@@ -592,7 +593,7 @@ func _equipment_panel() -> void:
         button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         button.disabled = not available or equipped
         choices.add_child(button)
-    panel_content.add_child(_label("Pesca: equipe a VARA DE PESCAR na mão principal; vá à praia ou ao cais e toque PESCAR.",18))
+    panel_content.add_child(_label("Pesca: equipe a VARA DE PESCAR na mão principal; vá à praia ou ao cais e toque PESCAR. Para caçar javalis, equipe a LANÇA DE PEDRA no espaço Ferramenta. Caranguejos são coletados à mão.",18))
 
 func _equip_callback(kind: String) -> Callable:
     return func(): equipment_requested.emit(kind)
@@ -604,7 +605,7 @@ func _item_callback(kind: String) -> Callable:
     return func():
         if not is_instance_valid(item_detail): return
         var title: String = SurvivalState.ITEMS.get(kind,SurvivalState.RECIPES.get(kind,{}).get("title",kind))
-        var descriptions := {"wood":"Troncos soltos podem ser recolhidos à mão. Para cortar árvores, fabrique um machado.","stone":"Pedras soltas podem ser recolhidas à mão. Para minerar rochas, fabrique uma picareta.","fiber":"Recolha à mão nas plantas. A faca aumenta a quantidade coletada.","metal":"Recupere ferragens nos destroços e nas cavernas para construir o barco.","coconut":"Recupera água e fome. Use Comer / beber.","raw_fish":"Asse na fogueira antes de comer.","meal":"Peixe assado: recupera fome e saúde.","rope":"Material intermediário feito com fibras. Use nos móveis e no barco.","plank":"Peça preparada na bancada. Necessária para o barco."}
+        var descriptions := {"wood":"Troncos soltos podem ser recolhidos à mão. Para cortar árvores, fabrique um machado.","stone":"Pedras soltas podem ser recolhidas à mão. Para minerar rochas, fabrique uma picareta.","fiber":"Recolha à mão nas plantas. A faca aumenta a quantidade coletada.","metal":"Recupere ferragens nos destroços e nas cavernas para construir o barco.","coconut":"Recupera água e fome. Use Comer / beber.","raw_fish":"Asse na fogueira antes de comer.","meal":"Peixe assado: recupera fome e saúde.","raw_crab":"Recolha caranguejos na praia e prepare na fogueira.","raw_meat":"Cace javalis com a lança de pedra equipada e asse na fogueira.","grilled_crab":"Caranguejo assado: recupera 26 pontos de fome.","cooked_meat":"Carne assada: recupera fome e saúde.","rope":"Material intermediário feito com fibras. Use nos móveis e no barco.","plank":"Peça preparada na bancada. Necessária para o barco."}
         var detail: String = descriptions.get(kind,SurvivalState.RECIPES.get(kind,{}).get("description",""))
         item_detail.text = "%s • %d no inventário\n%s" % [title,state.inventory.get(kind,0),detail]
 
@@ -641,7 +642,7 @@ func _recipe_grid(title: String,kinds: Array) -> void:
         detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         body.add_child(detail)
         var error := state.recipe_error(kind)
-        var button := _button("Pronto" if state.owns(kind) and kind not in SurvivalState.MODULES else ("Fabricar" if kind in SurvivalState.TOOLS or kind in SurvivalState.MATERIAL_RECIPES or kind == "meal" else "Construir"),_recipe_callback(kind))
+        var button := _button("Pronto" if state.owns(kind) and kind not in SurvivalState.MODULES else ("Fabricar" if kind in SurvivalState.TOOLS or kind in SurvivalState.MATERIAL_RECIPES or kind in SurvivalState.FOOD_RECIPES else "Construir"),_recipe_callback(kind))
         button.disabled = error != ""
         body.add_child(button)
         build_buttons[kind] = button
@@ -709,10 +710,11 @@ func _process(delta: float) -> void:
         fishing_button.text = "Pescar"
         action_button.text = "Explorar"
         if not target.is_empty():
-            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
+            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "crab":"Pegar caranguejo", "boar":"Caçar javali", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
     if not target.is_empty() and placement_kind == "" and activity_name == "":
         var error := state.harvest_error(str(target.kind))
-        if error != "": action_button.text = "Precisa de machado" if target.kind in ["tree","palm"] else "Precisa de picareta"
+        if error != "":
+            action_button.text = "Precisa de machado" if target.kind in ["tree","palm"] else ("Precisa de lança" if target.kind == "boar" else "Precisa de picareta")
     if activity_name!="" and placement_kind=="":
         action_button.text="Cancelar ação"
         action_button.disabled=false
