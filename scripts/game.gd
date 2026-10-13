@@ -194,27 +194,33 @@ func _fish() -> void:
 func _craft(recipe: String) -> void:
     if not running:
         return
+    if not SurvivorState.RECIPES.has(recipe):
+        return
     if recipe == "raft" and not terrain.is_shore(player.position.x, player.position.z):
         hud.notify("A jangada precisa ser construída na faixa de areia.")
         return
     if not state.can_craft(recipe):
         hud.notify("Materiais insuficientes para %s." % SurvivorHUD.RECIPE_NAMES[recipe])
         return
-    if recipe != "spear" and world.structure_records.size() >= 100:
+    var is_building: bool = SurvivorState.BUILDING_RECIPES.has(recipe)
+    if is_building and world.structure_records.size() >= 100:
         hud.notify("Limite de construções atingido.")
         return
     if not state.craft(recipe):
         hud.notify("Não foi possível fabricar.")
         return
-    if recipe != "spear":
+    if is_building:
         var facing: float = player.body_pivot.rotation.y
         var offset := Vector3(sin(facing), 0.0, cos(facing)) * 5.0
         var destination: Vector3 = player.position + offset
         if not terrain.is_land(destination.x, destination.z):
             destination = player.position + Vector3(2.0, 0.0, 0.0)
         world.place_structure(recipe, destination)
-    hud.close_crafting()
-    hud.notify("Criado: " + SurvivorHUD.RECIPE_NAMES[recipe])
+    if is_building:
+        hud.close_inventory()
+    else:
+        hud.open_inventory("equipment")
+    hud.notify("Criado: " + SurvivorHUD.RECIPE_NAMES[recipe] + (". Equipe na aba EQUIPAR." if not is_building else ""))
     if recipe == "raft":
         _finish(true)
 
@@ -241,11 +247,27 @@ func _on_action(action: String) -> void:
         return
     if not running:
         return
+    if action.begins_with("equip:"):
+        var item: String = action.trim_prefix("equip:")
+        if state.equip(item):
+            hud.notify("Item equipado: " + SurvivorState.ITEM_NAMES[item])
+        else:
+            hud.notify("Você ainda não possui esse equipamento.")
+        return
+    if action.begins_with("unequip:"):
+        if state.unequip(action.trim_prefix("unequip:")):
+            hud.notify("Equipamento removido.")
+        return
     match action:
         "collect": _collect()
         "fish": _fish()
         "eat": hud.notify(state.eat())
         "drink": hud.notify(state.drink())
-        "craft_menu": hud.toggle_crafting()
-        "close_craft": hud.close_crafting()
+        "inventory": hud.toggle_inventory()
+        "craft_menu": hud.open_inventory("craft")
+        "close_inventory": hud.close_inventory()
+        "zoom_in":
+            camera_zoom = maxf(0.62, camera_zoom - 0.12)
+        "zoom_out":
+            camera_zoom = minf(1.85, camera_zoom + 0.12)
         "save": _save()
