@@ -38,9 +38,12 @@ var step_distance := 0.0
 var fishing_line: MeshInstance3D
 var fishing_mesh: ImmediateMesh
 var bobber: MeshInstance3D
+var rigged_hero: SurvivorSkinnedActor
+var using_skinned_hero := false
 
 func _ready() -> void:
     _build_character()
+    _activate_skinned_hero()
     var listener := AudioListener3D.new()
     listener.position.y = 1.6
     add_child(listener)
@@ -48,6 +51,21 @@ func _ready() -> void:
 
 func is_busy() -> bool:
     return action_remaining > 0.0
+
+# The original movement, crafting and equipment code remains authoritative.
+# Only the rendered character and its equipment hand follow the imported rig.
+func _activate_skinned_hero() -> void:
+    rigged_hero = SurvivorSkinnedActor.new()
+    rigged_hero.name = "RealMakeHumanSurvivor"
+    body_pivot.add_child(rigged_hero)
+    if not rigged_hero.initialize(self,right_hand):
+        rigged_hero.queue_free()
+        rigged_hero = null
+        return
+    using_skinned_hero = true
+    torso.visible = false
+    left_leg.visible = false
+    right_leg.visible = false
 
 func _physics_process(delta: float) -> void:
     if terrain == null or not enabled:
