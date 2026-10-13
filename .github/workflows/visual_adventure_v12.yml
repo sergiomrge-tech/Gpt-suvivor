@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feat/deep-caves-atmosphere-voyage-v12
+      - feat/cave-vents-voyage-hud-v13
   workflow_dispatch:
 permissions:
   contents: read
