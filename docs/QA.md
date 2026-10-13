@@ -1,3 +1,7 @@
+# QA — v0.5.0 — 13/10/2026
+
+A suíte automatizada do Godot 4.6.1 na branch `feat/survival-camp-exploration-v05` cobre nova cadeia de corda/tábua/barco, pista da caverna, espaço de equipamentos, rotação de construção, cancelamento de relocação, baú com transferências sem duplicação, coletor de chuva e persistência do save v3. Foi executada no GitHub Actions, incluindo parser/importação, gameplay, referências e auditoria de WAV. O teste físico Android, desempenho/FPS, toque, qualidade dos modelos de acampamento e APK com assinatura preservada ainda não foram realizados nesta versão.
+
 # QA atual — v0.4.1 — 13/10/2026
 
 Godot 4.6.1 Linux: 141/141 verificações nativas aprovadas. Novas verificações cobrem recursos iniciais acessíveis, restrição de árvore/rocha sem ferramenta, fabricação com custos exatos, cancelamento anterior ao contato, rejeição de duplicatas, bônus da faca, persistência das ferramentas, migração v1→v2, zoom limitado, joystick reposicionado, grade do inventário, descrição de itens e painel limitado ao viewport.
