@@ -192,22 +192,24 @@ func reset_world() -> void:
     structure_records.clear()
     rng.seed = 195824
     serial_id = 0
+    # Existing order is stable: harvested_ids from v0.2 refer to serial IDs.
     _scatter("palm", 38, 120.0, 204.0)
     _scatter("tree", 34, 15.0, 173.0)
     _scatter("rock", 54, 30.0, 185.0)
     _scatter("driftwood", 32, 140.0, 210.0, true)
-    _scatter("fiber_bundle", 35, 135.0, 210.0, true)
-    _scatter("pebbles", 35, 130.0, 210.0, true)
     _scatter("berry", 26, 30.0, 175.0)
     _scatter("spring", 8, 15.0, 149.0)
-    # Materiais garantidos no começo da aventura.
     _spawn_resource("driftwood", 137.0, 4.0)
+    _spawn_resource("rock", 143.0, 5.0)
+    _spawn_resource("berry", 138.0, -6.0)
+    # Append the new beach loot AFTER original spawns for save compatibility.
+    _scatter("fiber_bundle", 35, 135.0, 210.0, true)
+    _scatter("pebbles", 35, 130.0, 210.0, true)
     _spawn_resource("driftwood", 135.0, -3.0)
     _spawn_resource("fiber_bundle", 141.0, 3.0)
     _spawn_resource("fiber_bundle", 135.0, 6.0)
     _spawn_resource("pebbles", 143.0, 5.0)
     _spawn_resource("pebbles", 136.0, -5.0)
-    _spawn_resource("berry", 138.0, -6.0)
 
 func nearest_resource(player_pos: Vector3, radius: float = 5.2) -> Node3D:
     var best: Node3D = null
