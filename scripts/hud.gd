@@ -510,6 +510,8 @@ func _camp_panel() -> void:
     for building in state.buildings:
         var kind: String = str(building.get("kind",""))
         var title: String = str(SurvivalState.RECIPES.get(kind,{}).get("title",kind))
+        if kind == "boat":
+            title += " • Etapa %d/5 (%s)" % [state.boat_stage(),SurvivalState.BOAT_STAGE_NAMES[state.boat_stage()]]
         var line := HBoxContainer.new()
         line.add_theme_constant_override("separation",10)
         panel_content.add_child(line)
@@ -518,6 +520,12 @@ func _camp_panel() -> void:
         line.add_child(label_node)
         if kind not in ["boat","dock"] and kind not in SurvivalState.MODULES:
             line.add_child(_button("Mover",_relocate_callback(kind)))
+    if state.boat_stage() > 0 and not state.boat_ready():
+        var next_stage := state.boat_stage()+1
+        var supplies := PackedStringArray()
+        for item in SurvivalState.BOAT_STAGE_COSTS[next_stage]:
+            supplies.append("%s %d/%d" % [SurvivalState.ITEMS.get(item,item),state.inventory.get(item,0),SurvivalState.BOAT_STAGE_COSTS[next_stage][item]])
+        panel_content.add_child(_label("Próxima etapa do barco: %s • %s" % [SurvivalState.BOAT_STAGE_NAMES[next_stage],", ".join(supplies)],18))
     if state.has_structure("chest"):
         panel_content.add_child(_button("Abrir baú de recursos",func(): show_storage()))
     if state.has_structure("rain_collector"):
@@ -712,6 +720,8 @@ func _process(delta: float) -> void:
         action_button.text = "Explorar"
         if not target.is_empty():
             action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "crab":"Pegar caranguejo", "boar":"Caçar javali", "cave":"Entrar na caverna", "cave_exit":"Sair da caverna", "cave_cache":"Investigar caixa", "cave_seal":"Ativar selo", "cave_vault":"Abrir relicário", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
+            if target.kind == "boat" and state.boat_stage() < 5:
+                action_button.text = "Montar %s (%d/5)" % [SurvivalState.BOAT_STAGE_NAMES[state.boat_stage()+1],state.boat_stage()+1]
     if not target.is_empty() and placement_kind == "" and activity_name == "":
         var error := state.harvest_error(str(target.kind))
         if error != "":
