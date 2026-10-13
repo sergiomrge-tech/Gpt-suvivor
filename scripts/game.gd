@@ -372,7 +372,7 @@ func select_recipe(kind: String) -> void:
     if error != "":
         hud.toast(error)
         return
-    if kind in ["meal", "grilled_crab", "cooked_meat"]:
+    if kind in SurvivalState.FOOD_RECIPES:
         craft_food(kind)
         return
     if kind in SurvivalState.MATERIAL_RECIPES:
