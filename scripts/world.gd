@@ -149,12 +149,29 @@ func add_structure(entry: Dictionary) -> Node3D:
         node.rotation.y = float(entry.get("rotation", 0.0))
     add_child(node)
     SurvivorModels.building(node, entry.kind)
+    if entry.kind == "door_panel":
+        var leaf: Node3D = node.get_node_or_null("DoorLeaf")
+        if leaf != null:
+            leaf.rotation.y = -PI * 0.5 if bool(entry.get("door_open", false)) else 0.0
     if entry.kind != "campfire":
         SurvivorModels.merge_static(node, "building_" + str(entry.kind))
-    structures.append({"kind": entry.kind, "node": node, "position": node.position})
+    structures.append({"kind": entry.kind, "node": node, "position": node.position, "door_open": bool(entry.get("door_open", false)), "save_entry": entry})
     if scenery != null:
         scenery.clear_area(node.position, 5.0 if entry.kind == "house" else 2.8)
     return node
+
+func toggle_door(entry: Dictionary) -> bool:
+    if str(entry.get("kind", "")) != "door_panel":
+        return false
+    var next_open := not bool(entry.get("door_open", false))
+    entry["door_open"] = next_open
+    var saved: Dictionary = entry.get("save_entry", {})
+    saved["door_open"] = next_open
+    var leaf: Node3D = entry.node.get_node_or_null("DoorLeaf")
+    if leaf != null:
+        var animation := create_tween()
+        animation.tween_property(leaf, "rotation:y", -PI * 0.5 if next_open else 0.0, 0.32)
+    return next_open
 
 func remove_structure(kind: String) -> void:
     for index in range(structures.size() - 1, -1, -1):
@@ -233,7 +250,7 @@ func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
             distance = d
             result = entry
     for entry in structures + landmarks:
-        if entry.kind in ["wreck", "cave", "workbench", "dock"]:
+        if entry.kind in ["wreck", "cave", "workbench", "dock", "floor_panel", "wall_panel", "window_panel", "roof_panel"]:
             continue
         var d := Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length()
         # Boat is placed off the shore; it remains reachable from the dock.
@@ -271,7 +288,9 @@ func walkable(pos: Vector3, previous: Vector3) -> bool:
             return false
         if entry.kind == "workbench" and absf(local.x) < 1.9 and absf(local.z) < 1.1:
             return false
-        if entry.kind == "wall_panel" and absf(local.x) < 1.75 and absf(local.z) < 0.33:
+        if entry.kind in SurvivalState.WALL_MODULES and absf(local.x) < 1.75 and absf(local.z) < 0.33:
+            if entry.kind == "door_panel" and bool(entry.get("door_open", false)) and absf(local.x) < 1.10:
+                continue
             return false
         if entry.kind == "house":
             if absf(local.x) < 3.2 and absf(local.z) < 3.2:
@@ -294,7 +313,7 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
         return "O cais precisa ficar na faixa de areia junto ao mar."
     var modular := kind in SurvivalState.MODULES
     var radius := 1.4 if modular else (4.5 if kind == "house" else 2.4)
-    if kind == "wall_panel":
+    if kind in SurvivalState.WALL_MODULES:
         var supported := false
         for entry in structures:
             if entry.kind == "floor_panel" and Vector2(pos.x-entry.position.x,pos.z-entry.position.z).length() < 1.85:
@@ -308,7 +327,7 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
             var d := Vector2(pos.x-entry.position.x,pos.z-entry.position.z).length()
             if entry.kind == "floor_panel" and d < 0.25:
                 supported_floor = true
-            if entry.kind == "wall_panel" and d < 2.0:
+            if entry.kind in SurvivalState.WALL_MODULES and d < 2.0:
                 supported_wall = true
         if not supported_floor or not supported_wall:
             return "O telhado precisa de um piso e uma parede modular."
@@ -321,12 +340,13 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
         var distance := Vector2(pos.x-entry.position.x,pos.z-entry.position.z).length()
         if modular and entry.kind in SurvivalState.MODULES:
             # Floor + roof at the same grid center and walls at the tile edges are valid.
-            if kind == entry.kind and distance < (2.8 if kind == "floor_panel" else 0.45):
+            if kind == "floor_panel" and entry.kind == "floor_panel" and distance < 2.8:
                 return "Esse encaixe já está ocupado."
-            if kind != entry.kind:
-                continue
-            if kind == "wall_panel" and distance < 2.75:
-                return "Deixe um canto livre entre as paredes."
+            if kind == "roof_panel" and entry.kind == "roof_panel" and distance < 0.45:
+                return "Esse encaixe já está ocupado."
+            if kind in SurvivalState.WALL_MODULES and entry.kind in SurvivalState.WALL_MODULES and distance < 0.45:
+                return "Esse espaço de parede já está ocupado."
+            # Distinct modular sockets may share a foundation or adjoining edges.
             continue
         if distance < radius + (1.4 if entry.kind in SurvivalState.MODULES else (4.5 if entry.kind == "house" else 2.4)):
             return "Deixe espaço entre as construções."
