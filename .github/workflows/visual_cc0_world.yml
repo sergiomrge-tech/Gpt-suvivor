@@ -1,0 +1,50 @@
+name: Native Godot realistic island CC0 world review
+on:
+  push:
+    branches: [feat/cc0-aviation-palms-crafting-world]
+    paths-ignore: [".github/workflows/download_cc0_world.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: survivor-cc0-world-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  render-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install exact Godot 4.6.1
+        run: |
+          curl --fail --location --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo /tmp/godot >> "$GITHUB_PATH"
+      - name: Parse CC0 assets, PBR shader and all GDScript
+        run: |
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/import-world.log
+          if grep -E 'SCRIPT ERROR|Parse Error' /tmp/import-world.log; then exit 1; fi
+      - name: Test all world gameplay/asset intersections
+        run: |
+          timeout 240 Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_world_cc0.gd 2>&1 | tee /tmp/test-world.log
+          grep -q "CC0_WORLD_TESTS:" /tmp/test-world.log
+          if grep -E 'FAIL_REAL_WORLD|SCRIPT ERROR|Parse Error' /tmp/test-world.log; then exit 1; fi
+      - name: Render true island and imported model captures
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 420 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_cc0_world.gd 2>&1 | tee /tmp/capture-world.log
+          for f in 01_tropical_beach_full 03_forest_understory 06_mobile_light_preset 09_authored_aircraft_crash 10_real_carpentry_workbench 11_real_coconut_trees 12_dense_B_forest_scanned; do
+            test -s "/tmp/survivor-biomes-cc0_v20/${f}.png"
+          done
+          if grep -E 'SCRIPT ERROR|Parse Error' /tmp/capture-world.log; then exit 1; fi
+      - name: Validate project references
+        run: |
+          python3 tests/audit_project.py
+          python3 tests/audit_audio.py
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-CC0-Real-World-Godot-Screenshots
+          path: /tmp/survivor-biomes-cc0_v20/*.png
+          retention-days: 21
