@@ -263,6 +263,9 @@ func _build_character() -> void:
     SurvivorModels.merge_static(torso, "hero_torso_v17")
 
     head_pivot = _joint(torso, Vector3(0, 0.67, 0))
+    # Anatomical audit: the former oversized cranium read as a toy head.
+    # Scale only its visual joint so gear/action roots stay unchanged.
+    head_pivot.scale = Vector3(0.80,0.73,0.80)
     SurvivorHeroGeometry.shaped_limb(head_pivot, 0.22, 0.15, 0.16, skin_shadow, 1.0)
     # Face is a single continuous jaw/cheek/cranium surface (not a ball).
     SurvivorHeroGeometry.loft(head_pivot, PackedVector4Array([
@@ -283,14 +286,14 @@ func _build_character() -> void:
         Vector4(0.435, 0.308, 0.267, -0.055)
     ]), Color(0.19, 0.17, 0.14), 24)
     # Compact ears, bridge, nostrils, eye sockets and lips; no protruding eyes.
-    SurvivorModels.sphere(head_pivot, 0.074, skin_shadow, Vector3(0, 0.245, 0.285), Vector3(0.53, 1.20, 0.50))
-    SurvivorModels.sphere(head_pivot, 0.057, skin, Vector3(0, 0.205, 0.315), Vector3(0.88, 0.59, 0.61))
+    SurvivorModels.sphere(head_pivot, 0.052, skin_shadow, Vector3(0, 0.245, 0.274), Vector3(0.55, 1.22, 0.53))
+    SurvivorModels.sphere(head_pivot, 0.046, skin, Vector3(0, 0.205, 0.298), Vector3(0.87, 0.52, 0.57))
     for side in [-1.0, 1.0]:
         SurvivorModels.sphere(head_pivot, 0.086, skin, Vector3(side * 0.31, 0.255, -0.007), Vector3(0.46, 1.0, 0.67))
-        SurvivorModels.sphere(head_pivot, 0.059, skin_shadow, Vector3(side * 0.13, 0.312, 0.253), Vector3(1.3, 0.62, 0.30))
-        SurvivorModels.sphere(head_pivot, 0.045, Color(0.82, 0.78, 0.68), Vector3(side * 0.13, 0.311, 0.270), Vector3(1.22, 0.54, 0.35))
-        SurvivorModels.sphere(head_pivot, 0.024, Color(0.14, 0.15, 0.14), Vector3(side * 0.13, 0.311, 0.290), Vector3(0.91, 0.95, 0.44))
-        SurvivorModels.beam(head_pivot, Vector3(side * 0.068, 0.377, 0.259), Vector3(side * 0.202, 0.369, 0.225), 0.021, Color(0.20, 0.16, 0.13))
+        SurvivorModels.sphere(head_pivot, 0.051, skin_shadow, Vector3(side * 0.13, 0.312, 0.253), Vector3(1.3, 0.62, 0.30))
+        SurvivorModels.sphere(head_pivot, 0.032, Color(0.79, 0.75, 0.66), Vector3(side * 0.13, 0.311, 0.268), Vector3(1.18, 0.49, 0.30))
+        SurvivorModels.sphere(head_pivot, 0.017, Color(0.14, 0.15, 0.14), Vector3(side * 0.13, 0.311, 0.284), Vector3(0.91, 0.95, 0.44))
+        SurvivorModels.beam(head_pivot, Vector3(side * 0.068, 0.377, 0.254), Vector3(side * 0.202, 0.368, 0.222), 0.013, Color(0.20, 0.16, 0.13))
     SurvivorModels.beam(head_pivot, Vector3(-0.077, 0.091, 0.228), Vector3(0.077, 0.091, 0.228), 0.016, skin_shadow)
     # Subtle cheek/jaw plane transitions, scalp hair wisps and a believable
     # narrow mouth avoid the previous painted-on spherical facial appearance.
@@ -300,37 +303,40 @@ func _build_character() -> void:
         SurvivorModels.sphere(head_pivot,0.018,skin_shadow,Vector3(side*0.031,0.184,0.321),Vector3(0.9,0.50,0.26))
     SurvivorModels.merge_static(head_pivot, "hero_head_v17")
 
-    left_leg = _joint(body_pivot, Vector3(-0.23, 1.00, 0))
-    right_leg = _joint(body_pivot, Vector3(0.23, 1.00, 0))
-    left_knee = _joint(left_leg, Vector3(0, -0.44, 0))
-    right_knee = _joint(right_leg, Vector3(0, -0.44, 0))
+    # Raised pelvis + longer upper/lower legs, keeping ankle soles at the
+    # original surface height. Anatomical shape changes never affect speed,
+    # collisions or the world save position.
+    left_leg = _joint(body_pivot, Vector3(-0.22, 1.24, 0))
+    right_leg = _joint(body_pivot, Vector3(0.22, 1.24, 0))
+    left_knee = _joint(left_leg, Vector3(0, -0.55, 0))
+    right_knee = _joint(right_leg, Vector3(0, -0.55, 0))
     for leg in [left_leg, right_leg]:
-        SurvivorHeroGeometry.shaped_limb(leg, 0.44, 0.215, 0.17, pants, 1.05)
-        SurvivorModels.beam(leg, Vector3(0.10, -0.09, 0.18), Vector3(0.08, -0.35, 0.16), 0.018, pants.darkened(0.13))
+        SurvivorHeroGeometry.shaped_limb(leg, 0.55, 0.174, 0.144, pants, 1.04)
+        SurvivorModels.beam(leg, Vector3(0.10, -0.12, 0.13), Vector3(0.08, -0.46, 0.13), 0.012, pants.darkened(0.13))
         SurvivorModels.merge_static(leg, "hero_thigh_v17")
     for knee in [left_knee, right_knee]:
-        SurvivorHeroGeometry.shaped_limb(knee, 0.39, 0.175, 0.115, pants, 0.97)
-        SurvivorModels.beam(knee, Vector3(-0.10, -0.27, 0.10), Vector3(0.10, -0.27, 0.10), 0.013, pants.darkened(0.19))
+        SurvivorHeroGeometry.shaped_limb(knee, 0.51, 0.151, 0.108, pants, 0.97)
+        SurvivorModels.beam(knee, Vector3(-0.085, -0.37, 0.095), Vector3(0.085, -0.37, 0.095), 0.013, pants.darkened(0.19))
         SurvivorModels.merge_static(knee, "hero_shin_v17")
-    left_foot = _joint(left_knee, Vector3(0, -0.39, 0))
-    right_foot = _joint(right_knee, Vector3(0, -0.39, 0))
+    left_foot = _joint(left_knee, Vector3(0, -0.52, 0))
+    right_foot = _joint(right_knee, Vector3(0, -0.52, 0))
     left_foot.name = "LeftAnkle"
     right_foot.name = "RightAnkle"
     for foot in [left_foot, right_foot]:
         SurvivorHeroGeometry.boot(foot,leather,Color(0.18,0.16,0.14))
         SurvivorModels.merge_static(foot, "hero_boot_v17")
 
-    left_arm = _joint(torso, Vector3(-0.52, 0.30, 0))
-    right_arm = _joint(torso, Vector3(0.52, 0.30, 0))
+    left_arm = _joint(torso, Vector3(-0.47, 0.30, 0))
+    right_arm = _joint(torso, Vector3(0.47, 0.30, 0))
     left_elbow = _joint(left_arm, Vector3(0, -0.38, 0))
     right_elbow = _joint(right_arm, Vector3(0, -0.38, 0))
     for arm in [left_arm, right_arm]:
-        SurvivorHeroGeometry.shaped_limb(arm, 0.215, 0.18, 0.17, shirt, 1.0)
-        SurvivorHeroGeometry.shaped_limb(arm, 0.385, 0.132, 0.115, skin, 0.96)
+        SurvivorHeroGeometry.shaped_limb(arm, 0.215, 0.147, 0.135, shirt, 1.0)
+        SurvivorHeroGeometry.shaped_limb(arm, 0.385, 0.113, 0.098, skin, 0.96)
         SurvivorModels.beam(arm, Vector3(-0.16, -0.20, 0), Vector3(0.16, -0.20, 0), 0.020, shirt_shadow)
         SurvivorModels.merge_static(arm, "hero_upper_arm_v17")
     for elbow in [left_elbow, right_elbow]:
-        SurvivorHeroGeometry.shaped_limb(elbow, 0.32, 0.128, 0.094, skin, 0.92)
+        SurvivorHeroGeometry.shaped_limb(elbow, 0.32, 0.104, 0.086, skin, 0.92)
         SurvivorHeroGeometry.loft(elbow,PackedVector4Array([
             Vector4(-0.315,0.104,0.081,0.012),
             Vector4(-0.360,0.126,0.081,0.018),
