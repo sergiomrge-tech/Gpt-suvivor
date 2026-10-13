@@ -324,7 +324,7 @@ func close_modal() -> void:
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
-    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.4.1")
+    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.4.2")
     if paused:
         panel_content.add_child(_button("Voltar ao jogo", func(): close_modal(); resume_requested.emit()))
         panel_content.add_child(_button("Salvar progresso", func(): save_requested.emit()))
