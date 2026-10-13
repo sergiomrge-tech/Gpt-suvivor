@@ -241,7 +241,7 @@ func show_game() -> void:
     game_active = true
     menu_view.visible = false
     playing_view.visible = true
-    craft_panel.visible = false
+    inventory_panel.visible = false
 
 func show_ending(won: bool) -> void:
     game_active = false
@@ -257,12 +257,95 @@ func show_ending(won: bool) -> void:
     menu_content.add_child(_button("NOVA PARTIDA", "start"))
     menu_content.add_child(_button("MENU PRINCIPAL", "menu"))
 
-func toggle_crafting() -> void:
-    if game_active:
-        craft_panel.visible = not craft_panel.visible
+func inventory_is_open() -> bool:
+    return inventory_panel.visible
 
-func close_crafting() -> void:
-    craft_panel.visible = false
+func _select_tab(tab_name: String) -> void:
+    active_tab = tab_name
+    inventory_signature = ""
+    _refresh_inventory()
+
+func toggle_inventory() -> void:
+    if not game_active:
+        return
+    if inventory_panel.visible:
+        close_inventory()
+    else:
+        open_inventory("items")
+
+func open_inventory(tab_name: String = "items") -> void:
+    if not game_active:
+        return
+    inventory_panel.visible = true
+    _select_tab(tab_name)
+
+func close_inventory() -> void:
+    inventory_panel.visible = false
+
+func _inventory_button(label_text: String, action: String, enabled: bool = true) -> void:
+    var button := _button(label_text, action)
+    button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    button.disabled = not enabled
+    inventory_list.add_child(button)
+
+func _refresh_inventory() -> void:
+    if active_state == null or not inventory_panel.visible:
+        return
+    for child in inventory_list.get_children():
+        child.free()
+    var state: SurvivorState = active_state
+    if active_tab == "items":
+        inventory_list.add_child(_label("RECURSOS / CONSUMÍVEIS", 22))
+        for item in ["wood", "stone", "fiber", "palm_leaf", "fruit", "fish", "water"]:
+            var count: int = state.item_count(item)
+            if count > 0:
+                inventory_list.add_child(_label("%s   x%d" % [SurvivorState.ITEM_NAMES[item], count], 19))
+        inventory_list.add_child(_label("FERRAMENTAS NA MOCHILA", 22))
+        var found := false
+        for item in SurvivorState.TOOL_SLOTS:
+            var count: int = state.item_count(item)
+            if count > 0:
+                found = true
+                var equipped: String = " • EQUIPADO" if state.is_equipped(item) else ""
+                inventory_list.add_child(_label("%s   x%d%s" % [SurvivorState.ITEM_NAMES[item], count, equipped], 19))
+        if not found:
+            inventory_list.add_child(_label("Sem ferramentas. Abra FABRICAR para criar.", 17))
+    elif active_tab == "equipment":
+        inventory_list.add_child(_label("ESPAÇOS PARA EQUIPAR", 22))
+        for slot in ["main_hand", "utility"]:
+            var slot_title: String = "MÃO PRINCIPAL" if slot == "main_hand" else "FERRAMENTA"
+            var equipped: String = str(state.equipment.get(slot, ""))
+            var item_title: String = SurvivorState.ITEM_NAMES.get(equipped, "Vazio")
+            inventory_list.add_child(_label("%s: %s" % [slot_title, item_title], 19))
+            if equipped != "":
+                _inventory_button("DESEQUIPAR " + item_title, "unequip:" + slot)
+        inventory_list.add_child(_label("EQUIPAMENTOS DISPONÍVEIS", 22))
+        var owned := false
+        for item in SurvivorState.TOOL_SLOTS:
+            if state.item_count(item) > 0:
+                owned = true
+                var in_use: bool = state.is_equipped(item)
+                _inventory_button(("EQUIPADO: " if in_use else "EQUIPAR: ") + SurvivorState.ITEM_NAMES[item], "equip:" + item, not in_use)
+        if not owned:
+            inventory_list.add_child(_label("Fabrique uma faca, machado, picareta ou vara.", 17))
+    elif active_tab == "craft":
+        inventory_list.add_child(_label("FERRAMENTAS BÁSICAS", 21))
+        for recipe in SurvivorState.RECIPES:
+            if SurvivorState.BUILDING_RECIPES.has(recipe):
+                continue
+            _add_recipe(state, str(recipe))
+        inventory_list.add_child(_label("CONSTRUÇÕES", 21))
+        for recipe in SurvivorState.BUILDING_RECIPES:
+            _add_recipe(state, str(recipe))
+    inventory_signature = str(state.inventory) + str(state.equipment) + str(state.crafted)
+
+func _add_recipe(state: SurvivorState, recipe: String) -> void:
+    var costs: Array[String] = []
+    var materials: Dictionary = SurvivorState.RECIPES[recipe]
+    for item in materials:
+        costs.append("%s %d/%d" % [SurvivorState.ITEM_NAMES[item], state.item_count(item), int(materials[item])])
+    var title_text: String = RECIPE_NAMES[recipe] + "  |  " + ", ".join(costs)
+    _inventory_button(title_text, "recipe:" + recipe, state.can_craft(recipe))
 
 func notify(message: String) -> void:
     toast_label.text = message
