@@ -312,6 +312,25 @@ func run() -> void:
         var at: Vector3 = SurvivorCaves.CENTERS[cave_id]
         check(game.world.caves.is_walkable(at+Vector3(0,0,-21)) and game.world.caves.is_walkable(at+Vector3(0,0,-33)), "Deep chambers genuinely walkable and joined to old cave: "+str(cave_id))
     check(game.world.caves.caches[4].id == "east_deep_cache" or game.world.caves.caches[5].id == "east_deep_cache", "Eastern deep chamber has independently collectible new supply cache")
+    var vein_state := SurvivalState.new()
+    var original_cave_state: SurvivalState = game.world.caves.state
+    game.world.caves.state = vein_state
+    check(game.world.caves.veins.size() == 4, "Four original real 3D crystal mining deposits exist in the connected cave wings")
+    var first_vein: Dictionary = game.world.caves.veins[0]
+    check(game.world.caves.extract_vein(first_vein).is_empty() and first_vein.node.visible, "Deep mineral nodes reject unqualified mining attempts")
+    vein_state.add_item("reinforced_pickaxe",1)
+    vein_state.equip_tool("reinforced_pickaxe")
+    var ore := game.world.caves.extract_vein(first_vein)
+    check(not ore.is_empty() and vein_state.inventory.cave_crystal == 1 and not first_vein.node.visible, "Equipped tier-two pickaxe extracts a rare crystal deposit exactly once")
+    check(game.world.caves.extract_vein(first_vein).is_empty(), "Rare mined crystal never duplicates")
+    var saved_ore := SurvivalState.from_data(vein_state.to_data())
+    check(saved_ore != null and saved_ore.discoveries.has(first_vein.id) and saved_ore.inventory.cave_crystal == 1, "Rare ore mining stays depleted through original save format")
+    first_vein.node.visible = true
+    game.world.caves.state = original_cave_state
+    for cave_id in SurvivorCaves.CENTERS:
+        var cave_center: Vector3 = SurvivorCaves.CENTERS[cave_id]
+        check(game.world.caves.hazard_rate_at(cave_center+Vector3(0,0,-24)) > 0.0,"Deep cavern gas hazards damage only when approaching visible ore vents")
+        check(game.world.caves.hazard_rate_at(cave_center+Vector3(6,0,-24)) == 0.0,"Players can steer around mineral gas vents along valid walkable routes")
     var root_cave_spawn := SurvivorCaves.spawn_position("roots")
     check(game.world.caves.is_inside(root_cave_spawn) and game.world.walkable(root_cave_spawn,root_cave_spawn),"Cave pocket has a walkable entry and isolated ground height")
     check(not game.world.walkable(SurvivorCaves.CENTERS["roots"]+Vector3(19,0,0),root_cave_spawn), "Cave walls prevent walking into the unloaded sea")
