@@ -1,5 +1,14 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.4.0 — Primeira etapa de anatomia 3D e materiais realistas (fonte Godot; SEM APK)
+
+- **Personagem remodelado em código 3D real**: novo gerador de malhas por perfis contínuos com normais suavizadas, substituindo o antigo corpo baseado quase exclusivamente em caixas/esferas/cilindros. Tórax afunilado com ombros e cintura, cabeça com maxilar e crânio próprios, braços e pernas afunilados, botas, mochila mais plana e detalhes discretos de roupa/rosto. Mantidos os mesmos pontos de articulação e encaixes de ferramentas.
+- **Animações físicas aprimoradas**: deslocamento de ombros/quadris, inclinação na corrida, respiração discreta em repouso e contrarrotação da cabeça para reduzir a sensação de robô. Continuam funcionais corte, mineração, pesca, caça, craft e repouso.
+- **Materiais mais naturais**: separação por vértice de pele e tecido na malha combinada, com microvariação de aspereza/cor e malha fundida para poupar draw calls.
+- **Praia/floresta**: rugosidade de areia molhada, solo/granito e microrrelevo por normal em shader; as duas leituras adicionais da textura são aplicadas somente no modo visual **Completo**. O modo **Leve** desliga esse efeito.
+- **Qualidade e continuidade**: saves versão 3, jogabilidade, inventário premium, cavernas, barco e progressão da v1.3 preservados. Incluídos testes para malhas/normais, materiais e alternância de modo visual e workflow que tira capturas de framebuffer do Godot original.
+- **Limite artístico**: esta é uma melhoria geométrica/procedural concreta, **não** um personagem fotorrealista final. Para atingir qualidade extrema de produção ainda são necessárias escultura 3D, UV, texturas PBR (albedo, normal, roughness), cabelo/vestuário, rig/skinning e animações de produção com LODs para Android. Não há validação visual no aparelho, benchmark 60 FPS nem APK nesta etapa.
+
 ## v1.3.0 — Ventilação perigosa nas cavernas e painel de navegação (código-fonte, sem APK)
 
 - **Vapores com ritmo legível**: as zonas minerais profundas de ambas as cavernas passam por 4,5 segundos de gás ativo em ciclos de 8 segundos. Uma luz localizada sem sombras móveis diferencia o período de risco da pausa segura; o jogador pode aguardar ou contornar. O período é reproduzível usando o tempo da partida e não exige alterar o save v3.
