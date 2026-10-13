@@ -179,6 +179,7 @@ func run() -> void:
     var old_state := SurvivalState.new()
     old_state.buildings.append({"kind":"dock","x":20.0,"z":180.0})
     old_state.buildings.append({"kind":"boat","x":23.5,"z":185.0})
+    check(old_state.boat_ready() and old_state.boat_stage() == 5, "Old saves without a boat stage are treated as fully constructed")
     var old_world := SurvivorWorld.new()
     old_world.terrain = game.terrain
     old_world.state = old_state
@@ -203,6 +204,12 @@ func run() -> void:
     check(game.world.discoverables.size()==5,"Unique clues available at crash site and caves")
     check(game.soundscape.streams.size()==13 and game.soundscape.voices.size()==7,"Original ambience and pooled positional effect voices loaded")
     check(game.soundscape.streams.sea.loop_mode==AudioStreamWAV.LOOP_FORWARD,"Sea ambience loops natively")
+    check(SurvivorSoundscape.FOOTSTEP_VOLUME_DB <= -20.0,"Footsteps have a separate quiet gain, without reducing other gameplay effects")
+    var original_footstep: AudioStreamWAV = load(SurvivorSoundscape.STREAM_PATHS.step_sand)
+    var filtered_footstep: AudioStreamWAV = game.soundscape.streams.step_sand
+    check(filtered_footstep.data != original_footstep.data and filtered_footstep.data.size() == original_footstep.data.size(),"Terrain footsteps get real smoothed PCM samples, leaving source WAV intact")
+    check(filtered_footstep.data.decode_s16(0) == 0 and filtered_footstep.data.decode_s16(filtered_footstep.data.size()-2) == 0, "Soft footsteps fade in and out without hard edge clicks")
+
     game.soundscape.set_muted(true)
     check(not game.soundscape.sea.playing,"Muted audio stops ambient playback")
     game.soundscape.set_muted(false)
@@ -535,10 +542,44 @@ func run() -> void:
     game.player.position = shore
     game.select_recipe("boat")
     game.confirm_placement()
-    check(game.state.owns("boat"), "Boat built next to dock after all prerequisites")
+    check(game.state.owns("boat") and game.state.boat_stage() == 1, "Initial boat placement builds only keel, stage one of five")
     var built_boat: Dictionary = game.world.near_structure(game.player.position,"boat",12)
-    check(not built_boat.is_empty() and game.terrain.height_at(built_boat.position.x,built_boat.position.z) <= game.terrain.sea_level+0.15, "Constructed escape boat actually floats offshore")
-    check(game.state.inventory.wood == total_wood - 142, "Processed plank stages preserve complete wood budget")
+    check(not built_boat.is_empty() and game.terrain.height_at(built_boat.position.x,built_boat.position.z) <= game.terrain.sea_level+0.15, "Boat keel floats next to built dock")
+    check(not game.state.boat_ready(), "Incomplete stage-one boat cannot depart")
+    game.escape_island()
+    check(not game.state.escaped and game.playing, "Escape is rejected until full hull, deck, mast, sail and rudder are finished")
+    var partial_save := SurvivalState.from_data(game.state.to_data())
+    check(partial_save != null and partial_save.boat_stage() == 1 and not partial_save.boat_ready(), "Partial keel survives save without becoming a completed boat")
+    var invalid_boat_save := game.state.to_data().duplicate(true)
+    invalid_boat_save.buildings[invalid_boat_save.buildings.size()-1]["stage"] = 8
+    check(SurvivalState.from_data(invalid_boat_save) == null, "Invalid boat stage cannot be imported from corrupted save")
+    check(built_boat.node.has_node("BoatModel"), "Real boat stage meshes are created under a persistent node")
+    var keel_model: Node3D = built_boat.node.get_node("BoatModel")
+    var keel_mesh: MeshInstance3D = keel_model.get_child(0) as MeshInstance3D
+    var keel_height := keel_mesh.get_aabb().size.y
+    game.cancel_work()
+    var prebuild := game.state.inventory.duplicate(true)
+    game.queue_work(built_boat,"build",1.65,"boat_upgrade",10.0)
+    check(game.state.boat_stage() == 1 and game.state.inventory == prebuild, "Queued boat upgrade pays nothing before tool contact")
+    game.cancel_work()
+    check(game.state.inventory == prebuild and game.state.boat_stage() == 1, "Cancelled boat upgrade leaves supplies and progress untouched")
+    for next_stage in range(2,6):
+        var supply_before := game.state.inventory.duplicate(true)
+        game.queue_work(built_boat,"build",1.65,"boat_upgrade",10.0)
+        game._physics_process(0.016)
+        game.player.enabled = true
+        game.player._physics_process(0.87)
+        check(game.state.boat_stage() == next_stage, "Actual build action advances exactly one boat phase: %d" % next_stage)
+        for item in SurvivalState.BOAT_STAGE_COSTS[next_stage]:
+            check(int(game.state.inventory.get(item,0)) == int(supply_before.get(item,0)) - int(SurvivalState.BOAT_STAGE_COSTS[next_stage][item]), "Exact material payment for boat stage %d: %s" % [next_stage,item])
+        game.player._physics_process(0.9)
+        check(game.state.boat_stage() == next_stage, "Action finish cannot charge boat phase twice")
+    check(game.state.boat_ready() and game.state.boat_stage() == 5 and int(built_boat.stage) == 5, "Five-phase boat complete in save and live world")
+    var final_model: Node3D = built_boat.node.get_node("BoatModel")
+    var final_mesh: MeshInstance3D = final_model.get_child(0) as MeshInstance3D
+    check(final_mesh.get_aabb().size.y > keel_height + 4.0, "Visible boat model gains tall mast and sail only at late construction phase")
+    check(game.state.inventory.wood == total_wood - 142, "Staged keel, hull and mast preserve exact original wood budget")
+    check(game.state.boat_upgrade_error() == "Barco pronto para embarcar.", "Completed boat rejects all extra material payments")
     game.state.player_position = game.player.position
     var full := SurvivalState.from_data(game.state.to_data())
     check(full != null and full.buildings.size() == 5 and full.owns("fishing_rod") and full.discoveries.get("sail_diagram",false), "Camp, tools and cave clue survive save round-trip")
