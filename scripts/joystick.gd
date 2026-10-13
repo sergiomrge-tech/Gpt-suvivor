@@ -1,58 +1,53 @@
 extends Control
 class_name SurvivorJoystick
 
-signal direction_changed(direction: Vector2)
-
-var direction := Vector2.ZERO
-var active_pointer := -999
-const RADIUS = 69.0
+var value := Vector2.ZERO
+var finger := -1
+var active := false
+const RADIUS := 88.0
 
 func _ready() -> void:
-    mouse_filter = Control.MOUSE_FILTER_STOP
-    custom_minimum_size = Vector2(190, 190)
+    mouse_filter = Control.MOUSE_FILTER_IGNORE
+    custom_minimum_size = Vector2(220, 220)
+
+func reset() -> void:
+    finger = -1
+    value = Vector2.ZERO
+    queue_redraw()
+
+func _input(event: InputEvent) -> void:
+    if not active or not is_visible_in_tree():
+        reset()
+        return
+    if event is InputEventScreenTouch:
+        if event.pressed and finger < 0 and get_global_rect().has_point(event.position):
+            finger = event.index
+            _update_value(event.position)
+            get_viewport().set_input_as_handled()
+        elif not event.pressed and event.index == finger:
+            reset()
+            get_viewport().set_input_as_handled()
+    elif event is InputEventScreenDrag and event.index == finger:
+        _update_value(event.position)
+        get_viewport().set_input_as_handled()
+    elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+        if event.pressed and get_global_rect().has_point(event.position):
+            finger = -2
+            _update_value(event.position)
+        elif not event.pressed and finger == -2:
+            reset()
+    elif event is InputEventMouseMotion and finger == -2:
+        _update_value(event.position)
+
+func _update_value(pos: Vector2) -> void:
+    var center := global_position + size * 0.5
+    value = ((pos - center) / RADIUS).limit_length(1.0)
+    if value.length() < 0.12:
+        value = Vector2.ZERO
+    queue_redraw()
 
 func _draw() -> void:
-    var center: Vector2 = size * 0.5
-    draw_circle(center, RADIUS + 9.0, Color(0.05, 0.09, 0.10, 0.37))
-    draw_arc(center, RADIUS, 0.0, TAU, 56, Color(0.94, 0.89, 0.68, 0.55), 3.0, true)
-    draw_circle(center + direction * RADIUS, 30.0, Color(0.95, 0.90, 0.69, 0.72))
-
-func _update_direction(pos: Vector2) -> void:
-    direction = ((pos - size * 0.5) / RADIUS).limit_length(1.0)
-    direction_changed.emit(direction)
-    queue_redraw()
-
-func _release() -> void:
-    direction = Vector2.ZERO
-    active_pointer = -999
-    direction_changed.emit(direction)
-    queue_redraw()
-
-func _gui_input(event: InputEvent) -> void:
-    if event is InputEventScreenTouch:
-        var touch := event as InputEventScreenTouch
-        if touch.pressed and active_pointer == -999:
-            active_pointer = touch.index
-            _update_direction(touch.position)
-            accept_event()
-        elif not touch.pressed and touch.index == active_pointer:
-            _release()
-            accept_event()
-    elif event is InputEventScreenDrag:
-        var drag := event as InputEventScreenDrag
-        if drag.index == active_pointer:
-            _update_direction(drag.position)
-            accept_event()
-    elif event is InputEventMouseButton:
-        var mouse := event as InputEventMouseButton
-        if mouse.button_index == MOUSE_BUTTON_LEFT:
-            if mouse.pressed:
-                active_pointer = -1
-                _update_direction(mouse.position)
-            elif active_pointer == -1:
-                _release()
-            accept_event()
-    elif event is InputEventMouseMotion and active_pointer == -1:
-        var motion := event as InputEventMouseMotion
-        _update_direction(motion.position)
-        accept_event()
+    var center := size * 0.5
+    draw_circle(center, RADIUS, Color(0.03, 0.1, 0.13, 0.38))
+    draw_arc(center, RADIUS, 0, TAU, 64, Color(0.76, 0.87, 0.8, 0.58), 2, true)
+    draw_circle(center + value * RADIUS * 0.63, 32, Color(0.73, 0.82, 0.65, 0.72))
