@@ -335,6 +335,12 @@ func run() -> void:
     check(game.selected_recipe == "house" and game.relocation_kind == "house","Existing house enters move mode")
     game.cancel_placement()
     check(game.state.has_structure("house") and game.state.inventory == before_move,"Cancelled relocation preserves house and inventory")
+    game.relocate_structure("house")
+    game.rotate_preview()
+    game.confirm_placement()
+    check(game.relocation_kind == "" and game.state.buildings.size() == 3 and game.state.inventory == before_move,"Confirmed relocation keeps one building and charges nothing")
+    var rotated_house: Dictionary = game.state.buildings[2]
+    check(is_equal_approx(float(rotated_house.get("rotation",0.0)),PI*0.5),"Relocated building stores its new rotation")
 
     var shore := Vector3.ZERO
     for z in range(172, 224):
