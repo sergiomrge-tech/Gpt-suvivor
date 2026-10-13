@@ -778,8 +778,35 @@ func run() -> void:
     var loaded_camp := SurvivalState.from_data(supplemental.to_data())
     check(loaded_camp != null and loaded_camp.storage.wood == 1 and loaded_camp.rain_water > 0.0 and is_equal_approx(loaded_camp.buildings[0].rotation,PI*0.5),"Version 3 save stores chest, water and rotation")
 
+    check(game.state.boat_ready() and not bool(game.state.discoveries.get("voyage_prepared",false)), "A constructed boat alone cannot escape without sea voyage provisions")
+    check(game.state.voyage_error() != "", "Voyage checklist identifies missing food and boat repair equipment")
+    game.state.add_item("coconut",2)
+    game.state.add_item("meal",1)
+    game.state.add_item("rope",2)
+    game.state.add_item("plank",1)
+    var voyage_stock: Dictionary = game.state.inventory.duplicate(true)
     game.escape_island()
-    check(game.state.escaped and not game.playing, "Embarking completes survival")
+    check(not game.state.escaped and bool(game.state.discoveries.get("voyage_prepared",false)) and not game.voyage.active, "First embark interaction prepares supplies rather than instant victory")
+    for material in SurvivalState.VOYAGE_COST:
+        check(int(game.state.inventory[material]) == int(voyage_stock[material])-int(SurvivalState.VOYAGE_COST[material]), "Preparing journey spends exact material: "+str(material))
+    check(not game.state.prepare_voyage(), "Journey provisioning cannot be purchased or credited twice")
+    var provision_save := SurvivalState.from_data(game.state.to_data())
+    check(provision_save != null and bool(provision_save.discoveries.get("voyage_prepared",false)) and not provision_save.escaped, "Voyage supplies survive v3 save without granting premature victory")
+    game.escape_island()
+    check(game.voyage.active and not game.state.escaped and game.hud.voyage_overlay != null, "Second embark begins real offshore piloting with visible touch controls")
+    check(game.voyage.reefs.size() == 3 and game.voyage.boat_node != null, "Three physical reef models spawn along boat route")
+    for i in range(230):
+        if not game.voyage.active: break
+        game.voyage.step(0.12)
+    check(not game.voyage.active and not game.state.escaped and game.playing, "Unsteered boat collides with three reefs and retries, never receiving a free win")
+    check(game.hud.voyage_overlay == null and game.player.visible, "Sinking returns to normal onshore controls and restores hero visibility")
+    game.escape_island()
+    check(game.voyage.active, "Resupplying once enables later retry at no extra cost")
+    game.voyage.steer(1)
+    for i in range(250):
+        if not game.voyage.active: break
+        game.voyage.step(0.12)
+    check(game.state.escaped and not game.playing, "Steering around hazards reaches the actual sea channel and completes survival")
     game.hud.show_end(true, game.state.elapsed)
     game.hud.target = {"kind":"boat"}
     game.hud._process(0.2)
