@@ -1,26 +1,35 @@
 extends RefCounted
 class_name SurvivalState
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "fishing_rod"]
+const MATERIAL_RECIPES := ["rope", "plank"]
+const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal"]
 const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "fishing_rod":"main_hand"}
 const DAY_SECONDS := 1200.0
 const START_POSITION := Vector3(0.0, 0.0, 170.0)
-const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado"}
+const ITEMS := {"wood": "Madeira", "stone": "Pedra", "fiber": "Fibra", "metal": "Metal", "coconut": "Coco", "raw_fish": "Peixe cru", "meal": "Peixe assado", "rope": "Corda", "plank": "Tábua"}
 const RECIPES := {
     "stone_knife": {"title": "Faca de pedra", "cost": {"wood": 1, "stone": 2, "fiber": 1}, "requires": [], "description": "Feita à mão. Corta fibras: coleta 8 em vez de 5."},
     "stone_axe": {"title": "Machado de pedra", "cost": {"wood": 3, "stone": 2, "fiber": 2}, "requires": [], "description": "Feito à mão. Necessário para cortar árvores e coqueiros."},
     "stone_pickaxe": {"title": "Picareta de pedra", "cost": {"wood": 3, "stone": 3, "fiber": 2}, "requires": [], "description": "Feita à mão. Necessária para extrair pedra das rochas."},
+    "rope": {"title": "Corda", "cost": {"fiber": 1}, "requires": [], "description": "Trance fibras à mão. Usada nos móveis e no barco."},
+    "plank": {"title": "Tábua", "cost": {"wood": 2}, "requires": ["workbench"], "description": "Prepare madeira na bancada. Usada nas peças do barco."},
     "campfire": {"title": "Fogueira", "cost": {"wood": 10, "stone": 6}, "requires": [], "description": "Asse peixes e ilumine o acampamento."},
     "workbench": {"title": "Bancada", "cost": {"wood": 16, "stone": 8}, "requires": ["campfire"], "description": "Libera ferramentas e construção avançada."},
     "fishing_rod": {"title": "Vara de pesca", "cost": {"wood": 6, "fiber": 8}, "requires": ["workbench"], "description": "Pesque na costa ou no cais."},
     "house": {"title": "Casa", "cost": {"wood": 30, "stone": 10, "fiber": 10}, "requires": ["workbench"], "description": "Abrigo para descansar e recuperar saúde."},
     "dock": {"title": "Cais", "cost": {"wood": 20, "fiber": 10}, "requires": ["workbench"], "description": "Construa na praia. Ponto de pesca e embarque."},
-    "boat": {"title": "Barco de fuga", "cost": {"wood": 60, "fiber": 20, "metal": 8}, "requires": ["house", "dock", "fishing_rod"], "description": "Construa junto ao cais e parta da ilha."},
+    "boat": {"title": "Barco de fuga", "cost": {"wood": 40, "fiber": 10, "plank": 10, "rope": 10, "metal": 8}, "requires": ["house", "dock", "fishing_rod"], "description": "Construa junto ao cais e parta da ilha."},
+    "chest": {"title": "Baú do acampamento", "cost": {"wood": 5, "plank": 4, "rope": 2}, "requires": ["workbench"], "description": "Guarde recursos e retire-os quando precisar."},
+    "bed": {"title": "Cama de folhas", "cost": {"wood": 6, "fiber": 5, "rope": 2}, "requires": ["house"], "description": "Descansar recupera a saúde."},
+    "rain_collector": {"title": "Coletor de chuva", "cost": {"wood": 6, "plank": 2, "rope": 3}, "requires": ["workbench"], "description": "Armazena água durante as chuvas tropicais."},
     "meal": {"title": "Assar peixe", "cost": {"raw_fish": 1}, "requires": ["campfire"], "description": "Prepare na fogueira. Recupera 38 de fome."}
 }
 var equipment: Dictionary = {"main_hand":"", "utility":""}
-var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "fishing_rod": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0}
+var inventory: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 2, "raw_fish": 0, "meal": 0, "fishing_rod": 0, "stone_knife": 0, "stone_axe": 0, "stone_pickaxe": 0}
+var storage: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope": 0, "plank": 0, "coconut": 0, "raw_fish": 0, "meal": 0}
+var rain_water := 0.0
 var buildings: Array[Dictionary] = []
 var harvested: Dictionary = {}
 var discoveries: Dictionary = {}
@@ -76,8 +85,10 @@ func craft_tool(kind: String) -> bool:
 func recipe_error(kind: String) -> String:
     if not RECIPES.has(kind):
         return "Receita desconhecida."
-    if kind != "meal" and owns(kind):
+    if kind not in ["meal", "rope", "plank"] and owns(kind):
         return "Você já possui esse item."
+    if kind == "boat" and not bool(discoveries.get("sail_diagram", false)):
+        return "Encontre o esquema de vela na Caverna do Leste antes de construir o barco."
     var recipe: Dictionary = RECIPES[kind]
     for requirement in recipe.requires:
         if not owns(requirement):
@@ -92,6 +103,29 @@ func pay_recipe(kind: String) -> bool:
         return false
     for item in RECIPES[kind].cost:
         inventory[item] = int(inventory.get(item, 0)) - int(RECIPES[kind].cost[item])
+    return true
+
+func craft_material(kind: String) -> bool:
+    if kind not in MATERIAL_RECIPES or not pay_recipe(kind):
+        return false
+    add_item(kind, 1)
+    return true
+
+func transfer_storage(kind: String, to_chest: bool, count: int = 1) -> bool:
+    if not has_structure("chest") or kind not in STORABLE or count <= 0:
+        return false
+    var source: Dictionary = inventory if to_chest else storage
+    var destination: Dictionary = storage if to_chest else inventory
+    if int(source.get(kind, 0)) < count:
+        return false
+    if to_chest:
+        var stored := 0
+        for item in STORABLE:
+            stored += int(storage.get(item, 0))
+        if stored + count > 100:
+            return false
+    source[kind] = int(source.get(kind, 0)) - count
+    destination[kind] = int(destination.get(kind, 0)) + count
     return true
 
 func add_item(kind: String, count: int) -> void:
@@ -111,7 +145,12 @@ func consume() -> String:
     return "Sem alimento pronto ou necessidades já cheias."
 
 func advance(delta: float) -> void:
+    var previous_elapsed := elapsed
     elapsed += delta
+    if has_structure("rain_collector") and not escaped:
+        # Tropical showers recur on a deterministic schedule; pauses freeze elapsed time.
+        if int(elapsed / 200.0) % 4 == 1:
+            rain_water = minf(12.0, rain_water + maxf(0.0, elapsed - previous_elapsed) * 0.06)
     if elapsed < 180.0 or escaped or health <= 0.0:
         return
     hunger = maxf(0.0, hunger - delta * 0.045)
@@ -138,15 +177,17 @@ func objective() -> String:
         return "4/6 • Construa sua casa e estabeleça um acampamento."
     if not owns("dock"):
         return "5/6 • Monte um cais na praia. Procure metal nos destroços e cavernas."
+    if not bool(discoveries.get("sail_diagram", false)):
+        return "6/6 • Explore a Caverna do Leste e encontre o esquema da vela."
     if not owns("boat"):
-        return "6/6 • Construa o barco junto ao cais: 60 madeiras, 20 fibras, 8 metais."
+        return "6/6 • Fabrique 10 tábuas e 10 cordas; complete o barco junto ao cais."
     return "O barco está pronto! Aproxime-se e toque em Embarcar."
 
 func to_data() -> Dictionary:
-    return {"version": SAVE_VERSION, "inventory": inventory, "equipment": equipment.duplicate(true), "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
+    return {"version": SAVE_VERSION, "inventory": inventory, "storage": storage.duplicate(true), "rain_water": rain_water, "equipment": equipment.duplicate(true), "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
 
 static func from_data(data: Dictionary) -> SurvivalState:
-    if int(data.get("version", 0)) not in [1, SAVE_VERSION]:
+    if int(data.get("version", 0)) not in [1, 2, SAVE_VERSION]:
         return null
     var state := SurvivalState.new()
     var inv = data.get("inventory", {})
@@ -157,6 +198,18 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not (value is int or value is float) or not is_finite(float(value)):
             return null
         state.inventory[key] = clampi(int(value), 0, 100000)
+    var saved_storage = data.get("storage", {})
+    if not saved_storage is Dictionary:
+        return null
+    for key in state.storage:
+        var value = saved_storage.get(key, 0)
+        if not (value is int or value is float) or not is_finite(float(value)) or float(value) < 0.0:
+            return null
+        state.storage[key] = clampi(int(value), 0, 100)
+    var water = data.get("rain_water", 0.0)
+    if not (water is int or water is float) or not is_finite(float(water)):
+        return null
+    state.rain_water = clampf(float(water), 0.0, 12.0)
     var gear = data.get("equipment", null)
     if gear is Dictionary:
         for slot in state.equipment:
@@ -195,13 +248,19 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not entry is Dictionary or not RECIPES.has(str(entry.get("kind", ""))):
             return null
         var kind := str(entry.kind)
-        if kind == "meal" or kind in TOOLS or state.has_structure(kind):
+        if kind == "meal" or kind in TOOLS or kind in MATERIAL_RECIPES or state.has_structure(kind):
             return null
         for axis in ["x", "z"]:
             var value = entry.get(axis)
             if not (value is int or value is float) or not is_finite(float(value)) or absf(float(value)) > 240.0:
                 return null
-        state.buildings.append({"kind": kind, "x": float(entry.x), "z": float(entry.z)})
+        var building := {"kind": kind, "x": float(entry.x), "z": float(entry.z)}
+        if entry.has("rotation"):
+            var angle = entry.rotation
+            if not (angle is int or angle is float) or not is_finite(float(angle)) or absf(float(angle)) > TAU:
+                return null
+            building["rotation"] = float(angle)
+        state.buildings.append(building)
     var gathered = data.get("harvested", {})
     if not gathered is Dictionary or gathered.size() > 2000:
         return null
