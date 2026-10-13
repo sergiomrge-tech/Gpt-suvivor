@@ -1,5 +1,18 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.0.0 — Construção reforçada, revisão de progressão e APK beta Android
+
+A versão 1.0 mantém o ciclo de sobrevivência em ilha 3D de todas as versões anteriores: coleta com ferramentas equipadas, pesca funcional, caça de animais, cozinhar alimentos, água/sede, clima, inventário, baú, fabricação, dois sistemas de cavernas com relíquias, oficina nível 2 e barco construído em cinco estágios para fuga.
+
+**Nova evolução de construção (nível 2):** a **parede reforçada** é construída na grade modular de 3,2 m, requer bancada aprimorada + piso, e custa 3 tábuas, 4 pedras e 1 metal. Usa modelo 3D original com base de pedra, tirantes de metal, vigas e tábuas escuras. O **telhado reforçado**, que exige uma parede reforçada e bancada aprimorada, custa 5 tábuas, 2 pedras e 1 metal; seu modelo 3D usa estrutura de madeira, telhas cinza e rebites metálicos. Ambas preservam save v3, encaixes, rotação e colisões. Estão em seção própria na Mochila → Construções.
+
+**Polimento já incluído:** passos suaves e baixos com filtragem de agudos, câmera com zoom, controle analógico ampliado, menus de equipamentos, clima dinâmico, 3D procedural, modos visuais Leve/Completo, progressão de ferramentas e indicação de materiais para cada etapa do barco.
+
+**APK de teste:** exportação Android ARM64 com chave de depuração beta e identificador separado `com.sergiomrge.gptsurvivor.beta.v100`, para não sobrescrever versões anteriores. O pacote é destinado a teste fechado no aparelho, **não** a Play Store; pode ser necessário desinstalar uma variante beta caso use outro certificado. O código-fonte segue disponível no repositório. A validação pelo CI não substitui testes reais de áudio, toque, desempenho e estabilidade no telefone. 
+
+**Estado:** marco de código 1.0 e APK beta não são afirmação de homologação de loja, 60 FPS constante ou acabamento artístico final.
+
+
 ## v0.9.0 — passos mais suaves + barco construído em cinco etapas (código-fonte, SEM APK)
 
 ### Áudio: passos confortáveis e baixos
