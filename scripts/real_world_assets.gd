@@ -88,8 +88,11 @@ static func fracture_airplane(model: Node3D) -> int:
         push_warning("GLB had no separable wing, preserving intact source visual")
         return 0
     var broken: MeshInstance3D = wing_parts[1]
-    broken.position += Vector3(2.1,-0.43,3.4)
-    broken.rotation = Vector3(0.49,-0.30,0.63)
+    # Keep the impact wing in the crash site footprint, not as a floating
+    # full-size plane wing outside the camera bounds.
+    broken.position += Vector3(0.95,-0.32,1.18)
+    broken.rotation = Vector3(0.20,-0.38,0.42)
+    broken.scale = Vector3(0.76,0.86,0.82)
     broken.set_meta("wreck_detached",true)
     var surface: Material = broken.material_override
     if surface == null and broken.mesh != null and broken.mesh.get_surface_count() > 0:
@@ -101,8 +104,9 @@ static func fracture_airplane(model: Node3D) -> int:
         broken.material_override = burned
     if tip_parts.size() >= 2:
         var tip: MeshInstance3D = tip_parts[1]
-        tip.position += Vector3(2.1,-0.43,3.4)
-        tip.rotation = Vector3(0.49,-0.30,0.63)
+        tip.position += Vector3(0.95,-0.32,1.18)
+        tip.rotation = Vector3(0.20,-0.38,0.42)
+        tip.scale = Vector3(0.76,0.86,0.82)
         tip.set_meta("wreck_detached",true)
     # Four pieces of actual in-game aircraft mesh geometry, one visibly
     # separated and weathered. No collision/search radius changes.
