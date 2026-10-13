@@ -15,6 +15,7 @@ const DEPTH := 13.0
 var state: SurvivalState
 var rooms: Dictionary = {}
 var caches: Array[Dictionary] = []
+var puzzles: SurvivorCavePuzzles
 
 static func cave_at(pos: Vector3) -> String:
     for id in CENTERS:
@@ -61,6 +62,10 @@ func generate() -> void:
         _model_cache(cache, str(id))
         caches.append({"kind":"cave_cache","id":id,"cave":info.cave,"title":info.title,
             "position":owner.to_global(info.local),"node":cache,"radius":0.9})
+    puzzles = SurvivorCavePuzzles.new()
+    puzzles.state = state
+    add_child(puzzles)
+    puzzles.generate()
 
 func _model_room(room: Node3D, id: String) -> void:
     var rock := Color(0.22,0.25,0.27) if id == "east" else Color(0.25,0.23,0.19)
@@ -143,6 +148,10 @@ func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
         if d < limit:
             limit = d
             best = cache
+    if puzzles != null:
+        var mechanism := puzzles.nearest_target(pos,limit)
+        if not mechanism.is_empty():
+            best = mechanism
     return best
 
 func collect_cache(entry: Dictionary) -> Dictionary:
