@@ -7,6 +7,7 @@ var world: SurvivorWorld
 var batches: Array[Dictionary] = []
 var cover_count := 0
 var light_mode := false
+var grass_material: ShaderMaterial
 
 func generate() -> void:
     var rng := RandomNumberGenerator.new()
@@ -27,6 +28,7 @@ func generate() -> void:
     var mesh := _grass_mesh()
     var material := ShaderMaterial.new()
     material.shader = load("res://shaders/groundcover.gdshader")
+    grass_material = material
     for key in buckets:
         var entries: Array = buckets[key]
         var center := Vector3((key.x + 0.5) * CHUNK_SIZE, 0, (key.y + 0.5) * CHUNK_SIZE)
@@ -88,6 +90,11 @@ func clear_area(pos: Vector3, radius: float) -> void:
                 var transform: Transform3D = batch.node.multimesh.get_instance_transform(i)
                 transform.basis = Basis.IDENTITY.scaled(Vector3.ZERO)
                 batch.node.multimesh.set_instance_transform(i, transform)
+
+func set_weather(wind: float, rain: float) -> void:
+    if grass_material != null:
+        grass_material.set_shader_parameter("wind_strength",wind)
+        grass_material.set_shader_parameter("rain_amount",rain)
 
 func set_light_mode(value: bool) -> void:
     light_mode = value
