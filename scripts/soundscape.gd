@@ -28,6 +28,8 @@ var frozen := false
 var active := false
 var output_available := false
 var last_effect := ""
+const FOOTSTEP_VOLUME_DB := -23.0
+const FOOTSTEP_FILTER_ALPHA := 0.17
 
 func _ready() -> void:
     # Headless test sessions have no output mixer; do not allocate looping
@@ -39,6 +41,10 @@ func _ready() -> void:
             AudioServer.set_bus_name(AudioServer.bus_count-1,bus)
     for kind in EFFECTS+["sea","wind","fire"]:
         var stream := load(STREAM_PATHS[kind]) as AudioStreamWAV
+        if kind.begins_with("step_"):
+            # Filter a private copy; the imported WAV is never modified globally.
+            stream = stream.duplicate() as AudioStreamWAV
+            stream.data = _soften_footstep(stream.data, stream.mix_rate)
         if kind in ["sea","wind","fire"]:
             stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
             stream.loop_begin = 0
@@ -61,6 +67,23 @@ func _ready() -> void:
         voice.volume_db = -9
         add_child(voice)
         voices.append(voice)
+
+func _soften_footstep(pcm: PackedByteArray, sample_rate: int) -> PackedByteArray:
+    # 16-bit mono PCM. Low-pass removes sharp heel clicks; fade avoids edge pops.
+    var out := pcm.duplicate()
+    var samples := out.size() / 2
+    if samples < 2:
+        return out
+    var smooth := 0.0
+    var fade_in := maxi(1,int(sample_rate * 0.010))
+    var fade_out := maxi(1,int(sample_rate * 0.055))
+    for i in range(samples):
+        smooth = lerpf(smooth,float(pcm.decode_s16(i*2)),FOOTSTEP_FILTER_ALPHA)
+        var start_fade := minf(1.0,float(i)/float(fade_in))
+        var end_fade := minf(1.0,float(samples-1-i)/float(fade_out))
+        var sample := clampi(roundi(smooth * 0.79 * minf(start_fade,end_fade)),-32768,32767)
+        out.encode_s16(i*2,sample)
+    return out
 
 func _ambient(kind: String,volume: float) -> AudioStreamPlayer:
     var player := AudioStreamPlayer.new()
@@ -100,7 +123,13 @@ func play_effect(kind: String,point: Vector3,pitch: float = 1.0) -> void:
     voice.stop()
     voice.position = point
     voice.stream = streams[kind]
-    voice.pitch_scale = clampf(pitch,0.85,1.15)
+    if kind.begins_with("step_"):
+        # Gentle, close-to-the-player foley without intrusive thumps or spikes.
+        voice.volume_db = FOOTSTEP_VOLUME_DB
+        voice.pitch_scale = randf_range(0.965,1.035)
+    else:
+        voice.volume_db = -9.0
+        voice.pitch_scale = clampf(pitch,0.85,1.15)
     voice.play()
 
 func update_environment(point: Vector3,terrain: SurvivorTerrain,world: SurvivorWorld,delta: float) -> void:
