@@ -100,7 +100,11 @@ func _resource(kind: String, id: String, p: Vector2) -> void:
     var radius := 0.0
     match kind:
         "palm":
-            SurvivorModels.palm(node, variant)
+            # The resource entry, collection cooldown and hit radius do not
+            # depend on which visual mesh represents the coconut tree.
+            var palm_lod := "palm_detailed" if p.distance_to(Vector2(0,170)) < 48.0 else "palm_light"
+            if not SurvivorRealWorldAssets.attach(node,palm_lod,8.25,80.0 if palm_lod == "palm_detailed" else 120.0):
+                SurvivorModels.palm(node,variant)
             radius = 0.8
         "tree":
             SurvivorModels.canopy_tree(node,variant)
@@ -131,7 +135,14 @@ func _landmark(kind: String, title: String, p: Vector2) -> void:
     add_child(node)
     match kind:
         "wreck":
-            SurvivorModels.wreck(node)
+            if SurvivorRealWorldAssets.attach(node,"airplane_propeller",4.25,155.0):
+                var aircraft := node.get_node_or_null("CC0_airplane_propeller") as Node3D
+                if aircraft != null:
+                    aircraft.rotation_degrees = Vector3(-10.0,23.0,11.5)
+                    aircraft.position.y -= 0.55
+                SurvivorRealWorldAssets.add_crash_damage(node)
+            else:
+                SurvivorModels.wreck(node)
         "cave":
             SurvivorModels.cave(node)
         "spring":
@@ -157,7 +168,16 @@ func add_structure(entry: Dictionary) -> Node3D:
     if entry.kind == "boat":
         _build_boat_model(node,int(entry.get("stage",5)))
     else:
-        SurvivorModels.building(node, entry.kind)
+        if entry.kind == "workbench":
+            if not SurvivorRealWorldAssets.attach(node,"workbench_carpenter",1.43,72.0):
+                SurvivorModels.building(node,entry.kind)
+        elif entry.kind == "house":
+            # Real timber prefab is decorative. Gameplay footprint, placement,
+            # doorway logic, save and progression stay owned by SurvivorWorld.
+            if not SurvivorRealWorldAssets.attach(node,"garden_shed",4.15,110.0):
+                SurvivorModels.building(node,entry.kind)
+        else:
+            SurvivorModels.building(node,entry.kind)
     if entry.kind == "door_panel":
         var leaf: Node3D = node.get_node_or_null("DoorLeaf")
         if leaf != null:
