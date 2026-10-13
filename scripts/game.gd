@@ -330,6 +330,13 @@ func interact() -> void:
             _leave_cave(target)
         "cave_cache":
             queue_work(target,"search",1.1,"harvest",1.5)
+        "cave_seal":
+            queue_work(target,"search",1.0,"cave_seal",1.6)
+        "cave_vault":
+            if not world.caves.puzzles.vault_unlocked(str(target.id)):
+                hud.toast("Relicário selado. Ative os dois selos desta caverna.")
+            else:
+                queue_work(target,"search",1.15,"cave_vault",1.7)
         "spring":
             player.perform_action("drink",0.95,target.position)
             state.thirst = 100
@@ -700,6 +707,13 @@ func _on_action_contact(kind: String,point: Vector3) -> void:
             save_game(false)
         else:
             hud.toast(state.recipe_error(recipe))
+        pending_work.clear()
+    if not pending_work.is_empty() and pending_work.mode == "cave_seal":
+        hud.toast(world.caves.puzzles.activate_seal(pending_work.entry))
+        pending_work.clear()
+        save_game(false)
+    if not pending_work.is_empty() and pending_work.mode == "cave_vault":
+        pending_discovery = world.caves.puzzles.collect_vault(pending_work.entry)
         pending_work.clear()
     if not pending_work.is_empty() and pending_work.mode=="harvest":
         var entry: Dictionary = pending_work.entry
