@@ -1,3 +1,11 @@
+# Checkpoint v1.4.0 — 13/10/2026
+
+Nova branch `feat/hero-anatomy-materials-v14` derivada diretamente do commit `c46bb954` da v1.3, preservando todo o gameplay, inventário, cavernas, fauna, save v3, progressão de ferramentas, som confortável e navegação de barco. Pedido anterior: cenário e protagonista substancialmente mais realistas, sem construir APK automaticamente.
+
+Entregue nesta etapa: `SurvivorHeroGeometry` constrói lofts triangulados com normais suaves. A malha animada do protagonista usa tronco/cabeça e membros de silhueta orgânica, cabelo curto, características faciais menores, roupa gasta, botas e mochila; pivôs de equipamentos e ações foram mantidos. `SurvivorModels.merge_static` agora retém distinção de pele/roupa via UV2 mesmo unindo malhas. `shaders/surfaces.gdshader` trata aspereza da pele e tecido de modo separado. Marcha tem balanço dos ombros e cabeça estabilizada com respiração em repouso. `shaders/ground.gdshader` ganhou micro-normal e rugosidade não-uniforme; `terrain.set_surface_detail` é governado pelo modo Leve/Completo.
+
+Há testes Godot nativos adicionais e workflow separado `visual_hero_v14.yml` que salva 5 screenshots reais de frente/perfil, pose de ferramenta e materiais Completo/Leve, com fixtures claramente identificadas. Validação publicada no GitHub Actions deve ser checada antes de declarar o branch concluído. Capture de Linux/Xvfb e Godot headless NÃO equivalem a teste físico Android, aferição de FPS ou fotorrealismo. Prioridade de arte para próximo lote: um personagem humano rigorosamente modelado em Blender, retopologia/rig e texturas PBR originais com licenças claras e metas de desempenho, e revisão visual da ilha em capturas reais. Nenhum APK foi produzido nem workflow Android acionado.
+
 # Checkpoint v1.3.0 — 13/10/2026
 
 Branch `feat/cave-vents-voyage-hud-v13`, criada a partir da v1.2. Melhoria incremental real, sem APK: gases de caverna agora pulsam por ciclos determinísticos de 8 segundos, com janela ativa de 4,5 segundos e aviso por luz própria sem sombras extras. Caverna do Leste e Gruta das Raízes têm fases ligeiramente deslocadas, incentivando aguardar uma janela de travessia. `hazard_rate_at` recebe tempo opcional e não modifica o formato de saves v3; o jogo passa `state.elapsed` para preservar a fase após carregar.
