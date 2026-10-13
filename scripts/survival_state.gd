@@ -4,6 +4,7 @@ class_name SurvivalState
 const SAVE_VERSION := 3
 const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "fishing_rod"]
 const MATERIAL_RECIPES := ["rope", "plank"]
+const MODULES := ["floor_panel", "wall_panel", "roof_panel"]
 const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal"]
 const TOOL_SLOTS := {"stone_knife":"utility", "stone_axe":"utility", "stone_pickaxe":"utility", "fishing_rod":"main_hand"}
 const DAY_SECONDS := 1200.0
@@ -21,6 +22,9 @@ const RECIPES := {
     "house": {"title": "Casa", "cost": {"wood": 30, "stone": 10, "fiber": 10}, "requires": ["workbench"], "description": "Abrigo para descansar e recuperar saúde."},
     "dock": {"title": "Cais", "cost": {"wood": 20, "fiber": 10}, "requires": ["workbench"], "description": "Construa na praia. Ponto de pesca e embarque."},
     "boat": {"title": "Barco de fuga", "cost": {"wood": 40, "fiber": 10, "plank": 10, "rope": 10, "metal": 8}, "requires": ["house", "dock", "fishing_rod"], "description": "Construa junto ao cais e parta da ilha."},
+    "floor_panel": {"title": "Piso modular", "cost": {"plank": 2, "wood": 2}, "requires": ["workbench"], "description": "Piso 3,2 × 3,2 m. Encaixa na grade de construção."},
+    "wall_panel": {"title": "Parede modular", "cost": {"plank": 2, "wood": 2, "rope": 1}, "requires": ["workbench", "floor_panel"], "description": "Parede de madeira para cercar o piso, com encaixe e rotação."},
+    "roof_panel": {"title": "Telhado modular", "cost": {"plank": 3, "fiber": 2, "rope": 1}, "requires": ["wall_panel"], "description": "Cobertura inclinada para sua casa modular."},
     "chest": {"title": "Baú do acampamento", "cost": {"wood": 5, "plank": 4, "rope": 2}, "requires": ["workbench"], "description": "Guarde recursos e retire-os quando precisar."},
     "bed": {"title": "Cama de folhas", "cost": {"wood": 6, "fiber": 5, "rope": 2}, "requires": ["house"], "description": "Descansar recupera a saúde."},
     "rain_collector": {"title": "Coletor de chuva", "cost": {"wood": 6, "plank": 2, "rope": 3}, "requires": ["workbench"], "description": "Armazena água durante as chuvas tropicais."},
@@ -85,7 +89,7 @@ func craft_tool(kind: String) -> bool:
 func recipe_error(kind: String) -> String:
     if not RECIPES.has(kind):
         return "Receita desconhecida."
-    if kind not in ["meal", "rope", "plank"] and owns(kind):
+    if kind not in ["meal", "rope", "plank"] and kind not in MODULES and owns(kind):
         return "Você já possui esse item."
     if kind == "boat" and not bool(discoveries.get("sail_diagram", false)):
         return "Encontre o esquema de vela na Caverna do Leste antes de construir o barco."
@@ -248,13 +252,13 @@ static func from_data(data: Dictionary) -> SurvivalState:
             return null
     state.player_position = Vector3(clampf(float(coords[0]), -220.0, 220.0), 0, clampf(float(coords[1]), -220.0, 220.0))
     var entries = data.get("buildings", [])
-    if not entries is Array or entries.size() > 20:
+    if not entries is Array or entries.size() > 80:
         return null
     for entry in entries:
         if not entry is Dictionary or not RECIPES.has(str(entry.get("kind", ""))):
             return null
         var kind := str(entry.kind)
-        if kind == "meal" or kind in TOOLS or kind in MATERIAL_RECIPES or state.has_structure(kind):
+        if kind == "meal" or kind in TOOLS or kind in MATERIAL_RECIPES or (state.has_structure(kind) and kind not in MODULES):
             return null
         for axis in ["x", "z"]:
             var value = entry.get(axis)
