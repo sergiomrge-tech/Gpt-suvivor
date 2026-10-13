@@ -119,7 +119,7 @@ func run() -> void:
     check(game.player.using_skinned_hero, "Godot loads actual MakeHuman skinned human instead of the obsolete handmade hero mesh")
     check(game.player.rigged_hero != null and game.player.rigged_hero.skeleton != null, "Imported human contains playable Skeleton3D")
     if game.player.rigged_hero != null and game.player.rigged_hero.skeleton != null:
-        var rig := game.player.rigged_hero
+        var rig: SurvivorSkinnedActor = game.player.rigged_hero
         check(rig.skeleton.get_bone_count() >= 50, "The new protagonist has 50+ real skinned anatomical joints")
         check(rig.clips.has("idle") and rig.clips.has("walk") and rig.clips.has("run"), "The imported rig exposes authentic animation clips")
         check(game.player.right_hand.get_parent() == rig.grip and rig.grip.get_parent() == rig.skeleton, "Every crafted tool and fishing rod follows the rigged right-hand bone")
