@@ -56,6 +56,27 @@ func run() -> void:
     check(wild_food_state.consume().contains("Caranguejo assado") and wild_food_state.hunger == 89.0, "Cooked crab is edible and recovers hunger")
     var wildlife_saved := SurvivalState.from_data(wild_food_state.to_data())
     check(wildlife_saved != null and wildlife_saved.inventory.raw_crab == 1 and wildlife_saved.inventory.raw_meat == 1 and wildlife_saved.owns("stone_spear"), "Old save version preserves wildlife food and tool without schema migration")
+    var research := SurvivalState.new()
+    research.buildings.append({"kind":"campfire","x":0.0,"z":161.0})
+    research.buildings.append({"kind":"workbench","x":0.0,"z":156.0})
+    research.add_item("stone_axe",1)
+    research.add_item("stone_pickaxe",1)
+    research.add_item("wood",6)
+    research.add_item("plank",8)
+    research.add_item("metal",8)
+    research.add_item("rope",2)
+    research.add_item("cave_crystal",1)
+    check(research.recipe_error("tool_rack").contains("Relicário"), "Workshop tier two cannot be researched without exploring the eastern cave")
+    research.discoveries["east_vault"] = true
+    check(research.pay_recipe("tool_rack"), "Rare crystal and intermediate materials pay for workshop tier two")
+    research.buildings.append({"kind":"tool_rack","x":6.0,"z":156.0})
+    check(research.inventory.cave_crystal == 0 and research.has_structure("tool_rack"), "Crafting upgrade consumes exactly one crystal and adds persistent workshop")
+    check(research.craft_tool("reinforced_axe") and research.is_equipped("reinforced_axe"), "Level-two axe can be crafted and equipped after workshop upgrade")
+    check(research.harvest_error("tree") == "", "Upgraded axe satisfies wooden resource gating")
+    check(research.craft_tool("reinforced_pickaxe") and research.is_equipped("reinforced_pickaxe"), "Level-two pickaxe can be crafted and equipped at the same workshop")
+    check(research.harvest_error("rock") == "" and research.inventory.metal == 0, "Improved pickaxe mines rocks and upgrade costs never produce free metal")
+    var saved_research := SurvivalState.from_data(research.to_data())
+    check(saved_research != null and saved_research.has_structure("tool_rack") and saved_research.is_equipped("reinforced_pickaxe"), "Workshop and advanced tool equipment survive original v3 save roundtrip")
     var grace := SurvivalState.new()
     grace.advance(120)
     check(grace.hunger == 100 and grace.thirst == 100, "Three-minute learning grace period")
@@ -187,6 +208,34 @@ func run() -> void:
     game.soundscape.set_muted(false)
     check(game.world.landmarks.size() == 4, "Crash site, spring and two caves generated")
     check(game.world.caves != null and game.world.caves.rooms.size() == 2 and game.world.caves.caches.size() == 4, "Two playable 3D cave interiors and four persistent caches generated")
+    check(game.world.caves.puzzles != null and game.world.caves.puzzles.mechanisms.size() == 6, "Both caves spawn two seal pedestals and an independent relic vault")
+    var puzzles: SurvivorCavePuzzles = game.world.caves.puzzles
+    var original_puzzle_state: SurvivalState = puzzles.state
+    var isolated_puzzle_state := SurvivalState.new()
+    puzzles.state = isolated_puzzle_state
+    var first_seal: Dictionary = puzzles.mechanisms[0]
+    var second_seal: Dictionary = {}
+    var first_vault: Dictionary = {}
+    for mechanism in puzzles.mechanisms:
+        if mechanism.kind == "cave_seal" and mechanism.cave == first_seal.cave and mechanism.id != first_seal.id:
+            second_seal = mechanism
+        if mechanism.kind == "cave_vault" and mechanism.cave == first_seal.cave:
+            first_vault = mechanism
+    check(not second_seal.is_empty() and not first_vault.is_empty(), "Every relic vault has exactly two separate stone-seal mechanisms")
+    if not second_seal.is_empty() and not first_vault.is_empty():
+        check(not puzzles.vault_unlocked(first_vault.id) and puzzles.collect_vault(first_vault).is_empty(), "Relic vault refuses rewards while puzzle is locked")
+        check(puzzles.activate_seal(first_seal).contains("Selo ativado"), "First seal starts a persistent environmental puzzle")
+        check(not puzzles.vault_unlocked(first_vault.id), "One activated seal is insufficient")
+        check(puzzles.activate_seal(second_seal).contains("Selo ativado") and puzzles.vault_unlocked(first_vault.id), "Two independent seals unlock one vault")
+        var crystal_before: int = isolated_puzzle_state.inventory.cave_crystal
+        var unlocked_reward := puzzles.collect_vault(first_vault)
+        check(not unlocked_reward.is_empty() and isolated_puzzle_state.inventory.cave_crystal == crystal_before + 1, "Opened relic vault grants exactly one rare crafting crystal")
+        check(puzzles.collect_vault(first_vault).is_empty(), "Relic reward cannot be duplicated by touching a closed vault")
+        var relic_save := SurvivalState.from_data(isolated_puzzle_state.to_data())
+        check(relic_save != null and relic_save.discoveries.has(first_vault.id) and relic_save.inventory.cave_crystal == 1, "Puzzle seals, vault state and rare item persist in version-three save")
+        first_vault.node.visible = true
+    puzzles.state = original_puzzle_state
+
     var root_cave_spawn := SurvivorCaves.spawn_position("roots")
     check(game.world.caves.is_inside(root_cave_spawn) and game.world.walkable(root_cave_spawn,root_cave_spawn),"Cave pocket has a walkable entry and isolated ground height")
     check(not game.world.walkable(SurvivorCaves.CENTERS["roots"]+Vector3(19,0,0),root_cave_spawn), "Cave walls prevent walking into the unloaded sea")
@@ -347,7 +396,7 @@ func run() -> void:
     check(game.hud.panel.get_rect().end.y <= game.hud.root.size.y and game.hud.panel.get_rect().end.x <= game.hud.root.size.x,"Inventory stays inside the viewport after wrapped-label layout")
     game.hud._item_callback("stone_axe").call()
     check(game.hud.item_detail.text.contains("Machado de pedra") and game.hud.item_detail.text.contains("árvores"),"Inventory item selection shows quantity and actual tool function")
-    check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 18,"Inventory grid opens with tool slots and blocks movement")
+    check(game.hud.modal_mode == "inventory" and not game.hud.joystick.active and game.hud.item_buttons.size() == 21,"Inventory grid opens with tool slots and blocks movement")
     game.hud.show_inventory("equipment")
     check(game.hud.modal_mode == "inventory" and game.hud.inventory_tab == "equipment","Separate equip tab opens inside backpack")
     game.hud._equip_callback("stone_pickaxe").call()
