@@ -1,0 +1,274 @@
+{
+  "license": "CC0",
+  "items": [
+    {
+      "id": "camp_fire_grill",
+      "title": "Cooking fire grate",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/fire-pit-with-cooking-grate-c8480cfc",
+      "files": [
+        {
+          "path": "models/camp_fire_grill.glb",
+          "size": 2025404,
+          "sha256": "0cb28e36dfaa378231c28056e675ad1473b34ab3364cd9563406426edef763fd"
+        }
+      ]
+    },
+    {
+      "id": "camp_kitchen",
+      "title": "Camp kitchen work station",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/camp-kitchen-station-camping-work-station-4dd50007",
+      "files": [
+        {
+          "path": "models/camp_kitchen.glb",
+          "size": 1256264,
+          "sha256": "ffdfa8d0a1c440470116ce8b62093312a08eaec641086c932dd5d59bc5613be0"
+        }
+      ]
+    },
+    {
+      "id": "camp_chair",
+      "title": "Canvas survival camp chair",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/camp-folding-canvas-camp-chair-e2726d99",
+      "files": [
+        {
+          "path": "models/camp_chair.glb",
+          "size": 2597444,
+          "sha256": "546ffa2437b8a54e09b1fa3811f71b67936d09ab1de7ee3cf1b53c9351dfeec8"
+        }
+      ]
+    },
+    {
+      "id": "storage_chest",
+      "title": "Weathered travel chest with PBR",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/voyage-campaign-chest-1d609eb1",
+      "files": [
+        {
+          "path": "models/storage_chest.glb",
+          "size": 1830564,
+          "sha256": "2433b721cb014f21a03fb8cf73d15a53bb950284de0ecdbb39dd5e4316da572b"
+        }
+      ]
+    },
+    {
+      "id": "canoe",
+      "title": "Real canoe for early boating/reference",
+      "kind": "glb",
+      "provider": "Innerscene",
+      "license": "CC0",
+      "web": "https://www.innerscene.com/tools/library/3d-parts/open-canoe-b46d64a0",
+      "files": [
+        {
+          "path": "models/canoe.glb",
+          "size": 5980220,
+          "sha256": "3b0de8023ee4128d34d169e4f10a2eae80470ea086aa5e4543cd90bab077b9c0"
+        }
+      ]
+    },
+    {
+      "id": "wooden_crate_01",
+      "title": "Wooden Crate 01",
+      "kind": "gltf",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/wooden_crate_01",
+      "files": [
+        {
+          "path": "models/polyhaven/wooden_crate_01/wooden_crate_01.gltf",
+          "size": 5612,
+          "sha256": "fd9c6073acfc671e12b64666053f2805ae33aff5d3dbbcfe5c97c08c06644927"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_01/textures/wooden_crate_01_diff_1k.jpg",
+          "size": 711292,
+          "sha256": "16653f4abaf4c1d9bca94bde3bd8c54d0ea9a5298d1648abcf57de1f7ecc34cc"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_01/textures/wooden_crate_01_nor_gl_1k.jpg",
+          "size": 594076,
+          "sha256": "f4ea44c7dc1686123d337039cb713d74e8a2dbc6d1bd2beeac276d06f5df3fab"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_01/wooden_crate_01.bin",
+          "size": 189408,
+          "sha256": "85f381f8035f7a6f2f3b848640894c6d3333b261946dd8a338c0fe19e0bea21e"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_01/textures/wooden_crate_01_arm_1k.jpg",
+          "size": 776699,
+          "sha256": "cd0b031c3924905e16ffd78ead062c2cc274148c4104d09635310097738b4679"
+        }
+      ]
+    },
+    {
+      "id": "wooden_crate_02",
+      "title": "Wooden Crate 02",
+      "kind": "gltf",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/wooden_crate_02",
+      "files": [
+        {
+          "path": "models/polyhaven/wooden_crate_02/wooden_crate_02.gltf",
+          "size": 4150,
+          "sha256": "e90985d317664668988cb95ce707784c94ab0ccc6d13c980ca789fa69a5cf7b6"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_02/textures/wooden_crate_02_diff_1k.jpg",
+          "size": 716110,
+          "sha256": "a6e57123110d2899af9493c22b1918174f1c96c707e7126ac67738d98ee10c07"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_02/textures/wooden_crate_02_arm_1k.jpg",
+          "size": 819577,
+          "sha256": "a76af97005a66fe8c7cdcabf20174f06813e6a6d5cd9502157c93a57f3c89d5a"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_02/wooden_crate_02.bin",
+          "size": 150064,
+          "sha256": "e68e272641f704e5241e4108894f0b97363d511944db8b991a48787d0160ea5e"
+        },
+        {
+          "path": "models/polyhaven/wooden_crate_02/textures/wooden_crate_02_nor_gl_1k.jpg",
+          "size": 546319,
+          "sha256": "59342f730c9f336950f796ef5e4c3b8c794ce5adbd54d98a2ecb679a7e4ae5e8"
+        }
+      ]
+    },
+    {
+      "id": "wooden_bucket_01",
+      "title": "Wooden Bucket 01",
+      "kind": "gltf",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/wooden_bucket_01",
+      "files": [
+        {
+          "path": "models/polyhaven/wooden_bucket_01/wooden_bucket_01.gltf",
+          "size": 4248,
+          "sha256": "f5338d760391b1f6183f09cbb3dfcb0d6b5d954d9a1d388e7debabce46fd999d"
+        },
+        {
+          "path": "models/polyhaven/wooden_bucket_01/textures/wooden_bucket_01_arm_1k.jpg",
+          "size": 777463,
+          "sha256": "3f093ca45792584632bbcc94fcc6a6521e5338a19202545f143303de6f6e8f17"
+        },
+        {
+          "path": "models/polyhaven/wooden_bucket_01/wooden_bucket_01.bin",
+          "size": 158408,
+          "sha256": "7dbce867270cbb1efe7b0970ebeb9b0d40dd53bcb62f57bfa541c04726ed4b7e"
+        },
+        {
+          "path": "models/polyhaven/wooden_bucket_01/textures/wooden_bucket_01_diff_1k.jpg",
+          "size": 698083,
+          "sha256": "d9a8ec311099bc94510abdc4b246b67c893df5e829ada4a1014021dbc7c84561"
+        },
+        {
+          "path": "models/polyhaven/wooden_bucket_01/textures/wooden_bucket_01_nor_gl_1k.jpg",
+          "size": 693440,
+          "sha256": "ae12106f8dd1e69813d42d714e9c99b70af3b5fcce6953cfbf8d8a741b4da40f"
+        }
+      ]
+    },
+    {
+      "id": "wooden_military_crate",
+      "title": "Wooden Military Crate",
+      "kind": "gltf",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/wooden_military_crate",
+      "files": [
+        {
+          "path": "models/polyhaven/wooden_military_crate/wooden_military_crate.gltf",
+          "size": 6002,
+          "sha256": "e8d8d21d112fef04c8e9fd05a62dc7c94260bc230a43d86d0e1f4b5a888a9499"
+        },
+        {
+          "path": "models/polyhaven/wooden_military_crate/textures/wooden_military_crate_nor_gl_1k.jpg",
+          "size": 745490,
+          "sha256": "89cc5ad94dd7ce425f2b9b04f37f2266778923369c77d8945101456f47579cf3"
+        },
+        {
+          "path": "models/polyhaven/wooden_military_crate/textures/wooden_military_crate_diff_1k.jpg",
+          "size": 824093,
+          "sha256": "aa6ace45bef9947586c07283cd11a2d737fe0783a18df69a76f77f59d4fb776d"
+        },
+        {
+          "path": "models/polyhaven/wooden_military_crate/textures/wooden_military_crate_arm_1k.jpg",
+          "size": 782386,
+          "sha256": "fe27fa628a9134f81958413c1a11deea8074fe40424c1a8a48ec459f2dde7955"
+        },
+        {
+          "path": "models/polyhaven/wooden_military_crate/wooden_military_crate.bin",
+          "size": 687548,
+          "sha256": "cf6fd469a476d834f9724f8b8f762630040d8e785e8697c5d7994ae3e840e727"
+        }
+      ]
+    },
+    {
+      "id": "wood_shutter",
+      "title": "Wood Shutter",
+      "kind": "pbr",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/wood_shutter",
+      "files": [
+        {
+          "path": "textures/wood_shutter/wood_shutter_diff.jpg",
+          "size": 718295,
+          "sha256": "105782fbf53fe803c8ef781bb441f525b23c571a3bc688d208989d805bfaaeea"
+        },
+        {
+          "path": "textures/wood_shutter/wood_shutter_nor_gl.jpg",
+          "size": 701234,
+          "sha256": "b621593f96705004c2c5ce78b59c059d36c77920934b6f7ac26f8824ef4ecdf8"
+        },
+        {
+          "path": "textures/wood_shutter/wood_shutter_rough.jpg",
+          "size": 255193,
+          "sha256": "134fbcb301c466ed54031056bb9c82ff92f21bf50782491f9212d26b3c94a5d1"
+        }
+      ]
+    },
+    {
+      "id": "wooden_floor_01",
+      "title": "Wooden Floor 01",
+      "kind": "pbr",
+      "provider": "Poly Haven",
+      "license": "CC0",
+      "web": "https://polyhaven.com/a/wooden_floor_01",
+      "files": [
+        {
+          "path": "textures/wooden_floor_01/wooden_floor_01_diff.jpg",
+          "size": 839089,
+          "sha256": "3487144bf5c7d07a5bea07b2b3754420e583d1f3fe128ecf1df25111e50ecbbc"
+        },
+        {
+          "path": "textures/wooden_floor_01/wooden_floor_01_nor_gl.jpg",
+          "size": 352877,
+          "sha256": "4120ac8d1498132e2e631e71cdfb524f18f2835fb19f12c5b452a8432f3f8b3a"
+        },
+        {
+          "path": "textures/wooden_floor_01/wooden_floor_01_rough.jpg",
+          "size": 469586,
+          "sha256": "6fd83a4c6b33f15fe4d4c8f5bd5b03b70215cef2ecba89cb55f300fdf03f989a"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    "https://www.innerscene.com/tools/library/",
+    "https://polyhaven.com/license"
+  ]
+}
