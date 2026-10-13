@@ -60,6 +60,17 @@ var can_fish := false
 var activity_name := ""
 var activity_fraction := 0.0
 var build_buttons: Dictionary = {}
+var selected_item := ""
+var inventory_tabs: Dictionary = {}
+var inventory_title_font: SystemFont
+const BAG_BG := Color(0.075,0.069,0.057,0.985)
+const BAG_PANEL := Color(0.13,0.119,0.094,0.97)
+const BAG_SLOT := Color(0.17,0.153,0.121,0.99)
+const BAG_GOLD := Color(0.83,0.67,0.39)
+const BAG_TEXT := Color(0.94,0.87,0.74)
+const BAG_MUTED := Color(0.65,0.63,0.55)
+const BAG_GREEN := Color(0.60,0.81,0.55)
+const BAG_RED := Color(0.91,0.49,0.44)
 const INK := Color(0.045, 0.1, 0.13, 0.94)
 const GOLD := Color(0.88, 0.75, 0.47)
 
@@ -269,6 +280,46 @@ func _button(text: String, callback: Callable) -> Button:
     button.pressed.connect(callback)
     return button
 
+func _bag_style(color: Color, selected: bool = false) -> StyleBoxFlat:
+    var style := StyleBoxFlat.new()
+    style.bg_color = color
+    style.border_color = BAG_GOLD if selected else Color(0.49,0.39,0.26,0.89)
+    style.set_border_width_all(2 if selected else 1)
+    style.set_corner_radius_all(5)
+    style.content_margin_left = 12
+    style.content_margin_right = 12
+    style.content_margin_top = 9
+    style.content_margin_bottom = 9
+    style.shadow_color = Color(0.01,0.01,0.005,0.48)
+    style.shadow_size = 3
+    return style
+
+func _bag_font() -> Font:
+    if inventory_title_font == null:
+        inventory_title_font = SystemFont.new()
+        inventory_title_font.font_names = PackedStringArray(["Noto Serif","Georgia","serif"])
+    return inventory_title_font
+
+func _bag_heading(value: String, size: int = 23) -> Label:
+    var label := _label(value,size)
+    label.add_theme_font_override("font",_bag_font())
+    label.add_theme_color_override("font_color",BAG_GOLD)
+    label.add_theme_color_override("font_shadow_color",Color(0,0,0,0.92))
+    return label
+
+func _bag_button(value: String, action: Callable, selected: bool = false) -> Button:
+    var button := _button(value,action)
+    button.add_theme_stylebox_override("normal",_bag_style(BAG_PANEL if selected else BAG_SLOT,selected))
+    button.add_theme_stylebox_override("hover",_bag_style(Color(0.24,0.20,0.14),true))
+    button.add_theme_stylebox_override("pressed",_bag_style(Color(0.26,0.21,0.14),true))
+    button.add_theme_stylebox_override("disabled",_bag_style(Color(0.12,0.115,0.095)))
+    button.add_theme_color_override("font_color",BAG_TEXT if selected else BAG_MUTED)
+    button.add_theme_color_override("font_hover_color",BAG_GOLD)
+    button.add_theme_font_size_override("font_size",17)
+    button.add_theme_font_override("font",_bag_font())
+    button.custom_minimum_size.y = 50
+    return button
+
 func set_playing(value: bool) -> void:
     is_playing = value
     game_controls.visible = value
@@ -283,11 +334,11 @@ func _new_modal(mode: String, title: String, description: String) -> void:
     joystick.reset()
     var blocker := ColorRect.new()
     blocker.name = "ModalBlocker"
-    blocker.color = Color(0.01, 0.035, 0.05, 0.67)
+    blocker.color = Color(0.015,0.011,0.008,0.83) if mode in ["inventory","craft"] else Color(0.01, 0.035, 0.05, 0.67)
     blocker.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     root.add_child(blocker)
     panel = PanelContainer.new()
-    panel.add_theme_stylebox_override("panel", _style(INK))
+    panel.add_theme_stylebox_override("panel", _bag_style(BAG_BG,true) if mode in ["inventory","craft"] else _style(INK))
     root.add_child(panel)
     var scroll := SurvivorTouchScroll.new()
     scroll.touch_allowed = func() -> bool: return is_instance_valid(panel) and panel.is_ancestor_of(scroll)
@@ -305,7 +356,9 @@ func _new_modal(mode: String, title: String, description: String) -> void:
     panel_content.add_theme_constant_override("separation", 14)
     scroll.add_child(panel_content)
     var heading := _label(title, 32)
-    heading.add_theme_color_override("font_color", GOLD)
+    heading.add_theme_color_override("font_color", BAG_GOLD if mode in ["inventory","craft"] else GOLD)
+    if mode in ["inventory","craft"]:
+        heading.add_theme_font_override("font",_bag_font())
     if mode in ["craft", "inventory", "pause", "storage"]:
         var header := HBoxContainer.new()
         heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -319,12 +372,15 @@ func _new_modal(mode: String, title: String, description: String) -> void:
     var desc := _label(description, 19)
     desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     modal_top.add_child(desc)
+    if mode in ["inventory","craft"]:
+        desc.visible = description != ""
+        desc.add_theme_color_override("font_color",BAG_MUTED)
     _resize_modal()
 
 func _resize_modal() -> void:
     if is_instance_valid(panel):
-        var width := minf(1080.0 if modal_mode in ["inventory","craft"] else 650.0, root.size.x - 32.0)
-        var height := minf(610.0, root.size.y - 36.0)
+        var width := minf(1170.0 if modal_mode in ["inventory","craft"] else 650.0, root.size.x - 30.0)
+        var height := minf(664.0 if modal_mode in ["inventory","craft"] else 610.0, root.size.y - 28.0)
         panel.position = (root.size - Vector2(width, height)) * 0.5
         panel.size = Vector2(width, height)
 
@@ -339,6 +395,7 @@ func close_modal() -> void:
         blocker.queue_free()
     modal_mode = ""
     build_buttons.clear()
+    inventory_tabs.clear()
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
@@ -373,35 +430,59 @@ func show_crafting() -> void:
     show_inventory("craft")
 
 func show_inventory(tab: String = "items") -> void:
-    if not is_playing or state == null: return
+    if not is_playing or state == null:
+        return
     inventory_tab = tab
     item_buttons.clear()
-    _new_modal("craft" if tab == "craft" else "inventory", "MOCHILA", "Organize itens e equipe as ferramentas antes de usá-las na ilha.")
+    var active_tab := "craft" if tab == "camp" else tab
+    var labels := {"items":"MOCHILA","equipment":"EQUIPAMENTOS","craft":"CONSTRUÇÕES","recipes":"RECEITAS"}
+    var subtitle := {
+        "items":"Recursos e itens coletados na ilha",
+        "equipment":"Gerencie os espaços do personagem e compare ferramentas",
+        "craft":"Estruturas por nível e evolução do acampamento",
+        "recipes":"Materiais, ferramentas, comida e pesquisas desbloqueadas",
+        "camp":"Edificações instaladas e progresso da embarcação"
+    }
+    _new_modal("craft" if active_tab == "craft" else "inventory",
+        str(labels.get(active_tab,"MOCHILA")),str(subtitle.get(tab,"")))
     var tabs := HBoxContainer.new()
+    tabs.add_theme_constant_override("separation",8)
     modal_top.add_child(tabs)
-    for entry in [["Itens", "items"], ["Equipar", "equipment"], ["Construções", "craft"], ["Acampamento", "camp"]]:
-        var tab_button := _button(entry[0],_inventory_tab_callback(entry[1]))
+    for entry in [["MOCHILA","items"],["EQUIPAMENTOS","equipment"],["CONSTRUÇÕES","craft"],["RECEITAS","recipes"]]:
+        var tab_button := _bag_button(entry[0],_inventory_tab_callback(entry[1]),active_tab == entry[1])
         tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        if tab == entry[1]:
-            tab_button.add_theme_stylebox_override("normal",_style(Color(0.28,0.36,0.23)))
         tabs.add_child(tab_button)
-    var summary := _label("Madeira %d • Pedra %d • Fibra %d • Metal %d • Corda %d • Tábua %d" % [state.inventory.wood,state.inventory.stone,state.inventory.fiber,state.inventory.metal,state.inventory.rope,state.inventory.plank],18)
+        inventory_tabs[entry[1]] = tab_button
+    var summary := HBoxContainer.new()
+    summary.add_theme_constant_override("separation",12)
     modal_top.add_child(summary)
+    for kind in ["wood","stone","fiber","metal","rope","plank"]:
+        var count := int(state.inventory.get(kind,0))
+        var pill := _label("%s  %d" % [str(SurvivalState.ITEMS.get(kind,kind)),count],15)
+        pill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        pill.add_theme_color_override("font_color",BAG_TEXT if count > 0 else BAG_MUTED)
+        summary.add_child(pill)
+    var accent := HSeparator.new()
+    accent.add_theme_constant_override("separation",4)
+    modal_top.add_child(accent)
     if tab == "equipment":
         _equipment_panel()
     elif tab == "craft":
-        _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe","stone_spear"])
-        _recipe_grid("Materiais • corda à mão, tábuas na bancada",["rope","plank"])
-        _recipe_grid("Pesquisa e ferramentas nível 2 • relicário + oficina",["tool_rack","reinforced_axe","reinforced_pickaxe"])
-        _recipe_grid("Acampamento",["campfire","workbench","fishing_rod","house","chest","bed","rain_collector","dock","boat"])
-        _recipe_grid("Cozinha • fogueira",SurvivalState.FOOD_RECIPES)
-        _recipe_grid("Casa modular • madeira / nível 1",["floor_panel","wall_panel","door_panel","window_panel","roof_panel"])
-        _recipe_grid("Casa reforçada • nível 2 após aprimorar a oficina",["reinforced_wall","reinforced_roof"])
+        _recipe_grid("ACAMPAMENTO • NÍVEL 1",["campfire","workbench","house","chest","bed","rain_collector","dock","boat"])
+        _recipe_grid("CASA MODULAR",["floor_panel","wall_panel","door_panel","window_panel","roof_panel"])
+        _recipe_grid("CONSTRUÇÕES REFORÇADAS • NÍVEL 2",["tool_rack","reinforced_wall","reinforced_roof"])
+        panel_content.add_child(_bag_button("GERENCIAR ACAMPAMENTO",func(): show_inventory("camp")))
+    elif tab == "recipes":
+        _recipe_grid("FERRAMENTAS INICIAIS",["stone_knife","stone_axe","stone_pickaxe","stone_spear","fishing_rod"])
+        _recipe_grid("APRIMORAMENTOS • NÍVEL 2",["reinforced_axe","reinforced_pickaxe"])
+        _recipe_grid("MATERIAIS E INSUMOS",["rope","plank"])
+        _recipe_grid("COZINHA",SurvivalState.FOOD_RECIPES)
     elif tab == "camp":
         _camp_panel()
     else:
         _inventory_grid()
-    panel_content.add_child(_button("Voltar ao jogo",func(): close_modal(); resume_requested.emit()))
+    panel_content.add_child(_bag_button("VOLTAR À ILHA",func(): close_modal(); resume_requested.emit()))
 
 func _inventory_tab_callback(tab: String) -> Callable:
     return func(): show_inventory(tab)
