@@ -89,8 +89,8 @@ func run() -> void:
     world.scenery.set_light_mode(true)
     check(world.scenery.light_mode,"Leve mode accessible with CC0 vegetation")
     var floor_culled := true
-    for bucket in world.scenery.tropical_floor_batches:
-        if bucket.node.multimesh.visible_instance_count > bucket.entries.size()/3+1:
+    for forest_sector in world.scenery.tropical_floor_batches:
+        if forest_sector.node.multimesh.visible_instance_count > forest_sector.entries.size()/3+1:
             floor_culled = false
             break
     check(floor_culled,"Mobile Leve preset reduces close-ground real fern draw instances")
