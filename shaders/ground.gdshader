@@ -52,6 +52,11 @@ void fragment() {
     undergrowth = mix(undergrowth,vec3(0.30,0.28,0.20),loam*0.27);
     float moss = smoothstep(0.65,0.86,middle.b) * (1.0-loam);
     undergrowth = mix(undergrowth,vec3(0.20,0.38,0.26),moss*0.17);
+    // A thin mottled organic horizon accumulates in sheltered forest pockets.
+    // Reuse the existing three noise octaves; no fourth texture fetch.
+    float humus = smoothstep(0.48,0.86,broad.b * 0.45+middle.g * 0.42+fine.r * 0.13);
+    float forest_floor = sand_to_vegetation * (1.0-smoothstep(20.0,29.0,h));
+    undergrowth = mix(undergrowth,vec3(0.215,0.255,0.165),humus*forest_floor*0.24);
 
     float slope = 1.0 - clamp(world_normal.y,0.0,1.0);
     // Patchy rock faces interrupt forest soil on actual steep terrain.
@@ -59,7 +64,12 @@ void fragment() {
     float rock_exposure = geological_band * smoothstep(9.0,22.0,h) * (0.58+0.42*broad.b);
     float stone_fleck = smoothstep(0.80,0.94,fine.r) * smoothstep(0.32,0.70,middle.r);
     vec3 stone = mix(vec3(0.37,0.40,0.36),vec3(0.48,0.48,0.40),broad.b);
-    stone *= 0.92+0.13*grain;
+    // Mineral banding is visible on exposed rock rather than uniform grey.
+    float stratum = sin(h * 2.75 + middle.r * 6.0 + broad.b * 3.8);
+    float mineral = smoothstep(0.62,0.91,middle.b*0.62+fine.g*0.38);
+    stone *= 0.88 + 0.08*grain + 0.035*stratum;
+    stone = mix(stone,vec3(0.37,0.35,0.30),mineral*0.19);
+    stone = mix(stone,vec3(0.30,0.39,0.34),moss*0.09);
 
     vec3 ground = mix(sand,undergrowth,sand_to_vegetation);
     if (show_trails) {
@@ -76,6 +86,7 @@ void fragment() {
     float gravel = smoothstep(0.72,0.93,middle.b) * sand_to_vegetation;
     ROUGHNESS = mix(0.96,0.78,tide);
     ROUGHNESS = mix(ROUGHNESS,0.90,gravel*0.45);
+    ROUGHNESS = mix(ROUGHNESS,0.86,rock_exposure*0.50);
     ROUGHNESS = mix(ROUGHNESS,0.60,rain_amount*0.56);
 
     // A small two-sample bump is reserved for the Complete mode.
