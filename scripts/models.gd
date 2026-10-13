@@ -263,6 +263,37 @@ static func building(parent: Node3D, kind: String) -> void:
             for y in [0.93,2.23]:
                 beam(parent,Vector3(-1.44,y,0.13),Vector3(1.44,y,0.13),0.085,Color(0.30,0.21,0.13))
             beam(parent,Vector3(-1.31,0.25,0.17),Vector3(1.31,3.00,0.17),0.07,wood)
+        "door_panel":
+            # Full modular frame, with an actual hinged leaf (kept separate from static batching).
+            for x in [-1.56, 1.56]:
+                beam(parent, Vector3(x, 0, 0), Vector3(x, 3.18, 0), 0.17, wood)
+            beam(parent, Vector3(-1.56, 3.12, 0), Vector3(1.56, 3.12, 0), 0.17, wood)
+            for x in [-1.55, 1.55]:
+                box(parent, Vector3(0.14, 3.0, 0.24), plank, Vector3(x, 1.5, 0))
+            var hinge := Node3D.new()
+            hinge.name = "DoorLeaf"
+            hinge.position = Vector3(-1.39, 0, 0)
+            parent.add_child(hinge)
+            for i in range(7):
+                var x := 0.19 + float(i) * 0.39
+                box(hinge, Vector3(0.38, 2.58, 0.15), plank.lightened(float(i % 3) * 0.028), Vector3(x, 1.42, 0))
+            for y in [0.47, 1.42, 2.36]:
+                box(hinge, Vector3(2.65, 0.12, 0.09), wood, Vector3(1.37, y, -0.12))
+            sphere(hinge, 0.105, Color(0.78, 0.65, 0.30), Vector3(2.42, 1.28, 0.16))
+        "window_panel":
+            # Solid knee wall with open upper window; fixed rain-resistant wooden lattice.
+            for x in [-1.56, 1.56]:
+                beam(parent, Vector3(x, 0, 0), Vector3(x, 3.17, 0), 0.16, wood)
+            for y in [0.21, 3.10]:
+                beam(parent, Vector3(-1.56, y, 0), Vector3(1.56, y, 0), 0.14, wood)
+            for i in range(8):
+                var x := (float(i) - 3.5) * 0.38
+                box(parent, Vector3(0.365, 1.03, 0.17), plank.lightened(float(i % 3) * 0.028), Vector3(x, 0.74, 0))
+                box(parent, Vector3(0.365, 0.39, 0.17), plank.lightened(float(i % 2) * 0.03), Vector3(x, 2.85, 0))
+            for y in [1.32, 2.62]:
+                beam(parent, Vector3(-1.54, y, 0), Vector3(1.54, y, 0), 0.12, wood)
+            beam(parent, Vector3(0, 1.32, 0), Vector3(0, 2.62, 0), 0.09, wood)
+            box(parent, Vector3(3.37, 0.14, 0.46), plank, Vector3(0, 1.31, 0.18))
         "roof_panel":
             # Raised pitched thatch leaves a visible cavity below the roof.
             for side in [-1,1]:
