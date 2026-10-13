@@ -29,8 +29,8 @@ jobs:
       - name: Validate original PCM audio
         run: python3 tests/audit_audio.py
       - name: Pack clean source
-        run: git archive --format=zip --prefix=GPT_Survivor_Godot_v1_4_0/ HEAD -o /tmp/GPT_Survivor_Godot_v1_4_0.zip
+        run: git archive --format=zip --prefix=GPT_Survivor_Godot_v1_5_0/ HEAD -o /tmp/GPT_Survivor_Godot_v1_5_0.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: GPT-Survivor-Godot-source-v140
-          path: /tmp/GPT_Survivor_Godot_v1_4_0.zip
+          name: GPT-Survivor-Godot-source-v150
+          path: /tmp/GPT_Survivor_Godot_v1_5_0.zip
