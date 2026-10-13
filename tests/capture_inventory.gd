@@ -30,27 +30,33 @@ func capture() -> void:
     print("INVENTORY RECT ",game.hud.panel.size," MIN ",game.hud.panel.get_combined_minimum_size())
     print("SCROLL RECT ",game.hud.panel_content.get_parent().size," MIN ",game.hud.panel_content.get_parent().get_combined_minimum_size()," MODE ",game.hud.panel_content.get_parent().vertical_scroll_mode)
     await shot("02_mochila")
-    game.hud.show_crafting()
+    game.hud.show_inventory("equipment")
     await create_timer(0.4).timeout
-    await shot("03_ferramentas")
+    await shot("03_equipamentos")
+    game.hud.show_inventory("craft")
+    await create_timer(0.4).timeout
+    await shot("04_construcoes")
+    game.hud.show_inventory("recipes")
+    await create_timer(0.4).timeout
+    await shot("05_receitas")
     game.hud.close_modal()
     for entry in game.world.resources:
         if str(entry.id).begins_with("start_log_") or str(entry.id).begins_with("start_pebble_") or entry.id == "start_hand_fiber": game.world.harvest(entry)
     game.hud.show_crafting()
     await create_timer(0.4).timeout
-    await shot("04_receitas_disponiveis")
+    await shot("06_construcoes_bloqueadas")
     game.hud.close_modal()
     game.change_zoom(-100)
     await create_timer(1.0).timeout
-    await shot("05_zoom_proximo")
+    await shot("07_zoom_proximo")
     # A narrower landscape viewport exercises canvas layout on shorter phones.
     root.size = Vector2i(1024,576)
     game.hud.show_inventory()
     await create_timer(0.5).timeout
-    await shot("06_mochila_compacta")
+    await shot("08_mochila_compacta")
     game.hud.show_crafting()
     await create_timer(0.5).timeout
-    await shot("07_receitas_compactas")
+    await shot("09_construcoes_compactas")
     game.playing = false
     game.soundscape.shutdown()
     game.queue_free()
