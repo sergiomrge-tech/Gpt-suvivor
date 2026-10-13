@@ -18,6 +18,20 @@ func _draw() -> void:
     if terrain == null or world == null:
         return
     draw_style_box(_background(), Rect2(Vector2.ZERO, size))
+    if player != null and world.caves != null and world.caves.is_inside(player.position):
+        var id := SurvivorCaves.cave_at(player.position)
+        var center: Vector3 = SurvivorCaves.CENTERS[id]
+        var frame := Rect2(size*Vector2(0.10,0.12),size*Vector2(0.80,0.76))
+        draw_rect(frame,Color(0.30,0.33,0.31),true)
+        draw_rect(frame,Color(0.72,0.60,0.42),false,2.0)
+        var to_map := func(p: Vector3) -> Vector2:
+            return Vector2(size.x*0.5 + (p.x-center.x)/37.0*frame.size.x,size.y*0.5 + (p.z-center.z)/30.0*frame.size.y)
+        draw_circle(to_map.call(SurvivorCaves.exit_position(id)),4.0,Color(0.39,0.83,0.73))
+        for cache in world.caves.caches:
+            if cache.cave == id and cache.node.visible:
+                draw_circle(to_map.call(cache.position),3.5,Color(1.0,0.79,0.34))
+        draw_circle(to_map.call(player.position),5.0,Color(1.0,1.0,0.90))
+        return
     var outline := PackedVector2Array()
     for i in range(80):
         var a := i * TAU / 80.0

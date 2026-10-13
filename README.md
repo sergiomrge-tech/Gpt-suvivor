@@ -1,5 +1,13 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v0.8 experimental — cavernas navegáveis (código-fonte, sem APK)
+
+Foram adicionados **dois interiores tridimensionais jogáveis**, acessados pelo botão **Explorar** nas entradas da Caverna do Leste e da Gruta das Raízes. A câmera segue o personagem dentro de galerias com rochas, raízes, cristais, iluminação própria e obstáculos de circulação. O botão **Sair da caverna** devolve à superfície; o minimapa passa a exibir a planta interna e os suprimentos restantes.
+
+Cada caverna possui **duas caixas de suprimentos investigáveis**, com materiais úteis à sobrevivência e ao barco. São recompensas únicas registradas em `discoveries`, evitando coleta duplicada. O save **mantém a versão 3** e também restaura a localização do personagem caso ele salve dentro de uma gruta. O mundo externo, a fauna, as ferramentas e o sistema de pesca existentes permanecem preservados.
+
+**Limites:** esta é uma primeira implementação de exploração; ainda não há enigmas ambientais, combate dentro das grutas ou barco construído em etapas. As cavernas são cenários separados por transição, sem geometria subterrânea física conectada ao terreno. É necessário conferir a execução do CI e fazer QA visual/touch no Android antes de afirmar que estão prontas. **Não gerar nem exportar APK sem pedido explícito do usuário.**
+
 ## v0.7.2 — fauna com caça, alimentação e saves (código-fonte; sem APK)
 
 Esta versão acrescenta **caranguejos coletáveis** na costa e **javalis caçáveis com lança de pedra equipada**. Os demais animais (tartarugas, aves e peixes 3D) permanecem sem captura; a pesca existente com vara não foi alterada. A lança é fabricada à mão com 4 madeiras, 2 pedras e 3 fibras e utiliza o espaço **Ferramenta** da aba Equipar. A coleta usa o mesmo fluxo de aproximação/animação/contato do sobrevivente e pode ser cancelada antes da recompensa.

@@ -271,7 +271,11 @@ static func from_data(data: Dictionary) -> SurvivalState:
     for coord in coords:
         if not (coord is int or coord is float) or not is_finite(float(coord)):
             return null
-    state.player_position = Vector3(clampf(float(coords[0]), -220.0, 220.0), 0, clampf(float(coords[1]), -220.0, 220.0))
+    var stored_position := Vector3(float(coords[0]),0.0,float(coords[1]))
+    if SurvivorCaves.is_cave_position(stored_position):
+        state.player_position = stored_position
+    else:
+        state.player_position = Vector3(clampf(float(coords[0]), -220.0, 220.0), 0, clampf(float(coords[1]), -220.0, 220.0))
     var entries = data.get("buildings", [])
     if not entries is Array or entries.size() > 80:
         return null

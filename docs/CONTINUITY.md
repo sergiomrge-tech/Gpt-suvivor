@@ -1,3 +1,9 @@
+# Checkpoint — 13/10/2026 — v0.8 cavernas exploráveis
+
+Branch `feat/explorable-caves-v08`, derivada de `feat/wildlife-food-v072`. Adicionados interiores 3D originais para Caverna do Leste e Gruta das Raízes, portais de entrada e saída, colisão das salas, 4 caches únicos com materiais, planta contextual no minimapa e persistência da posição no interior usando save v3. Preservadas caça, construção modular, pesca, ferramentas, clima, fauna e barco de fuga legado. Próximos passos: QA Godot remoto/Android, visual das salas, enigmas e barco por etapas.
+
+**Regra fixa:** não gerar, assinar, nem disparar workflow de APK até pedido explícito. Pipeline Android permanece manual e não foi alterado.
+
 # Checkpoint — 13/10/2026 — v0.7.2 caça e alimentação
 
 Branch `feat/wildlife-food-v072` parte de `feat/modular-shelter-v071`. Nova mecânica: fauna coletável (`crab`) e caça de javalis (`boar`) somente com lança de pedra equipada no slot utility; animação original da lança, coleta no contato, cozinhar caranguejo e carne na fogueira, inventário ampliado em cinco ícones/itens, armazenamento, fome/saúde e respawn determinístico de 900s registrado no mapa `harvested` do save v3. Fauna passiva (aves, tartarugas e peixes visuais), inventário/equipamento, clima, construção modular, pesca e barco originais foram mantidos. Testes automatizados ampliados.

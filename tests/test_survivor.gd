@@ -186,6 +186,14 @@ func run() -> void:
     check(not game.soundscape.sea.playing,"Muted audio stops ambient playback")
     game.soundscape.set_muted(false)
     check(game.world.landmarks.size() == 4, "Crash site, spring and two caves generated")
+    check(game.world.caves != null and game.world.caves.rooms.size() == 2 and game.world.caves.caches.size() == 4, "Two playable 3D cave interiors and four persistent caches generated")
+    var root_cave_spawn := SurvivorCaves.spawn_position("roots")
+    check(game.world.caves.is_inside(root_cave_spawn) and game.world.walkable(root_cave_spawn,root_cave_spawn),"Cave pocket has a walkable entry and isolated ground height")
+    check(not game.world.walkable(SurvivorCaves.CENTERS["roots"]+Vector3(19,0,0),root_cave_spawn), "Cave walls prevent walking into the unloaded sea")
+    var cave_save := SurvivalState.new()
+    cave_save.player_position = root_cave_spawn
+    var saved_inside := SurvivalState.from_data(cave_save.to_data())
+    check(saved_inside != null and saved_inside.player_position.x == root_cave_spawn.x and saved_inside.player_position.z == root_cave_spawn.z, "Legacy save v3 preserves the player position inside either cave")
     check(game.player != null and game.camera != null and game.hud != null, "Scene boot creates player, camera, HUD")
     check(not game.player.enabled and not game.hud.game_controls.visible, "Controls hidden during menu and intro")
     # Use a dedicated test save to preserve any user progress on test machines.
@@ -195,6 +203,26 @@ func run() -> void:
     game.start_game(false)
     await process_frame
     check(game.playing and game.player.enabled, "New survival starts")
+    var original_cave_player := game.player.position
+    game.player.position = Vector3(80,game.terrain.height_at(80,23.5),23.5)
+    game.action_cooldown = 0
+    game.interact()
+    check(SurvivorCaves.cave_at(game.player.position) == "east", "Explorar enters eastern cave through the live portal")
+    var cave_test_state := SurvivalState.new()
+    game.world.caves.state = cave_test_state
+    var first_cave_cache: Dictionary = game.world.caves.caches[0]
+    var cave_reward := game.world.caves.collect_cache(first_cave_cache)
+    check(not cave_reward.is_empty() and cave_test_state.discoveries.has(first_cave_cache.id), "Cave stash grants unique supplies and records the clue")
+    var saved_cave_loot := SurvivalState.from_data(cave_test_state.to_data())
+    check(saved_cave_loot != null and saved_cave_loot.discoveries.has(first_cave_cache.id), "Exploration reward survives save/load")
+    check(game.world.caves.collect_cache(first_cave_cache).is_empty(), "Cave supply stash cannot be collected twice")
+    game.world.caves.state = game.state
+    first_cave_cache.node.visible = true
+    game.player.position = SurvivorCaves.exit_position("east")
+    game.action_cooldown = 0
+    game.interact()
+    check(not game.world.caves.is_inside(game.player.position) and game.world.walkable(game.player.position,game.player.position), "Exit returns safely to the island")
+    game.player.position = original_cave_player
     check(game.climate != null and game.climate.particles.mesh != null,"Dynamic rain particles initialize in the scene")
     game.toggle_sprint()
     check(game.player.sprint_enabled and game.hud.run_button.text == "Andar","Mobile sprint toggle enables running gait")

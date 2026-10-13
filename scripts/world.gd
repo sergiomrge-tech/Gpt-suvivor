@@ -10,6 +10,7 @@ var _rng := RandomNumberGenerator.new()
 var _refresh_clock := 0.0
 var scenery: SurvivorScenery
 var fauna: SurvivorFauna
+var caves: SurvivorCaves
 var trails: SurvivorTrails
 var discoverables: Array[Dictionary] = []
 const DISCOVERIES := {
@@ -70,6 +71,10 @@ func generate() -> void:
     fauna.state = state
     add_child(fauna)
     fauna.generate()
+    caves = SurvivorCaves.new()
+    caves.state = state
+    add_child(caves)
+    caves.generate()
 
 func _reserved(p: Vector2) -> bool:
     if p.distance_to(Vector2(0, 170)) < 17.0:
@@ -236,6 +241,8 @@ func harvest(entry: Dictionary) -> String:
     return result
 
 func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
+    if caves != null and caves.is_inside(pos):
+        return caves.nearest_target(pos, reach)
     var result: Dictionary = {}
     var distance := reach
     for entry in resources:
@@ -253,7 +260,7 @@ func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
             distance = d
             result = entry
     for entry in structures + landmarks:
-        if entry.kind in ["wreck", "cave", "workbench", "dock", "floor_panel", "wall_panel", "window_panel", "roof_panel"]:
+        if entry.kind in ["wreck", "workbench", "dock", "floor_panel", "wall_panel", "window_panel", "roof_panel"]:
             continue
         var d := Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length()
         # Boat is placed off the shore; it remains reachable from the dock.
@@ -274,6 +281,10 @@ func near_structure(pos: Vector3, kind: String, reach: float = 12.0) -> Dictiona
     return {}
 
 func walkable(pos: Vector3, previous: Vector3) -> bool:
+    if caves != null and caves.is_inside(previous):
+        return caves.is_walkable(pos)
+    if caves != null and caves.is_inside(pos):
+        return false
     if not terrain.is_land(pos.x, pos.z) and not is_on_dock(pos):
         return false
     var horizontal := Vector2(pos.x - previous.x, pos.z - previous.z).length()
@@ -457,6 +468,8 @@ func is_on_dock(pos: Vector3) -> bool:
     return is_finite(dock_local(pos).y)
 
 func surface_height(pos: Vector3) -> float:
+    if caves != null and caves.is_inside(pos):
+        return 0.0
     var ground := terrain.height_at(pos.x,pos.z)
     var local := dock_local(pos)
     if is_finite(local.y):

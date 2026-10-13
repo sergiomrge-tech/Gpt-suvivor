@@ -188,6 +188,7 @@ func _process(delta: float) -> void:
     state.advance(delta)
     terrain.set_time_of_day(fmod(8.0 / 24.0 + state.elapsed / SurvivalState.DAY_SECONDS, 1.0))
     climate.update_weather(state.elapsed,player.position,terrain,world.scenery)
+    climate.visible = not world.caves.is_inside(player.position)
     action_cooldown = maxf(0, action_cooldown - delta)
     autosave_clock += delta
     if autosave_clock >= 60:
@@ -323,6 +324,12 @@ func interact() -> void:
                 return
             var animation: String = {"palm":"chop","tree":"chop","rock":"mine","metal":"search","fiber":"cut" if state.owns("stone_knife") else "gather","discovery":"search","loose_log":"gather","loose_stone":"gather","crab":"gather","boar":"spear"}[target.kind]
             queue_work(target,animation,1.05,"harvest",float(target.radius)+0.85)
+        "cave":
+            _enter_cave(target)
+        "cave_exit":
+            _leave_cave(target)
+        "cave_cache":
+            queue_work(target,"search",1.1,"harvest",1.5)
         "spring":
             player.perform_action("drink",0.95,target.position)
             state.thirst = 100
@@ -354,6 +361,34 @@ func interact() -> void:
                 hud.toast("Reservatório vazio. Aguarde a próxima chuva tropical.")
         "boat": escape_island()
 
+func _enter_cave(entry: Dictionary) -> void:
+    var id := SurvivorCaves.entrance_id(str(entry.get("title","")))
+    if id == "":
+        return
+    _teleport_to(SurvivorCaves.spawn_position(id))
+    hud.toast("Você entrou na caverna. Procure suprimentos e use Explorar na saída para voltar.",5)
+
+func _leave_cave(entry: Dictionary) -> void:
+    var id := str(entry.get("id",""))
+    if not SurvivorCaves.CENTERS.has(id):
+        return
+    var out := Vector3(80,0,28) if id == "east" else Vector3(-90,0,-52)
+    _teleport_to(out)
+    hud.toast("Você voltou à superfície.",3)
+
+func _teleport_to(point: Vector3) -> void:
+    cancel_work()
+    cancel_placement()
+    pending_discovery.clear()
+    fishing_remaining = 0.0
+    player.move_vector = Vector2.ZERO
+    player.position = point
+    player.position.y = world.surface_height(point)
+    camera.position = player.position + Vector3(0,camera_distance,camera_distance*0.85)
+    _update_camera(1.0)
+    action_cooldown = 0.85
+    save_game(false)
+
 func consume() -> void:
     if not paused() and selected_recipe == "" and fishing_remaining <= 0:
         var before: int = state.ready_food_count()
@@ -368,6 +403,9 @@ func select_recipe(kind: String) -> void:
         return
     cancel_work()
     cancel_placement()
+    if world.caves.is_inside(player.position) and kind not in SurvivalState.TOOLS and kind not in SurvivalState.MATERIAL_RECIPES:
+        hud.toast("Construa estruturas na superfície, fora das cavernas.")
+        return
     var error := state.recipe_error(kind)
     if error != "":
         hud.toast(error)
@@ -667,6 +705,8 @@ func _on_action_contact(kind: String,point: Vector3) -> void:
         var entry: Dictionary = pending_work.entry
         if entry.kind=="discovery":
             pending_discovery = world.discover(entry)
+        elif entry.kind=="cave_cache":
+            pending_discovery = world.caves.collect_cache(entry)
         elif is_instance_valid(entry.node) and entry.node.visible:
             hud.toast(world.harvest(entry))
         pending_work.clear()

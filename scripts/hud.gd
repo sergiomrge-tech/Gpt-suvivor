@@ -342,7 +342,7 @@ func close_modal() -> void:
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
-    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.7.1")
+    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nProtótipo Godot 3D • v0.8 (desenvolvimento)")
     if paused:
         panel_content.add_child(_button("Voltar ao jogo", func(): close_modal(); resume_requested.emit()))
         panel_content.add_child(_button("Salvar progresso", func(): save_requested.emit()))
@@ -710,7 +710,7 @@ func _process(delta: float) -> void:
         fishing_button.text = "Pescar"
         action_button.text = "Explorar"
         if not target.is_empty():
-            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "crab":"Pegar caranguejo", "boar":"Caçar javali", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
+            action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "crab":"Pegar caranguejo", "boar":"Caçar javali", "cave":"Entrar na caverna", "cave_exit":"Sair da caverna", "cave_cache":"Investigar caixa", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
     if not target.is_empty() and placement_kind == "" and activity_name == "":
         var error := state.harvest_error(str(target.kind))
         if error != "":
