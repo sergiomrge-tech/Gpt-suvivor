@@ -393,6 +393,7 @@ func show_inventory(tab: String = "items") -> void:
         _recipe_grid("Ferramentas básicas • feitas à mão",["stone_knife","stone_axe","stone_pickaxe"])
         _recipe_grid("Materiais • corda à mão, tábuas na bancada",["rope","plank"])
         _recipe_grid("Acampamento",["campfire","workbench","fishing_rod","house","chest","bed","rain_collector","dock","boat","meal"])
+        _recipe_grid("Casa modular • peças repetíveis na grade de 3,2 m",SurvivalState.MODULES)
     elif tab == "camp":
         _camp_panel()
     else:
@@ -513,7 +514,7 @@ func _camp_panel() -> void:
         var label_node := _label(title,20)
         label_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         line.add_child(label_node)
-        if kind not in ["boat","dock"]:
+        if kind not in ["boat","dock"] and kind not in SurvivalState.MODULES:
             line.add_child(_button("Mover",_relocate_callback(kind)))
     if state.has_structure("chest"):
         panel_content.add_child(_button("Abrir baú de recursos",func(): show_storage()))
@@ -640,7 +641,7 @@ func _recipe_grid(title: String,kinds: Array) -> void:
         detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         body.add_child(detail)
         var error := state.recipe_error(kind)
-        var button := _button("Pronto" if state.owns(kind) else ("Fabricar" if kind in SurvivalState.TOOLS or kind in SurvivalState.MATERIAL_RECIPES or kind == "meal" else "Construir"),_recipe_callback(kind))
+        var button := _button("Pronto" if state.owns(kind) and kind not in SurvivalState.MODULES else ("Fabricar" if kind in SurvivalState.TOOLS or kind in SurvivalState.MATERIAL_RECIPES or kind == "meal" else "Construir"),_recipe_callback(kind))
         button.disabled = error != ""
         body.add_child(button)
         build_buttons[kind] = button
