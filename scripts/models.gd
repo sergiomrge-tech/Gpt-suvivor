@@ -89,34 +89,41 @@ static func palm(parent: Node3D, variant: int) -> void:
                 ]))
             triangles(parent,ring,trunk_color.darkened(0.16))
     var crown := Vector3(0,tall,0)+curve
-    # Leaves are not planar broad triangles: 11 curved, serrated 3D fronds
-    # with drooping side leaflets and per-frond tonal differences.
-    for frond in range(9):
-        var angle := float(frond)*TAU/9.0+float(variant)*0.22
+    # Continuous arching rachis and narrow leaflets create a believable
+    # coconut-palm silhouette. All geometry remains cached by resource variant.
+    for frond in range(11):
+        var angle := float(frond)*TAU/11.0 + float(variant)*0.19
         var radial := Vector3(cos(angle),0,sin(angle))
         var side := Vector3(-sin(angle),0,cos(angle))
-        var length := 4.15+float((frond+variant)%4)*0.34
+        var length := 4.05 + float((frond+variant)%5)*0.29
         var vertices := PackedVector3Array()
-        for segment in range(8):
-            var t := float(segment)/8.0
-            var t2 := float(segment+1)/8.0
-            var a := crown+radial*t*length+Vector3.UP*(sin(t*PI)*0.62-t*t*2.08)
-            var b := crown+radial*t2*length+Vector3.UP*(sin(t2*PI)*0.62-t2*t2*2.08)
-            var w := sin(t*PI)*0.57
-            var w2 := sin(t2*PI)*0.57
+        for segment in range(12):
+            var t := float(segment)/12.0
+            var t2 := float(segment+1)/12.0
+            var a := crown + radial*t*length + Vector3.UP*(sin(t*PI)*0.75-t*t*2.20)
+            var b := crown + radial*t2*length + Vector3.UP*(sin(t2*PI)*0.75-t2*t2*2.20)
+            var w := sin(t*PI)*0.085
+            var w2 := sin(t2*PI)*0.085
             vertices.append_array(PackedVector3Array([
                 a-side*w,b-side*w2,a+side*w,
                 a+side*w,b-side*w2,b+side*w2
             ]))
-            if segment > 0 and segment < 7 and segment % 2 == 0:
+            if segment > 0 and segment < 11:
+                # Opposite leaflets spread laterally and droop at their tips.
+                # Sparse, independent segments admit daylight through the crown.
                 for sign in [-1.0,1.0]:
-                    var root: Vector3 = a+side*sign*w*0.48
-                    var next_root: Vector3 = b+side*sign*w2*0.53
-                    var droop := (0.13+t*0.24)*Vector3.DOWN
-                    var tip: Vector3 = root+side*sign*(w*0.82+0.36)+radial*0.13+droop
-                    vertices.append_array(PackedVector3Array([root,tip,next_root]))
-        triangles(parent,vertices,Color(0.12+float(frond%3)*0.018,
-            0.32+float((frond+variant)%4)*0.028,0.12+float(frond%2)*0.012))
+                    var base: Vector3 = a + side*sign*w*0.45
+                    var next_base: Vector3 = b + side*sign*w2*0.42
+                    var reach := sin(t*PI)*0.70 + 0.14
+                    var leaf_tip: Vector3 = base + side*sign*reach + radial*(0.09+0.11*t) - Vector3.UP*(0.12+0.34*t)
+                    vertices.append_array(PackedVector3Array([
+                        base,leaf_tip,next_base
+                    ]))
+        triangles(parent,vertices,Color(
+            0.13+float(frond%3)*0.019,
+            0.32+float((frond+variant)%4)*0.027,
+            0.11+float(frond%2)*0.013
+        ))
     for i in range(4):
         var a := float(i)*TAU/4.0
         sphere(parent,0.22,Color(0.44,0.32,0.12),
