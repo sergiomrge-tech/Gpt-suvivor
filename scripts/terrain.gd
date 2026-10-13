@@ -35,6 +35,11 @@ func is_shore(x: float, z: float) -> bool:
     var h: float = height_at(x, z)
     return h > SEA_LEVEL + 0.3 and h < 2.7
 
+func is_fishing_spot(x: float, z: float) -> bool:
+    # Shallow coastal land, including the grassy edge beside the beach.
+    var h: float = height_at(x, z)
+    return h > SEA_LEVEL + 0.3 and h < 5.0
+
 func _ready() -> void:
     _build_terrain()
     _build_ocean()
