@@ -13,27 +13,51 @@ void vertex() {
 void fragment() {
     float h = world_point.y;
     vec2 p = world_point.xz;
-    float macro = texture(detail_noise, p / 64.0).r;
-    float grain = texture(detail_noise, p / 2.0).b;
-    float grass = smoothstep(2.35, 5.4, h + (macro - 0.5) * 1.5);
-    vec3 sand = mix(vec3(0.73,0.63,0.44), vec3(0.87,0.78,0.56), 0.2 + macro * 0.6);
-    vec3 turf = mix(vec3(0.20,0.38,0.21), vec3(0.29,0.46,0.26), macro);
-    float dry_patch = smoothstep(0.65,0.83,texture(detail_noise,p / 47.0 + vec2(0.2,0.3)).g);
-    turf = mix(turf,vec3(0.35,0.37,0.23),dry_patch * 0.35);
-    vec3 ground = mix(sand,turf,grass);
-    float wet = 1.0 - smoothstep(sea_level + 0.15,sea_level + 1.65,h);
-    ground *= mix(1.0,0.77,wet);
-    ground *= 0.975 + grain * 0.05;
-    float ridges = sin(p.x * 3.8 + macro * 3.0) * 0.012;
-    ground += vec3(ridges) * (1.0 - grass);
-    float rock_exposure = smoothstep(0.32,0.72,1.0-world_normal.y) * smoothstep(7.0,18.0,h);
-    float fine_stones = smoothstep(0.77,0.89,texture(detail_noise,p * 0.58).r) * grass * (1.0 - rock_exposure);
-    float rain_darkness = rain_amount * (0.13 + macro * 0.08);
+    // Keep geometry, collisions and saved world locations untouched.
+    // All biome variation lives in material space, so beaches read as continuous.
+    vec3 broad = texture(detail_noise, p / 65.0).rgb;
+    vec3 middle = texture(detail_noise, p / 13.0 + vec2(0.17,0.31)).rgb;
+    vec3 fine = texture(detail_noise, p / 1.85).rgb;
+    float macro = broad.r;
+    float sand_to_vegetation = smoothstep(2.25,5.15,h + (macro - 0.5) * 1.8 + (middle.g - 0.5) * 0.85);
+    float grain = fine.b * 0.55 + middle.r * 0.45;
+
+    // Light dry sand above a darker compact tideline and granular footpath edges.
+    vec3 honey = vec3(0.80,0.70,0.52);
+    vec3 pale = vec3(0.90,0.81,0.63);
+    vec3 sand = mix(honey,pale,clamp(0.20 + macro * 0.64 + (fine.g-0.5)*0.16,0.0,1.0));
+    float tide = 1.0-smoothstep(sea_level+0.23,sea_level+1.65,h);
+    float fringe = smoothstep(sea_level+0.6,sea_level+1.22,h) * (1.0-smoothstep(sea_level+2.1,sea_level+3.3,h));
+    sand *= 1.0 - tide * 0.24;
+    sand *= 1.0 - fringe * middle.b * 0.055;
+    float tiny_shells = smoothstep(0.82,0.97,fine.r)* (1.0-sand_to_vegetation);
+    sand = mix(sand,vec3(0.94,0.85,0.67),tiny_shells * 0.11);
+
+    // Multiple vegetation hues form patchwork instead of a flat green paint.
+    vec3 undergrowth = mix(vec3(0.19,0.36,0.20),vec3(0.27,0.43,0.24),macro);
+    undergrowth = mix(undergrowth,vec3(0.34,0.39,0.21),smoothstep(0.58,0.82,middle.g)*0.28);
+    float loam = smoothstep(0.61,0.84,broad.g * 0.68+middle.r * 0.32);
+    undergrowth = mix(undergrowth,vec3(0.30,0.28,0.20),loam*0.27);
+    float moss = smoothstep(0.65,0.86,middle.b) * (1.0-loam);
+    undergrowth = mix(undergrowth,vec3(0.20,0.38,0.26),moss*0.17);
+
+    float slope = 1.0 - clamp(world_normal.y,0.0,1.0);
+    float rock_exposure = smoothstep(0.20,0.60,slope) * smoothstep(6.0,17.0,h);
+    float stone_fleck = smoothstep(0.80,0.94,fine.r) * smoothstep(0.32,0.70,middle.r);
+    vec3 stone = mix(vec3(0.37,0.40,0.36),vec3(0.48,0.48,0.40),broad.b);
+    stone *= 0.92+0.13*grain;
+
+    vec3 ground = mix(sand,undergrowth,sand_to_vegetation);
     if (show_trails) {
         float path = texture(trail_mask,(p+vec2(258.0))/516.0).r;
-        ground = mix(ground,vec3(0.46,0.40,0.27)*(0.96+grain*0.08),path*grass*0.78);
+        vec3 earth = mix(vec3(0.40,0.35,0.25),vec3(0.49,0.43,0.30),grain);
+        ground = mix(ground,earth,path * sand_to_vegetation * 0.80);
     }
-    ground = mix(ground,vec3(0.38,0.40,0.34),fine_stones * 0.26);
-    ALBEDO = mix(ground,vec3(0.39,0.41,0.34) * (0.92+macro*0.13),rock_exposure) * (1.0 - rain_darkness);
-    ROUGHNESS = mix(mix(0.95,0.68,wet),0.48,rain_amount * 0.74);
+    ground = mix(ground,stone,stone_fleck * (0.10 + sand_to_vegetation * 0.12));
+    ground = mix(ground,stone,rock_exposure);
+    ground *= 0.967 + grain*0.066;
+    float damp = rain_amount * (0.10 + macro * 0.085);
+    ALBEDO = ground * (1.0-damp);
+    ROUGHNESS = mix(0.96,0.76,tide);
+    ROUGHNESS = mix(ROUGHNESS,0.62,rain_amount*0.57);
 }
