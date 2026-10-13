@@ -35,6 +35,17 @@ func run() -> void:
             wreck_asset = entry.node.get_node_or_null("CC0_airplane_propeller") != null
             check(entry.position.distance_to(Vector3(-8,world.terrain.height_at(-8,164),164)) < 0.2,"Plane crash stays at original location and loot markers")
     check(wreck_found and wreck_asset,"Actual detailed plane GLB replaces artificial fuselage")
+    for crash in world.landmarks:
+        if crash.kind=="wreck":
+            check(int(crash.node.get_meta("aircraft_fracture_count",0)) >= 1,"A real authored wing has been physically detached from crashed plane, rather than intact mockup")
+            var detached := 0
+            var plane: Node = crash.node.get_node_or_null("CC0_airplane_propeller")
+            if plane != null:
+                for piece in plane.find_children("*","MeshInstance3D",true,false):
+                    if bool(piece.get_meta("wreck_detached",false)):
+                        detached += 1
+            check(detached >= 1,"Actual imported mesh instance is tilted and displaced as crash wreckage")
+            break
     var real_palm_count := 0
     for resource in world.resources:
         if resource.kind=="palm" and resource.node.get_node_or_null("CC0_palm_light")!=null or resource.kind=="palm" and resource.node.get_node_or_null("CC0_palm_detailed")!=null:
