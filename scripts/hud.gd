@@ -17,6 +17,7 @@ signal save_requested
 signal menu_requested
 signal start_requested(load_save: bool)
 signal sound_requested
+signal audio_level_requested(bus_name: String,level: float)
 signal journal_requested
 signal quality_requested
 signal zoom_requested(amount: float)
@@ -56,6 +57,7 @@ var light_visuals := false
 var quality_button: Button
 var sound_button: Button
 var muted := false
+var audio_levels := {"Ambiente":1.0,"Efeitos":1.0,"Passos":1.0}
 var activity_label: Label
 var activity_progress: ProgressBar
 var can_fish := false
@@ -511,6 +513,26 @@ func show_menu(saved: bool, paused: bool = false) -> void:
     panel_content.add_child(sound_button)
     quality_button = _button("Visual: Leve" if light_visuals else "Visual: Completo", func(): quality_requested.emit())
     panel_content.add_child(quality_button)
+    var sound_header := _bag_heading("MIXAGEM DE ÁUDIO",18)
+    panel_content.add_child(sound_header)
+    for item in [["Ambiente","Mundo, mar, chuva e natureza"],["Efeitos","Ferramentas e interações"],["Passos","Pisadas suaves"]]:
+        var bus_name: String = item[0]
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation",12)
+        panel_content.add_child(row)
+        var heading := _label(str(item[1]),16)
+        heading.custom_minimum_size.x = 220
+        row.add_child(heading)
+        var slider := HSlider.new()
+        slider.min_value = 0
+        slider.max_value = 100
+        slider.step = 5
+        slider.custom_minimum_size = Vector2(180,42)
+        slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        slider.value = float(audio_levels.get(bus_name,1.0))*100.0
+        slider.value_changed.connect(func(value: float): audio_level_requested.emit(bus_name,value/100.0))
+        row.add_child(slider)
+
     var help := _label("Explore os destroços, coqueiros, rochas e cavernas. A nascente aparece em azul no mapa. As barras diminuem após os três primeiros minutos.\n\nCelular: joystick à esquerda e ações à direita. PC: WASD / setas. O jogo salva automaticamente a cada minuto e ao sair.", 18)
     help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     panel_content.add_child(help)
