@@ -213,16 +213,19 @@ func harvest(entry: Dictionary) -> String:
     var result := ""
     match entry.kind:
         "palm":
-            state.add_item("wood", 8)
-            state.add_item("coconut", 2)
-            result = "+8 madeiras • +2 cocos"
+            var wood_amount := 12 if state.is_equipped("reinforced_axe") else 8
+            state.add_item("wood", wood_amount)
+            state.add_item("coconut", 3 if wood_amount == 12 else 2)
+            result = "+%d madeiras • cocos coletados" % wood_amount
         "tree":
-            state.add_item("wood",8)
+            var wood_amount := 12 if state.is_equipped("reinforced_axe") else 8
+            state.add_item("wood",wood_amount)
             state.add_item("fiber",2)
-            result = "+8 madeiras • +2 fibras"
+            result = "+%d madeiras • +2 fibras" % wood_amount
         "rock":
-            state.add_item("stone", 6)
-            result = "+6 pedras"
+            var stones := 9 if state.is_equipped("reinforced_pickaxe") else 6
+            state.add_item("stone", stones)
+            result = "+%d pedras" % stones
         "fiber":
             var count := 8 if state.is_equipped("stone_knife") else 5
             state.add_item("fiber", count)
@@ -327,6 +330,8 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
         return ""
     if not terrain.is_land(pos.x, pos.z):
         return "Escolha um ponto em terra firme."
+    if kind == "tool_rack" and near_structure(pos,"workbench",12).is_empty():
+        return "Construa a estação de aprimoramento próxima da bancada."
     if kind == "dock" and not terrain.is_shore(pos.x, pos.z):
         return "O cais precisa ficar na faixa de areia junto ao mar."
     var modular := kind in SurvivalState.MODULES
