@@ -47,6 +47,11 @@ func height_at(x: float,z: float) -> float:
             height = lerpf(height,natural_height_at(center.x,center.y),blend)
     return height
 
+func set_surface_detail(enabled: bool) -> void:
+    # Micro-normal texture samples are skipped on the low-power mobile preset.
+    if ground_material != null:
+        ground_material.set_shader_parameter("surface_microdetail", 1.0 if enabled else 0.0)
+
 func set_trail_mask(mask: Texture2D) -> void:
     var material := get_node("IslandTerrain").material_override as ShaderMaterial
     material.set_shader_parameter("trail_mask",mask)
