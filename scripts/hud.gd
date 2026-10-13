@@ -359,11 +359,11 @@ func update_display(state: SurvivorState, near: String) -> void:
     (vitals["thirst"] as ProgressBar).value = state.thirst
     day_label.text = "DIA %d  •  %02d:%02d" % [state.days, int(state.clock * 24.0), int(fmod(state.clock * 1440.0, 60.0))]
     nearby_label.text = near if near != "" else "Explore a ilha e procure recursos"
-    var items: Array[String] = []
-    for item in ["wood", "stone", "fiber", "palm_leaf", "fruit", "fish", "water", "spear"]:
-        var count: int = state.item_count(item)
-        if count > 0:
-            items.append("%s: %d" % [SurvivorState.ITEM_NAMES[item], count])
-    inventory_label.text = "  •  ".join(items)
+    active_state = state
+    inventory_label.text = "MOCHILA  •  Madeira: %d  •  Pedra: %d  •  Fibra: %d  •  Peixes: %d  |  [I] INVENTÁRIO" % [
+        state.item_count("wood"), state.item_count("stone"), state.item_count("fiber"), state.item_count("fish")]
+    var current_signature: String = str(state.inventory) + str(state.equipment) + str(state.crafted)
+    if inventory_panel.visible and inventory_signature != current_signature:
+        _refresh_inventory()
     if Time.get_ticks_msec() / 1000.0 > toast_until:
         toast_label.text = ""
