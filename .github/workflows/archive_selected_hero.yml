@@ -1,4 +1,4 @@
-name: Archive selected original dressed MakeHuman B
+name: Archive 3 real MakeHuman models with dressed B selected
 on:
   push:
     branches: [feat/hero-asset-comparison]
@@ -28,12 +28,27 @@ jobs:
         run: |
           mkdir -p /tmp/makehuman_B
           cp assets/characters/makehuman_survivor.glb /tmp/makehuman_B/MakeHuman_B_Vestido_original.glb
+          curl --fail --location --retry 4 --retry-delay 2 -o /tmp/makehuman_B/MakeHuman_A_Homem_Base.glb https://raw.githubusercontent.com/kunalkushwaha/vsim/main/packages/assets/library/man.glb
+          curl --fail --location --retry 4 --retry-delay 2 -o /tmp/makehuman_B/MakeHuman_C_Humano_Alternativo.glb https://raw.githubusercontent.com/kunalkushwaha/vsim/main/packages/assets/library/human.glb
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          models={'MakeHuman_A_Homem_Base.glb':'bec48c7ad6be753520f7291510c1d63440df87b9',
+                  'MakeHuman_B_Vestido_original.glb':'95033d30a4b4bab4a4a0ce3eb176a4ce7d73d0b5',
+                  'MakeHuman_C_Humano_Alternativo.glb':'2569fa67af8c0acd786d79bcdac9cce6684e0085'}
+          for name,expected in models.items():
+              blob=Path('/tmp/makehuman_B',name).read_bytes()
+              assert blob[:4]==b'glTF',(name,'not a glb')
+              digest=hashlib.sha1(b'blob '+str(len(blob)).encode()+bytes([0])+blob).hexdigest()
+              assert digest==expected,(name,digest)
+              print('VERIFIED_ORIGINAL_CC0_MODEL',name,len(blob),digest)
+          PY
           cp docs/HERO_SELECTED_B.md /tmp/makehuman_B/LEIA_ME_ESCOLHA_B.md
           cp docs/licenses/makehuman_survivor.md /tmp/makehuman_B/LICENCA_FONTE.md
           python3 - <<'PY'
           import zipfile
           from pathlib import Path
-          p=Path('/tmp/MakeHuman_B_Vestido_CC0_Original.zip')
+          p=Path('/tmp/GPT_Survivor_MakeHuman_3_opcoes_CC0_B_selecionado.zip')
           with zipfile.ZipFile(p,'w',compression=zipfile.ZIP_DEFLATED) as out:
               for x in Path('/tmp/makehuman_B').iterdir():
                   out.write(x,arcname=x.name)
@@ -43,6 +58,6 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: GPT-Survivor-MakeHuman-B-dressed-original-CC0
+          name: GPT-Survivor-MakeHuman-3-CC0-B-selected
           path: /tmp/MakeHuman_B_Vestido_CC0_Original.zip
           retention-days: 21
