@@ -69,6 +69,7 @@ var inventory_tabs: Dictionary = {}
 var inventory_title_font: SystemFont
 var voyage_overlay: Control
 var voyage_status: Label
+var voyage_hint: Label
 var voyage_progress: ProgressBar
 var shortcut_bar: HBoxContainer
 var shortcut_buttons: Array[Button] = []
@@ -1060,10 +1061,10 @@ func show_voyage() -> void:
     voyage_progress.show_percentage = false
     voyage_progress.custom_minimum_size = Vector2(290,9)
     info.add_child(voyage_progress)
-    var hint := _label("Evite os recifes • manobre com as setas",15)
-    hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    hint.add_theme_color_override("font_color",BAG_TEXT)
-    info.add_child(hint)
+    voyage_hint = _label("Evite os recifes • manobre com as setas",15)
+    voyage_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    voyage_hint.add_theme_color_override("font_color",BAG_TEXT)
+    info.add_child(voyage_hint)
     for side in [-1,1]:
         var button := _bag_button("◀  BOMBORDO" if side == -1 else "ESTIBORDO  ▶",func(): voyage_steer_requested.emit(side))
         button.name = "TurnLeft" if side == -1 else "TurnRight"
@@ -1084,6 +1085,7 @@ func update_voyage(voyage: SurvivorVoyage) -> void:
         return
     voyage_status.text = "CANAL SEGURO %d%% • CASCO %d%%" % [int(voyage.progress()*100.0),int(voyage.hull)]
     voyage_progress.value = voyage.progress()*100.0
+    voyage_hint.text = voyage.last_event if voyage.last_event != "" else "Manobre entre recifes com as setas."
 
 func hide_voyage() -> void:
     if is_instance_valid(voyage_overlay):
@@ -1091,6 +1093,7 @@ func hide_voyage() -> void:
         voyage_overlay.queue_free()
     voyage_overlay = null
     voyage_status = null
+    voyage_hint = null
     voyage_progress = null
 
 func show_end(victory: bool, elapsed: float) -> void:
