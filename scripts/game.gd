@@ -361,6 +361,11 @@ func interact() -> void:
             _leave_cave(target)
         "cave_cache":
             queue_work(target,"search",1.1,"harvest",1.5)
+        "cave_vein":
+            if not state.is_equipped("reinforced_pickaxe"):
+                hud.toast("Esses cristais profundos exigem a picareta reforçada da oficina nível 2.")
+            else:
+                queue_work(target,"mine",1.3,"harvest",1.65)
         "cave_seal":
             queue_work(target,"search",1.0,"cave_seal",1.6)
         "cave_vault":
@@ -841,6 +846,8 @@ func _on_action_contact(kind: String,point: Vector3) -> void:
             pending_discovery = world.discover(entry)
         elif entry.kind=="cave_cache":
             pending_discovery = world.caves.collect_cache(entry)
+        elif entry.kind=="cave_vein":
+            pending_discovery = world.caves.extract_vein(entry)
         elif is_instance_valid(entry.node) and entry.node.visible:
             hud.toast(world.harvest(entry))
         pending_work.clear()
