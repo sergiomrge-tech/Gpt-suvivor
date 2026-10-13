@@ -3,7 +3,7 @@ config_version=5
 [application]
 config/name="GPT Survivor"
 run/main_scene="res://scenes/main.tscn"
-config/description="Aventura de sobrevivencia em ilha tropical 3D"
+config/description="Sobrevivencia na ilha tropical em 3D"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 
 [display]
@@ -15,5 +15,4 @@ window/handheld/orientation=1
 [rendering]
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-textures/default_filters/use_nearest_mipmap_filter=false
 environment/defaults/default_clear_color=Color(0.5, 0.77, 0.85, 1)

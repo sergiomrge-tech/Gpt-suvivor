@@ -1,20 +1,42 @@
-# GPT Survivor
+# GPT Survivor — Ilha Perdida
 
-Jogo de sobrevivencia **3D top-down em Godot 4.x**, com mundo tropical gerado proceduralmente e suporte planejado para Android e PC.
+Protótipo 3D de sobrevivência feito **inteiramente em Godot 4.x / GDScript**.
+A base principal do projeto fica neste repositório. O mundo é criado em runtime, sem texturas ou modelos externos.
 
-## Como abrir
-1. Instale Godot 4.4 ou superior.
-2. Abra a pasta do repositorio no Godot (arquivo `project.godot`).
-3. Pressione **F6/F5** na cena principal para jogar.
-4. Movimento: WASD / setas ou joystick touch. E coleta, B construcao, F pesca, H consumo, P salva.
+## Jogar no editor
 
-A ilha e os modelos 3D sao gerados pelo codigo e nao exigem recursos externos.
-O repositorio e a fonte oficial do projeto; o APK ainda nao foi compilado.
+1. Abra o projeto `project.godot` com **Godot 4.4.1+**.
+2. Pressione **F5** e clique em **NOVA SOBREVIVÊNCIA**.
+3. Use **WASD/setas** ou joystick touch para explorar a ilha.
 
-## Escopo do prototipo
-- Ilha 3D de aproximadamente 400m de diametro com praias, morros, cavernas, coqueiros e pedras.
-- Exploracao, coletar recursos, sobrevivencia (fome, sede e saude), construcao e pesca.
-- Bancada, vara de pesca, fogueira, abrigo e barco para escapar.
-- Salvamento local e interface touch para Android.
+| Comando | Ação |
+| --- | --- |
+| WASD / setas / joystick | Mover o sobrevivente |
+| E / COLETAR | Coletar recurso próximo |
+| F / PESCAR | Pescar na praia (requer lança) |
+| H / COMER | Comer frutas ou peixe |
+| T / BEBER | Beber água coletada |
+| B / CRIAR | Abrir fabricação |
+| P / SALVAR | Salvar progresso local |
+| Esc / MENU | Menu principal (salva automaticamente) |
 
-**Estado:** prototipo de desenvolvimento; validacao de execucao grafica/Android ainda necessaria.
+## Loop de sobrevivência
+
+Explore uma ilha de aproximadamente 400m de diâmetro. Recolha árvores, coqueiros, rochas, madeira à deriva, frutas e água doce. Fabrique uma **lança** para pescar e construa **fogueira**, **abrigo**, **coletor de água**, **bancada** e finalmente uma **jangada**, que encerra a sessão com vitória.
+
+Fome e sede diminuem com o tempo e, se zerarem, a saúde também se perde. O coletor gera água automaticamente a cada 90 segundos. Há ciclo de luz diurno e salvamento versionado no armazenamento do dispositivo (`user://survivor_save_v1.json`).
+
+## Arquitetura
+
+- `scripts/game.gd`: coordenação de cena, input e interações.
+- `scripts/terrain.gd`: malha procedural da ilha, oceano, iluminação e horários.
+- `scripts/world.gd`: objetos coletáveis, vegetação e construções procedurais.
+- `scripts/player.gd`: personagem 3D e movimento.
+- `scripts/survival_state.gd`: vitais, inventário, receitas e persistência.
+- `scripts/hud.gd`: interface, menu, crafting e ações touch.
+- `scripts/joystick.gd`: joystick virtual multitouch.
+- `.github/workflows/godot-check.yml`: validação automatizada de import, testes de estado e boot headless.
+
+## Estado de desenvolvimento
+
+**v0.2 — vertical slice, em validação.** O código da primeira partida está integrado, porém ainda faltam testes gráficos e de toque num celular real, assets autorais polidos, animações completas e compilação de APK/AAB. Nenhuma renderização ilustrativa deve ser confundida com uma captura real do jogo.

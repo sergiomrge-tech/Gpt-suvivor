@@ -1,0 +1,24 @@
+name: Godot Syntax and Boot Check
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official Godot headless runtime
+        run: |
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.4.1-stable_linux.x86_64.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+          sudo mv Godot_v4.4.1-stable_linux.x86_64 /usr/local/bin/godot
+      - name: Parse and import project
+        run: godot --headless --path . --editor --quit
+      - name: Test survival and crafting state
+        run: godot --headless --path . --script res://tests/test_survival.gd
+      - name: Boot main scene (120 frames)
+        run: godot --headless --path . --quit-after 120
