@@ -1,5 +1,29 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v1.2.0 — Cavernas profundas, natureza sonora e fuga marítima jogável (código, SEM APK)
+
+### 5. Exploração das cavernas
+- As duas cavernas existentes conservam suas entradas e coordenadas de saves antigos e agora têm **galerias realmente conectadas** ao fundo, com chão, paredes, arcos minerais, raízes e pontos de luz próprios (renderização 3D real pelo Godot, câmera top-down).
+- **Dois esconderijos adicionais**, quatro veios cristalinos que **exigem picareta reforçada equipada** para minerar e somam recompensas raras e materiais para o acampamento. Recursos coletados uma vez só são registrados em `discoveries` no save v3.
+- Cada galeria funda adiciona dois ecos ambientais que desbloqueiam um relicário secreto, com **duas recompensas extras de cristais** em cada local. Os dois relicários antigos permanecem independentes e preservados.
+- Mineral de vapor colorido sinaliza uma zona perigosa no meio do corredor profundo; causa dano gradual somente ao permanecer sobre a zona, sendo possível contorná-la. O diário registra a progressão de ecos e câmaras.
+
+### 7. Áudio ambiental dinâmico
+- Ondas do mar, vento e fogueira existentes preservados; **novos pássaros durante o dia**, **insetos noturnos**, **chuva suave dinâmica**, **gotejamento em cavernas**.
+- Os quatro novos sons são sintetizados de forma determinística no Godot, em PCM 16-bit mono com loops compactos; nenhum áudio externo comercial ou sem licença foi incluído.
+- Através do menu, controle **três volumes independentes**: ambiente, efeitos (ferramentas/interações) e passos. Seus níveis ficam registrados em `user://visual.cfg`. Os passos seguem suaves e baixos, filtrados como na v0.9.
+
+### 8. Uma fuga de verdade, controlável
+- Ao terminar o barco de cinco etapas, prepare sua travessia com **2 cocos, 1 peixe assado, 2 cordas e 1 tábua**. São consumidos uma única vez, com marcador persistente e verificável no save v3.
+- Toque **Embarcar** novamente para iniciar a viagem. O barco avança como objeto real pelo mar 3D, com câmera que o acompanha, barra de viagem e integridade do casco.
+- Dois botões amplos no celular (**bombordo/estibordo**) ou as teclas A/D e setas no PC ajustam a rota lateral. Três recifes com modelos físicos punem colisões em 38 pontos de casco por impacto.
+- **A vitória só ocorre ao cruzar de fato o canal seguro**, não imediatamente ao clicar em Embarcar. Se o casco quebrar, o barco volta ao cais para nova tentativa; não desconta suprimentos novamente.
+- Regras antigas de coleta, fauna, pesca, inventário, construções modulares, ruínas, clima e barco por etapas são preservadas.
+
+### Validação e limites
+O projeto tem testes automatizados Godot headless para progressão, veios raros, save/load, som, tempo, embarque, perda de casco, nova tentativa e vitória real. Ainda são necessárias audição e análise visual/FPS no dispositivo Android. Esta é uma versão-fonte, não um APK nem uma versão homologada para loja. O workflow Android continua separado e não deve rodar sem pedido explícito do usuário.
+
+
 ## v1.1.0 — Ilha aprimorada + Inventário visual e funcional (código-fonte, sem APK)
 
 **Identidade do novo inventário**: interface do jogo em tons de madeira escura e bronze envelhecido, títulos em fonte serifada (Noto Serif/Georgia/serif por disponibilidade no sistema), bordas finas douradas, painéis retangulares, ícones grandes e leitura de quantidades. O mesmo tema é utilizado nas quatro seções e nos botões de abertura e fechamento do inventário.
