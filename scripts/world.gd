@@ -143,6 +143,7 @@ func _landmark(kind: String, title: String, p: Vector2) -> void:
                 var fractured := SurvivorRealWorldAssets.fracture_airplane(aircraft) if aircraft != null else 0
                 node.set_meta("aircraft_fracture_count",fractured)
                 SurvivorRealWorldAssets.add_crash_damage(node)
+                _place_crash_supplies(node)
             else:
                 SurvivorModels.wreck(node)
         "cave":
@@ -153,6 +154,30 @@ func _landmark(kind: String, title: String, p: Vector2) -> void:
             SurvivorModels.sphere(node, 2.3, Color(0.13, 0.57, 0.63), Vector3(0, 0.12, 0), Vector3(1, 0.08, 1))
     SurvivorModels.merge_static(node, "landmark_" + kind)
     landmarks.append({"kind": kind, "title": title, "node": node, "position": node.position})
+
+# Real imported salvage prop meshes are grouped visually, with independent
+# terrain heights; no loot, collider, save ID or crafting recipe is created.
+func _place_crash_supplies(crash: Node3D) -> void:
+    var cluster := Node3D.new()
+    cluster.name = "CrashSalvage"
+    crash.add_child(cluster)
+    var pieces := [
+        {"id":"wooden_military_crate","offset":Vector2(-7.6,-3.7),"height":1.12,"yaw":-0.38},
+        {"id":"wooden_crate_02","offset":Vector2(-5.2,-6.4),"height":0.86,"yaw":0.62},
+        {"id":"wooden_bucket","offset":Vector2(-8.5,2.1),"height":0.74,"yaw":1.2},
+        {"id":"camp_chair","offset":Vector2(6.9,-7.5),"height":1.08,"yaw":-0.84}
+    ]
+    for entry in pieces:
+        var offset: Vector2 = entry["offset"]
+        var x := crash.position.x + offset.x
+        var z := crash.position.z + offset.y
+        var anchor := Node3D.new()
+        anchor.name = "Salvage_" + str(entry["id"])
+        anchor.position = Vector3(offset.x,terrain.height_at(x,z)-crash.position.y,offset.y)
+        anchor.rotation.y = float(entry["yaw"])
+        cluster.add_child(anchor)
+        if not SurvivorRealWorldAssets.attach(anchor,str(entry["id"]),float(entry["height"]),65.0):
+            anchor.queue_free()
 
 func add_structure(entry: Dictionary) -> Node3D:
     var node := Node3D.new()
@@ -193,6 +218,14 @@ func add_structure(entry: Dictionary) -> Node3D:
         elif entry.kind == "workbench":
             if not SurvivorRealWorldAssets.attach(node,"workbench_carpenter",1.43,72.0):
                 SurvivorModels.building(node,entry.kind)
+            else:
+                # Separate, textured supply crate beside the working surface.
+                # Decoration has no inventory contents or gameplay collider.
+                var carpentry_supplies := Node3D.new()
+                carpentry_supplies.name = "WorkbenchSupplies"
+                carpentry_supplies.position = Vector3(1.85,0.0,0.60)
+                node.add_child(carpentry_supplies)
+                SurvivorRealWorldAssets.attach(carpentry_supplies,"wooden_crate_02",0.83,52.0)
         elif entry.kind == "house":
             # Real timber prefab is decorative. Gameplay footprint, placement,
             # doorway logic, save and progression stay owned by SurvivorWorld.

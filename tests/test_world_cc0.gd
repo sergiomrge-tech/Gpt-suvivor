@@ -26,6 +26,7 @@ func run() -> void:
     check(SurvivorRealWorldAssets.available("palm_detailed") and SurvivorRealWorldAssets.available("palm_light"),"Both imported palms available")
     check(SurvivorRealWorldAssets.available("airplane_propeller"),"Real airframe available")
     check(SurvivorRealWorldAssets.available("workbench_carpenter"),"Real carpenter workbench available")
+    check(SurvivorRealWorldAssets.available("wooden_crate_02") and SurvivorRealWorldAssets.available("wooden_military_crate"),"Both additional CC0 salvage crates load from imported Poly Haven GLTF sources")
     check(SurvivorRealWorldAssets.available("pachira") and SurvivorRealWorldAssets.available("calathea") and SurvivorRealWorldAssets.available("fern"),"B-heavy forest foliage GLTF files import")
     var wreck_found := false
     var wreck_asset := false
@@ -45,6 +46,13 @@ func run() -> void:
                     if bool(piece.get_meta("wreck_detached",false)):
                         detached += 1
             check(detached >= 1,"Actual imported mesh instance is tilted and displaced as crash wreckage")
+            var supplies := crash.node.get_node_or_null("CrashSalvage")
+            check(supplies != null and supplies.get_child_count() == 4,"Airplane site displays four original licensed salvage props")
+            if supplies != null:
+                check(supplies.find_child("CC0_wooden_military_crate",true,false) != null,"Salvaged military crate is a real imported GLTF")
+                check(supplies.find_child("CC0_wooden_crate_02",true,false) != null,"Second crate design is rendered at the crash")
+                check(supplies.find_child("CC0_camp_chair",true,false) != null,"Real camp chair appears among the crash debris")
+                check(supplies.find_child("CC0_wooden_bucket",true,false) != null,"Real bucket appears among the crash debris")
             break
     var real_palm_count := 0
     for resource in world.resources:
@@ -65,6 +73,7 @@ func run() -> void:
     var bench := world.add_structure({"kind":"workbench","x":1.0,"z":147.0,"rotation":0.0})
     var bench_model: Node = bench.get_node_or_null("CC0_workbench_carpenter")
     check(bench_model != null,"Craftable workbench uses imported carpenter workbench GLB")
+    check(bench.find_child("CC0_wooden_crate_02",true,false) != null,"Carpentry workbench adds real modeled supply crate, without separate save/crafting item")
     var house := world.add_structure({"kind":"house","x":37.0,"z":147.0,"rotation":0.0})
     check(house.get_node_or_null("CC0_garden_shed") != null,"Constructed shelter uses real CC0 GLB instead of box primitive")
     var chest := world.add_structure({"kind":"chest","x":-17.0,"z":145.0,"rotation":0.0})

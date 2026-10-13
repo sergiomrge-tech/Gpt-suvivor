@@ -1,3 +1,11 @@
+## Atualização de integração CC0 v2.1 — destroços e bancada
+
+- O local do acidente agora inclui quatro modelos PBR/GLTF já licenciados CC0: caixa militar de madeira, caixa alternativa, balde e cadeira de acampamento. Cada objeto é ancorado à altura real do terreno e limitado a uma área curta ao redor da fuselagem importada.
+- A bancada de carpintaria recebe uma segunda variante real de caixa como acessório visual. **Não são recursos gratuitos, loot, receitas ou construções adicionais**: custo, interação, posição do avião, progresso e save permanecem iguais.
+- Os arquivos originais estão em `assets/survival_props/models/`. A atribuição e os endereços de origem permanecem em `assets/survival_props/CATALOG.json`; no projeto Godot estão referenciados em `SurvivorRealWorldAssets`.
+- A suíte nativa `tests/test_world_cc0.gd` verifica as quatro peças e a bancada. As capturas da execução incluem `15_crash_original_supplies_CC0.png` e `16_cc0_shelter_and_camp.png` (produzidas apenas pela execução real do Godot).
+- Continuação experimental em branch; não gerar APK nesta revisão nem declarar FPS Android sem medição no aparelho.
+
 # GPT Survivor — Ilha: Último Voo
 
 ## v1.8.0 — Silhueta orgânica e materiais separados do herói (fonte Godot; SEM APK)
