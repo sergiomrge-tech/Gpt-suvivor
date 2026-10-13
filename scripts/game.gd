@@ -427,6 +427,9 @@ func relocate_structure(kind: String) -> void:
 func _transfer_storage(kind: String, to_chest: bool) -> void:
     if not state.has_structure("chest") or not playing:
         return
+    if world.near_structure(player.position,"chest",5).is_empty():
+        hud.toast("Aproxime-se do baú para guardar ou retirar itens.")
+        return
     if state.transfer_storage(kind,to_chest):
         hud.show_storage()
         save_game(false)
