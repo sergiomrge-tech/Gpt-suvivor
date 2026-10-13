@@ -165,7 +165,34 @@ func run() -> void:
             resource_meshes += 1
     check(resource_meshes == 1, "Static palm merged to one mesh for mobile rendering")
     check(game.world.scenery.cover_count > 1000, "Decorative groundcover generated without replacing harvestable resources")
+    var decor: SurvivorScenery = game.world.scenery
+    check(decor.coastal_detail_count > 80 and decor.forest_detail_count > 200, "Deterministic real 3D shells, smooth shore pebbles and forest leaf litter populate both biomes")
+    check(decor.detail_batches.size() > 8 and decor.detail_batches.size() < 240, "Coastal and forest visual props are batched in bounded mobile-friendly MultiMeshes")
+    var shore_mesh: Mesh
+    var leaf_mesh: Mesh
+    var visual_near_resource := false
+    for batch in decor.detail_batches:
+        var multi: MultiMesh = batch.node.multimesh
+        check(multi.instance_count == batch.entries.size() and multi.use_custom_data, "Instanced props carry deterministic color and transform data")
+        if int(batch.family) == 0 and shore_mesh == null:
+            shore_mesh = multi.mesh
+        if int(batch.family) == 1 and leaf_mesh == null:
+            leaf_mesh = multi.mesh
+        for entry in batch.entries.slice(0,mini(batch.entries.size(),2)):
+            var p: Vector3 = entry.position
+            if decor._protected(Vector2(p.x,p.z)):
+                visual_near_resource = true
+    check(shore_mesh != null and leaf_mesh != null and shore_mesh != leaf_mesh, "Distinct purpose-built meshes are used for coast and forest floor detailing")
+    check(not visual_near_resource, "Instanced pebbles and leaf litter avoid resource colliders, landmarks and build sites")
+    decor.set_weather(0.7,0.45)
+    check(is_equal_approx(float(decor.details_material.get_shader_parameter("rain_amount")),0.45),"Scattered ground details darken with local rain instead of ignoring weather")
+    decor.set_weather(0.2,0.0)
+
     check(not game.terrain.is_shore(0,170), "Beach plateau inland is not mistaken for actual shoreline")
+    var initial_detail_count := 0
+    for batch in decor.detail_batches:
+        initial_detail_count += batch.node.multimesh.instance_count
+    check(initial_detail_count == decor.coastal_detail_count+decor.forest_detail_count,"Decorative scenery counts match actual live MultiMesh instances")
     game.light_visuals = true
     game.apply_quality()
     var limited := true
