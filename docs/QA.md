@@ -1,3 +1,10 @@
+# QA — GPT Survivor v1.5.0 — 13/10/2026
+
+- **Escopo:** melhorias geométricas e shader, sem mudanças nas posições salvas, estrutura da mochila, ferramentas, combate, cavernas ou fuga marítima.
+- **Controles automatizados:** cobertura de juncos/samambaias/rochas com lotes multi-instanciados, terreno e saves v3 preservados, exclusão visual de trilhas/marcos/recursos, clima atingindo o shader, modo Leve reduzindo a densidade e árvore de madeira apresentando geometria foliar real.
+- **CI:** `.github/workflows/validate.yml` é a barreira de parser Godot 4.6.1, gameplay, referências, áudio e ZIP de fonte. `.github/workflows/visual_biomes_v15.yml` produz 6 PNGs do framebuffer real em Linux/Xvfb sem imagens geradas artificialmente. Conferir resultado no GitHub Actions para o último commit.
+- **Limitações conhecidas:** qualidade realista é incremental, não fotorrealismo; sem hardware Android, sem medição de FPS/memória/energia, e sem atestado auditivo. Estruturas decorativas não bloqueiam a circulação. Exportação Android só sob solicitação manual explícita.
+
 # QA — GPT Survivor v1.4.0 — 13/10/2026
 
 - Branch `feat/hero-anatomy-materials-v14` derivada da v1.3; fonte Godot 4.6.1, GL Compatibility e pipeline mobile existentes preservados.
