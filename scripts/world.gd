@@ -140,6 +140,8 @@ func _landmark(kind: String, title: String, p: Vector2) -> void:
                 if aircraft != null:
                     aircraft.rotation_degrees = Vector3(-10.0,23.0,11.5)
                     aircraft.position.y -= 0.55
+                var fractured := SurvivorRealWorldAssets.fracture_airplane(aircraft) if aircraft != null else 0
+                node.set_meta("aircraft_fracture_count",fractured)
                 SurvivorRealWorldAssets.add_crash_damage(node)
             else:
                 SurvivorModels.wreck(node)
