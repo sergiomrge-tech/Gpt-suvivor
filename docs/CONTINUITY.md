@@ -1,3 +1,9 @@
+# Checkpoint — 13/10/2026 — v0.8.0 completa no código
+
+Branch `feat/cave-relics-v081`, derivada de `feat/explorable-caves-v08` aprovada no CI. Cenários das duas cavernas mantidos e expandidos com `SurvivorCavePuzzles`: quatro selos e dois relicários modelados diretamente no Godot, interação com botão Explorar após aproximação, ativação por contato, recompensa única com 1 cristal por caverna, minimapa e Diário com progresso. A descoberta `east_vault` desbloqueia estação de aprimoramento nível 2, modelada em 3D, fabricada próxima da bancada com recursos reais. Machado e picareta reforçados têm novos modelos 3D nas mãos do jogador, receitas e equipamentos persistidos, custo efetivo apenas ao contato e rendimento 12 madeiras / 9 pedras. `SAVE_VERSION=3` mantida sem quebrar outros conteúdos.
+
+A validação native Godot 4.6.1 deve manter import/parser, teste completo, auditoria de referências e áudio; compilação e FPS em aparelho real não foram realizados. **Proibido gerar APK sem pedido do usuário.** O workflow Android continua em `workflow_dispatch`, sem disparos pela branch. Próximo marco: v0.9 barco progressivo, madeira reforçada, cenas de embarque e QA visual.
+
 # Checkpoint — 13/10/2026 — v0.8 cavernas exploráveis
 
 Branch `feat/explorable-caves-v08`, derivada de `feat/wildlife-food-v072`. Adicionados interiores 3D originais para Caverna do Leste e Gruta das Raízes, portais de entrada e saída, colisão das salas, 4 caches únicos com materiais, planta contextual no minimapa e persistência da posição no interior usando save v3. Preservadas caça, construção modular, pesca, ferramentas, clima, fauna e barco de fuga legado. Próximos passos: QA Godot remoto/Android, visual das salas, enigmas e barco por etapas.
