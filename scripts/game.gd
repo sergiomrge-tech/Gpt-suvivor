@@ -178,7 +178,7 @@ func _process(delta: float) -> void:
     SurvivorModels.merged_material.set_shader_parameter("survivor_position",player.position)
     hud.can_fish = terrain.is_shore(player.position.x,player.position.z) or not world.near_structure(player.position,"dock",8).is_empty()
     if player.is_busy():
-        hud.activity_name = {"chop":"Cortando madeira","mine":"Extraindo pedra","gather":"Coletando","search":"Investigando","fish":"Pescando","build":"Construindo","craft":"Fabricando","handcraft":"Fabricando ferramenta","cut":"Cortando fibras","cook":"Preparando alimento","eat":"Comendo","rest":"Descansando","drink":"Bebendo água"}.get(player.action_kind,"")
+        hud.activity_name = {"spear":"Caçando","chop":"Cortando madeira","mine":"Extraindo pedra","gather":"Coletando","search":"Investigando","fish":"Pescando","build":"Construindo","craft":"Fabricando","handcraft":"Fabricando ferramenta","cut":"Cortando fibras","cook":"Preparando alimento","eat":"Comendo","rest":"Descansando","drink":"Bebendo água"}.get(player.action_kind,"")
         hud.activity_fraction = 1-player.action_remaining/player.action_duration
     elif not pending_work.is_empty():
         hud.activity_name = "Aproximando-se"
@@ -312,16 +312,16 @@ func interact() -> void:
         return
     target = world.nearest_target(player.position)
     if target.is_empty():
-        hud.toast("Aproxime-se de coqueiros, pedras, fibras, metal ou da nascente.")
+        hud.toast("Explore recursos, caranguejos da praia e javalis da mata.")
         return
     action_cooldown = 0.65
     match str(target.kind):
-        "palm", "tree", "rock", "fiber", "metal", "discovery", "loose_log", "loose_stone":
+        "palm", "tree", "rock", "fiber", "metal", "discovery", "loose_log", "loose_stone", "crab", "boar":
             var error := state.harvest_error(str(target.kind))
             if error != "":
                 hud.toast(error,5)
                 return
-            var animation: String = {"palm":"chop","tree":"chop","rock":"mine","metal":"search","fiber":"cut" if state.owns("stone_knife") else "gather","discovery":"search","loose_log":"gather","loose_stone":"gather"}[target.kind]
+            var animation: String = {"palm":"chop","tree":"chop","rock":"mine","metal":"search","fiber":"cut" if state.owns("stone_knife") else "gather","discovery":"search","loose_log":"gather","loose_stone":"gather","crab":"gather","boar":"spear"}[target.kind]
             queue_work(target,animation,1.05,"harvest",float(target.radius)+0.85)
         "spring":
             player.perform_action("drink",0.95,target.position)
@@ -356,9 +356,9 @@ func interact() -> void:
 
 func consume() -> void:
     if not paused() and selected_recipe == "" and fishing_remaining <= 0:
-        var before: int = state.inventory.coconut+state.inventory.meal
+        var before: int = state.ready_food_count()
         var message := state.consume()
-        if state.inventory.coconut+state.inventory.meal < before:
+        if state.ready_food_count() < before:
             cancel_work()
             player.perform_action("eat",0.9,player.position)
         hud.toast(message)
@@ -372,8 +372,8 @@ func select_recipe(kind: String) -> void:
     if error != "":
         hud.toast(error)
         return
-    if kind == "meal":
-        craft_meal()
+    if kind in ["meal", "grilled_crab", "cooked_meat"]:
+        craft_food(kind)
         return
     if kind in SurvivalState.MATERIAL_RECIPES:
         if kind == "plank" and world.near_structure(player.position,"workbench",8).is_empty():
@@ -384,7 +384,7 @@ func select_recipe(kind: String) -> void:
             hud.toast("+1 %s fabricada." % SurvivalState.RECIPES[kind].title)
             save_game(false)
         return
-    if kind in ["stone_knife", "stone_axe", "stone_pickaxe"]:
+    if kind in ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear"]:
         # Charge and grant together at contact; cancelling before contact costs nothing.
         pending_work = {"mode":"tool", "recipe":kind}
         player.perform_action("handcraft",1.4,player.position)
@@ -529,15 +529,25 @@ func cancel_placement() -> void:
         hud.update_placement("", "")
 
 func craft_meal() -> void:
+    var kind := "meal"
+    if int(state.inventory.raw_fish) == 0:
+        if int(state.inventory.raw_crab) > 0:
+            kind = "grilled_crab"
+        elif int(state.inventory.raw_meat) > 0:
+            kind = "cooked_meat"
+    craft_food(kind)
+
+func craft_food(kind: String) -> void:
     if world.near_structure(player.position, "campfire", 6).is_empty():
-        hud.toast("Aproxime-se da fogueira para assar o peixe.")
+        hud.toast("Aproxime-se da fogueira para preparar o alimento.")
         return
-    if state.pay_recipe("meal"):
-        state.add_item("meal", 1)
+    if state.pay_recipe(kind):
+        state.add_item(kind, 1)
         queue_work(world.near_structure(player.position,"campfire",6),"cook",1.4,"station",2.05)
-        hud.toast("Peixe assado pronto. Toque em Comer / beber.")
+        hud.toast("%s pronto! Toque em Comer / beber." % SurvivalState.RECIPES[kind].title)
+        save_game(false)
     else:
-        hud.toast(state.recipe_error("meal"))
+        hud.toast(state.recipe_error(kind))
 
 func _equip_item(kind: String) -> void:
     if not playing: return
@@ -643,7 +653,7 @@ func cancel_work() -> void:
     if is_instance_valid(player): player.cancel_action()
 
 func _on_action_contact(kind: String,point: Vector3) -> void:
-    var effect: String = {"chop":"chop","mine":"mine","cut":"rustle","handcraft":"rustle","gather":"rustle","search":"rustle","fish":"splash","build":"hammer","craft":"hammer","cook":"rustle","eat":"consume","drink":"splash","rest":"rustle"}.get(kind,"rustle")
+    var effect: String = {"spear":"chop","chop":"chop","mine":"mine","cut":"rustle","handcraft":"rustle","gather":"rustle","search":"rustle","fish":"splash","build":"hammer","craft":"hammer","cook":"rustle","eat":"consume","drink":"splash","rest":"rustle"}.get(kind,"rustle")
     soundscape.play_effect(effect,point)
     if not pending_work.is_empty() and pending_work.mode == "tool":
         var recipe: String = pending_work.recipe
