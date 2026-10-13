@@ -1,23 +1,31 @@
 # GPT Survivor — Ilha: Último Voo
 
-**Protótipo jogável v0.4.2 (código-fonte) • Godot 4.x • 3D top-down • Android e PC**
+**Protótipo de desenvolvimento v0.5.0 (código-fonte) • Godot 4.x • 3D top-down • Android e PC**
 
 Um sobrevivente de um acidente aéreo precisa explorar uma ilha tropical de aproximadamente 400 metros de diâmetro, montar seu acampamento e construir um barco para voltar para casa.
 
+## Atualização v0.5.0 — Acampamento e fuga por etapas
+
+- **Fabricação por etapas:** corda = 1 fibra, produzida à mão; tábua = 2 madeiras, produzida próxima à bancada. A embarcação exige ambos e a pista `sail_diagram` encontrada na Caverna do Leste.
+- **Construção:** botão **Girar 90°** durante a prévia e área de ocupação sinalizada no terreno. Em Mochila → Acampamento, **Mover** reposiciona construções sem cobrança adicional. Cais e barco permanecem fixos.
+- **Acampamento:** baú de 100 itens com transferência de 1 unidade por toque (é necessário estar perto); cama com descanso; coletor com reservatório de até 12 unidades, enchendo durante chuvas periódicas. O jogador bebe água ao interagir.
+- **Exploração:** registros adicionais nos destroços e na Caverna do Leste; esquema da vela obrigatório para concluir o barco; o diário registra essas descobertas.
+- **Save:** versão 3 com migração de v1/v2, armazenamento, água armazenada e rotação. Modificações verificadas pelo workflow Godot 4.6.1 Linux. Sem APK v0.5 assinado nem teste físico de instalação/performance no Samsung Galaxy A35.
+
 ## Abrir no celular com Godot Android
 
-1. Baixe e extraia `GPT_Survivor_Godot_v0_4_2.zip` em uma pasta acessível, por exemplo `Downloads/GPT_Survivor`.
+1. Baixe e extraia `GPT_Survivor_Godot_v0_5_0.zip` em uma pasta acessível, por exemplo `Downloads/GPT_Survivor`.
 2. Abra o Godot Android e escolha **Importar**. Selecione o arquivo `project.godot` da pasta extraída. Se a versão do editor permitir importar ZIP, também é possível selecionar o ZIP diretamente.
 3. Abra o projeto. Use o celular na horizontal e toque em **▶ Executar projeto**.
 4. No jogo, toque em **Nova sobrevivência** e depois **Acordar na praia**.
 
-A primeira importação pode levar alguns segundos. O projeto gera as malhas localmente e não depende de downloads, APIs ou plugins. Recomenda-se Godot 4.4 ou superior; a validação desta entrega foi feita no Godot 4.6.1 Linux. O APK existente é da v0.4.1; a v0.4.2 requer nova exportação e assinatura com a mesma chave privada da versão anterior para atualizar sem desinstalar. O projeto pode ser aberto no editor Godot para desenvolvimento.
+A primeira importação pode levar alguns segundos. O projeto gera as malhas localmente e não depende de downloads, APIs ou plugins. Recomenda-se Godot 4.4 ou superior; a validação desta entrega foi feita no Godot 4.6.1 Linux. O APK assinado desta branch ainda não foi gerado. Para atualizar sem desinstalar, a exportação Android precisa usar a mesma chave privada de assinatura da instalação anterior. O projeto pode ser aberto no editor Godot para desenvolvimento.
 
 ## Controles
 
 - **Celular:** Mochila abre a grade de itens, o personagem, o diário, a nova aba **Equipar** e Construções; joystick maior à esquerda, afastado da borda; +/− abaixo do minimapa ajusta o zoom; ação, pesca, construção e alimentação à direita. Use dois dedos para mover e interagir ao mesmo tempo. Arraste a lista de receitas para ver todos os itens; × fecha o painel.
 - **PC:** WASD/setas para andar; E ação; B construção; F pesca/cancelar construção; H comer/beber; P salvar; Esc pausa/fechar; +/− aproximação da câmera.
-- **Construções:** selecione uma receita, mova o personagem para posicionar a prévia verde, toque em Confirmar. A prévia vermelha informa o impedimento. Nenhum recurso é gasto até confirmar um local válido.
+- **Construções:** selecione uma receita, mova o personagem para posicionar a prévia verde, use Girar 90° quando disponível e toque em Confirmar. A prévia vermelha informa o impedimento. Nenhum recurso é gasto até confirmar um local válido.
 
 ## Partida completa
 
@@ -26,9 +34,9 @@ A primeira importação pode levar alguns segundos. O projeto gera as malhas loc
 3. Fabricar vara perto da bancada (6 madeiras, 8 fibras). Ela é equipada automaticamente na mão principal ao fabricar; se desequipar, abra **Mochila → Equipar** antes de pescar. Pesque na costa ou no cais, depois asse o peixe na fogueira.
 4. Construir casa (30 madeiras, 10 pedras, 10 fibras); descansar junto dela recupera saúde e gasta fome/água.
 5. Construir cais na faixa costeira (20 madeiras, 10 fibras).
-6. Construir barco junto ao cais (60 madeiras, 20 fibras, 8 metais), depois aproximar-se e escolher **Embarcar**.
+6. Explore a Caverna do Leste e recupere o esquema da vela. Na bancada fabrique 10 tábuas (2 madeiras cada) e trance 10 cordas (1 fibra cada). Construa o barco com 40 madeiras, 10 fibras, 10 tábuas, 10 cordas e 8 metais, depois aproxime-se e escolha **Embarcar**.
 
-Cocos recuperam água e fome; a nascente, marcada em azul no minimapa, recupera água. Após três minutos de adaptação, fome e sede começam a diminuir. Recursos naturais reaparecem após dez minutos de jogo; metal é finito. A ilha contém material suficiente para completar o barco. O save local conserva inventário, ferramentas, construções, posição e recursos coletados, com cópia de recuperação. A pausa e os painéis de inventário/construções suspendem sobrevivência e pesca. Saves v1 da v0.4 são lidos automaticamente pelo formato v2.
+Cocos recuperam água e fome; a nascente, marcada em azul no minimapa, recupera água. Após três minutos de adaptação, fome e sede começam a diminuir. Recursos naturais reaparecem após dez minutos de jogo; metal é finito. A ilha contém material suficiente para completar o barco. O save local conserva inventário, ferramentas, construções, posição e recursos coletados, com cópia de recuperação. A pausa e os painéis de inventário/construções suspendem sobrevivência e pesca. Saves v1/v2 são migrados automaticamente para o formato v3 (incluindo inventário e equipamentos).
 
 ## Validação
 
