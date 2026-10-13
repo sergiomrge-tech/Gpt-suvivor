@@ -266,6 +266,8 @@ func walkable(pos: Vector3, previous: Vector3) -> bool:
             return false
         if entry.kind == "workbench" and absf(local.x) < 1.9 and absf(local.z) < 1.1:
             return false
+        if entry.kind == "wall_panel" and absf(local.x) < 1.75 and absf(local.z) < 0.33:
+            return false
         if entry.kind == "house":
             if absf(local.x) < 3.2 and absf(local.z) < 3.2:
                 if absf(local.x) > 2.15 or local.z < -2.15 or local.z > 2.15 and absf(local.x) > 0.65:
@@ -285,14 +287,43 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
         return "Escolha um ponto em terra firme."
     if kind == "dock" and not terrain.is_shore(pos.x, pos.z):
         return "O cais precisa ficar na faixa de areia junto ao mar."
-    var radius := 4.5 if kind == "house" else 2.4
+    var modular := kind in SurvivalState.MODULES
+    var radius := 1.4 if modular else (4.5 if kind == "house" else 2.4)
+    if kind == "wall_panel":
+        var supported := false
+        for entry in structures:
+            if entry.kind == "floor_panel" and Vector2(pos.x-entry.position.x,pos.z-entry.position.z).length() < 1.85:
+                supported = true
+        if not supported:
+            return "Encaixe a parede na borda de um piso modular."
+    if kind == "roof_panel":
+        var supported_floor := false
+        var supported_wall := false
+        for entry in structures:
+            var d := Vector2(pos.x-entry.position.x,pos.z-entry.position.z).length()
+            if entry.kind == "floor_panel" and d < 0.25:
+                supported_floor = true
+            if entry.kind == "wall_panel" and d < 2.0:
+                supported_wall = true
+        if not supported_floor or not supported_wall:
+            return "O telhado precisa de um piso e uma parede modular."
     for entry in resources:
         if entry.node.visible and entry.radius > 0 and Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length() < radius + float(entry.radius):
             return "Limpe os recursos desse local antes de construir."
     for entry in structures:
         if ignore_kind != "" and entry.kind == ignore_kind:
             continue
-        if Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length() < radius + (4.5 if entry.kind == "house" else 2.4):
+        var distance := Vector2(pos.x-entry.position.x,pos.z-entry.position.z).length()
+        if modular and entry.kind in SurvivalState.MODULES:
+            # Floor + roof at the same grid center and walls at the tile edges are valid.
+            if kind == entry.kind and distance < (2.8 if kind == "floor_panel" else 0.45):
+                return "Esse encaixe já está ocupado."
+            if kind != entry.kind:
+                continue
+            if kind == "wall_panel" and distance < 2.75:
+                return "Deixe um canto livre entre as paredes."
+            continue
+        if distance < radius + (1.4 if entry.kind in SurvivalState.MODULES else (4.5 if entry.kind == "house" else 2.4)):
             return "Deixe espaço entre as construções."
     for entry in landmarks:
         if Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length() < radius + 7.0:
