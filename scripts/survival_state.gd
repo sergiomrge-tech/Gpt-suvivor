@@ -4,6 +4,7 @@ class_name SurvivalState
 const SAVE_VERSION := 3
 const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear", "fishing_rod"]
 const MATERIAL_RECIPES := ["rope", "plank"]
+const FOOD_RECIPES := ["meal", "grilled_crab", "cooked_meat"]
 const MODULES := ["floor_panel", "wall_panel", "door_panel", "window_panel", "roof_panel"]
 const WALL_MODULES := ["wall_panel", "door_panel", "window_panel"]
 const STORABLE := ["wood", "stone", "fiber", "metal", "rope", "plank", "coconut", "raw_fish", "meal", "raw_crab", "raw_meat", "grilled_crab", "cooked_meat"]
@@ -97,7 +98,7 @@ func craft_tool(kind: String) -> bool:
 func recipe_error(kind: String) -> String:
     if not RECIPES.has(kind):
         return "Receita desconhecida."
-    if kind not in ["meal", "grilled_crab", "cooked_meat", "rope", "plank"] and kind not in MODULES and owns(kind):
+    if kind not in FOOD_RECIPES and kind not in MATERIAL_RECIPES and kind not in MODULES and owns(kind):
         return "Você já possui esse item."
     if kind == "boat" and not bool(discoveries.get("sail_diagram", false)):
         return "Encontre o esquema de vela na Caverna do Leste antes de construir o barco."
