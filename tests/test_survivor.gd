@@ -204,7 +204,7 @@ func run() -> void:
     await process_frame
     check(game.playing and game.player.enabled, "New survival starts")
     var original_cave_player: Vector3 = game.player.position
-    game.player.position = Vector3(80,game.terrain.height_at(80,23.5),23.5)
+    game.player.position = Vector3(80,game.terrain.height_at(80,20),20)
     game.action_cooldown = 0
     game.interact()
     check(SurvivorCaves.cave_at(game.player.position) == "east", "Explorar enters eastern cave through the live portal")
