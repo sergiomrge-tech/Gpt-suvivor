@@ -15,6 +15,7 @@ var marker: MeshInstance3D
 var target: Dictionary = {}
 var action_cooldown := 0.0
 var fishing_remaining := 0.0
+var cave_hazard_warning := 0.0
 var autosave_clock := 0.0
 var camera_distance := 29.0
 const MIN_ZOOM_DISTANCE := 12.0
@@ -210,6 +211,13 @@ func _process(delta: float) -> void:
     else:
         hud.activity_name = ""
     state.advance(delta)
+    cave_hazard_warning = maxf(0.0,cave_hazard_warning-delta)
+    var gas_damage := world.caves.hazard_rate_at(player.position)
+    if gas_damage > 0.0:
+        state.health = maxf(0.0,state.health-gas_damage*delta)
+        if cave_hazard_warning <= 0.0:
+            hud.toast("Perigo: vapores minerais! Afaste-se dos cristais coloridos.",4)
+            cave_hazard_warning = 7.0
     terrain.set_time_of_day(fmod(8.0 / 24.0 + state.elapsed / SurvivalState.DAY_SECONDS, 1.0))
     climate.update_weather(state.elapsed,player.position,terrain,world.scenery)
     climate.visible = not world.caves.is_inside(player.position)
