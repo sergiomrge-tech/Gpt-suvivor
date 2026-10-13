@@ -12,10 +12,17 @@ const SOURCES := {
     "garden_shed":ROOT+"garden_shed.glb",
     "fern":ROOT+"polyhaven/fern_02/fern_02.gltf",
     "calathea":ROOT+"polyhaven/calathea_orbifolia_01/calathea_orbifolia_01.gltf",
-    "pachira":ROOT+"polyhaven/pachira_aquatica_01/pachira_aquatica_01.gltf"
+    "pachira":ROOT+"polyhaven/pachira_aquatica_01/pachira_aquatica_01.gltf",
+    "camp_fire_grill":"res://assets/survival_props/models/camp_fire_grill.glb",
+    "storage_chest":"res://assets/survival_props/models/storage_chest.glb",
+    "camp_kitchen":"res://assets/survival_props/models/camp_kitchen.glb",
+    "camp_chair":"res://assets/survival_props/models/camp_chair.glb",
+    "canoe":"res://assets/survival_props/models/canoe.glb",
+    "wooden_bucket":"res://assets/survival_props/models/polyhaven/wooden_bucket_01/wooden_bucket_01.gltf",
+    "wooden_crate":"res://assets/survival_props/models/polyhaven/wooden_crate_01/wooden_crate_01.gltf"
 }
 static var cache: Dictionary = {}
-static var instances := {"palm_detailed":0,"palm_light":0,"airplane_propeller":0,"workbench_carpenter":0,"garden_shed":0,"fern":0,"calathea":0,"pachira":0}
+static var instances := {"palm_detailed":0,"palm_light":0,"airplane_propeller":0,"workbench_carpenter":0,"garden_shed":0,"fern":0,"calathea":0,"pachira":0,"camp_fire_grill":0,"storage_chest":0,"camp_kitchen":0,"camp_chair":0,"canoe":0,"wooden_bucket":0,"wooden_crate":0}
 
 static func available(asset_id: String) -> bool:
     return SOURCES.has(asset_id) and ResourceLoader.exists(SOURCES[asset_id])
