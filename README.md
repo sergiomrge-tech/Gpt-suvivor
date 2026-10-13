@@ -1,5 +1,16 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v0.7.2 — fauna com caça, alimentação e saves (código-fonte; sem APK)
+
+Esta versão acrescenta **caranguejos coletáveis** na costa e **javalis caçáveis com lança de pedra equipada**. Os demais animais (tartarugas, aves e peixes 3D) permanecem sem captura; a pesca existente com vara não foi alterada. A lança é fabricada à mão com 4 madeiras, 2 pedras e 3 fibras e utiliza o espaço **Ferramenta** da aba Equipar. A coleta usa o mesmo fluxo de aproximação/animação/contato do sobrevivente e pode ser cancelada antes da recompensa.
+
+Os caranguejos geram **caranguejo cru** e os javalis, **carne crua**. Na fogueira, a nova seção **Cozinha** permite assar os dois alimentos, além do peixe. Caranguejo assado recupera 26 de fome; carne assada recupera 48 de fome e 8 de saúde. Todos aparecem com ícones próprios na mochila e podem ser guardados no baú. A ação na fogueira escolhe peixe, caranguejo ou carne conforme ingredientes disponíveis, ou o jogador pode escolher diretamente na aba Construções.
+
+Cada animal capturado reaparece após 900 segundos de tempo de jogo, e seu identificador/cooldown fica salvo no campo `harvested` do save v3. Saves anteriores carregam com zero unidades dos novos itens sem perda dos recursos antigos. Foram adicionados testes de receitas, ferramentas, respawn, duplicidade de loot, HUD, armazenamento e compatibilidade.
+
+**Regra do projeto:** o workflow de exportação Android desta branch está em `workflow_dispatch` somente. Não compilar, assinar, exportar ou entregar APK até solicitação explícita. A importação Godot/testes nativos e a auditoria de fontes continuam no CI; não houve teste de APK nem medição real de FPS no celular. A v0.7.2 é uma branch experimental, não um release estável.
+
+
 ## Atualização v0.7.1 — portas e janelas funcionais (beta)
 
 - **Abrigo modular expandido:** duas novas receitas repetíveis, **Porta de madeira** (3 tábuas, 2 madeiras e 1 corda) e **Parede com janela** (3 tábuas, 2 madeiras e 1 corda), após construir bancada e ao menos um piso.
