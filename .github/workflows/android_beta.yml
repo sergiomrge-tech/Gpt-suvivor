@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feat/survival-camp-exploration-v05
+      - feat/visual-world-weather-v06
     paths:
       - .github/workflows/android_beta.yml
       - export_presets.cfg
@@ -57,8 +58,8 @@ jobs:
           p=Path('export_presets.cfg')
           s=p.read_text()
           assert 'com.sergiomrge.gptsurvivor' in s
-          s=s.replace('package/unique_name="com.sergiomrge.gptsurvivor"', 'package/unique_name="com.sergiomrge.gptsurvivor.beta"')
-          s=s.replace('version/name="0.5.0"', 'version/name="0.5.0-beta"')
+          s=s.replace('package/unique_name="com.sergiomrge.gptsurvivor"', 'package/unique_name="com.sergiomrge.gptsurvivor.beta.v06"')
+          s=s.replace('version/name="0.6.0"', 'version/name="0.6.0-beta"')
           p.write_text(s)
           PY
       - name: Import and build Android ARM64 beta
@@ -72,19 +73,19 @@ jobs:
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --export-debug Android /tmp/survivor-beta.apk
           python3 tools/android/fix_android_manifest.py /tmp/survivor-beta.apk /tmp/survivor-beta-fixed.apk
           "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -f -P 16 4 /tmp/survivor-beta-fixed.apk /tmp/survivor-beta-aligned.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out out/GPT_Survivor_v0_5_0_Beta.apk /tmp/survivor-beta-aligned.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" verify --verbose out/GPT_Survivor_v0_5_0_Beta.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -c -P 16 4 out/GPT_Survivor_v0_5_0_Beta.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/aapt" dump badging out/GPT_Survivor_v0_5_0_Beta.apk | head -4
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out out/GPT_Survivor_v0_6_0_Beta.apk /tmp/survivor-beta-aligned.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" verify --verbose out/GPT_Survivor_v0_6_0_Beta.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -c -P 16 4 out/GPT_Survivor_v0_6_0_Beta.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/aapt" dump badging out/GPT_Survivor_v0_6_0_Beta.apk | head -4
           python3 - <<'PY'
           import zipfile
-          with zipfile.ZipFile('out/GPT_Survivor_v0_5_0_Beta.apk') as z:
+          with zipfile.ZipFile('out/GPT_Survivor_v0_6_0_Beta.apk') as z:
               assert z.testzip() is None
           print('APK ZIP CRC: OK')
           PY
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: GPT-Survivor-v0.5-Android-Beta-APK
-          path: out/GPT_Survivor_v0_5_0_Beta.apk
+          name: GPT-Survivor-v0.6-Android-Beta-APK
+          path: out/GPT_Survivor_v0_6_0_Beta.apk
           retention-days: 14
