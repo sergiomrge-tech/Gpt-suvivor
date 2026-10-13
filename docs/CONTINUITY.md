@@ -1,3 +1,9 @@
+# Checkpoint — 13/10/2026 — v0.6.0
+
+Branch `feat/visual-world-weather-v06` iniciada do commit `f047a2b2` da v0.5, preservando save, equipamentos e gameplay. Implementados: clima determinístico `SurvivorClimate`, partículas de chuva com modo leve, atmosfera noite/amanhecer/tempestade, solo molhado/ondas/vento nos shaders, coleta real de água sincronizada com chuva, botão correr e nova cinemática de caminhada/corrida, três estruturas modulares repetíveis (piso/parede/telhado) com modelo 3D, snap 3,2m, suporte, colisão e save. Testes de regressão ampliados a 182 e aprovados. Chaves privadas permanecem fora do repo. Android físico ainda pendente.
+
+Autorização de publicar branches/commits já concedida, sem necessidade de novas perguntas. **Próximos marcos:** fauna e IA; cavernas e exploração com objetivos; construção modular avançada (portas/janelas/encaixes múltiplos); barco por etapas e sequência final. Sem prometer 60 FPS sem medição real. Ver `docs/ROADMAP_v06.md`.
+
 # Checkpoint — 13/10/2026 — v0.5.0
 
 Branch `feat/survival-camp-exploration-v05`, originada de `prototype-v0.4.2-equipment`. Requisitos escolhidos: (3) cordas/tábuas e manufatura por etapas; (4) rotação, indicador de área, mover acampamento sem custo; (5) baú, cama e coletor com chuva periódica; (6) pistas nos destroços/caverna e esquema de vela necessário ao barco. A lista recuperada terminava em 6: o item 7 não foi definido e não deve ser inventado.
