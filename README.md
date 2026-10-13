@@ -1,5 +1,21 @@
 # GPT Survivor — Ilha: Último Voo
 
+## v0.8.0 — cavernas, enigmas e oficina nível 2 (código-fonte, sem APK)
+
+**Progressão survival craft original**, combinando boas práticas de evolução de bancadas, ferramentas por categorias, recursos raros e exploração de jogos de sobrevivência, sem utilizar assets ou receitas de terceiros:
+
+- **Caverna do Leste e Gruta das raízes**: interiores realmente navegáveis, rochas, raízes e cristais modelados no projeto, iluminação e minimapa próprios, portais de entrada/saída, quatro caixas exclusivas com suprimentos, save dentro das cavernas preservado.
+- **Enigmas ambientais**: cada caverna tem dois selos de pedra. Ative ambos pelo botão Explorar, então alcance o relicário. Recompensas únicas salvas em `discoveries`; coletar duas vezes não gera novos recursos. O minimapa diferencia selos e relicários; o Diário mostra selos 0–2/2 e status da pesquisa.
+- **Cristais de cavernas**: recurso raro (`cave_crystal`) disponível nos relicários, com ícone próprio, inventário, baú e migração segura dos saves anteriores.
+- **Pesquisa e estações por nível**: abrir o Relicário do Leste desbloqueia a receita da **Estação de aprimoramento**. Construí-la perto da bancada custa 6 madeiras, 4 tábuas, 2 metais e 1 cristal; seu modelo 3D apresenta prateleiras, instrumentos e cristal. A oficina libera uma nova categoria de ferramentas.
+- **Equipamentos nível 2**: machado reforçado e picareta reforçada usam 3 metais, 2 tábuas e 1 corda cada e exigem a ferramenta de pedra correspondente. Fabricados perto da nova estação, são automaticamente equipados no slot Ferramenta, com aparências de metal próprias na mão do sobrevivente. Cortar árvore/coqueiro rende **12 madeiras em vez de 8**; minerar rocha rende **9 pedras em vez de 6**. Receita e pagamento são confirmados ao contato da animação, sem cobrança antecipada de trabalho cancelado.
+- **Compatibilidade**: mantido save v3, inventário e equipamento antigo, pesca com vara, caça, clima, construções modulares e fuga por barco. O teste automatizado completo do Godot está disponível no GitHub Actions.
+
+**Ainda pendente para versões futuras**: barcos montados etapa a etapa, interiores subterrâneos integrados continuamente à malha do terreno, enigmas mais sofisticados, melhoria da casa de madeira para outros materiais, inspeção visual real e medição de FPS no Android. A versão 0.8 é um marco de desenvolvimento validado por CI, não uma homologação comercial.
+
+**Regra do projeto:** não gerar, assinar, exportar ou entregar APK, nem disparar workflow Android, até solicitação explícita do usuário. Builds de teste do Godot e publicações de código-fonte no GitHub estão autorizados.
+
+
 ## v0.8 experimental — cavernas navegáveis (código-fonte, sem APK)
 
 Foram adicionados **dois interiores tridimensionais jogáveis**, acessados pelo botão **Explorar** nas entradas da Caverna do Leste e da Gruta das Raízes. A câmera segue o personagem dentro de galerias com rochas, raízes, cristais, iluminação própria e obstáculos de circulação. O botão **Sair da caverna** devolve à superfície; o minimapa passa a exibir a planta interna e os suprimentos restantes.
