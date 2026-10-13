@@ -1,8 +1,21 @@
 # GPT Survivor — Ilha: Último Voo
 
-**Protótipo de desenvolvimento v0.5.0 (código-fonte) • Godot 4.x • 3D top-down • Android e PC**
+**Protótipo de desenvolvimento v0.6.0 (código-fonte) • Godot 4.x • 3D top-down • Android e PC**
 
 Um sobrevivente de um acidente aéreo precisa explorar uma ilha tropical de aproximadamente 400 metros de diâmetro, montar seu acampamento e construir um barco para voltar para casa.
+
+## Atualização v0.6.0 — Clima real e primeiros módulos de construção
+
+- **Atmosfera:** ciclo de luz com amanhecer/entardecer, noite mais escura, chuva tropical e pico de tempestade, com partículas limitadas pelo modo gráfico.
+- **Materiais vivos:** vento nas folhas e grama, mar com ondas intensificadas pela tempestade, brilho/escurecimento do solo molhado, luz ambiente sensível à nebulosidade.
+- **Sobrevivência:** o coletor de água usa **a mesma curva de chuva** do clima visual; sem chuva, não produz água; o ciclo é determinístico e preserva os saves anteriores.
+- **Personagem:** corrida opcional com botão **Correr/Andar** junto ao analógico e passos/postura específicos; o botão não interfere na pesca, coleta ou multitoque.
+- **Construção modular inicial:** **Piso modular, Parede modular e Telhado modular**. São fabricáveis repetidas vezes pela aba **Mochila → Construções**, com encaixe espacial de 3,2 m, rotação de 90 graus, paredes na borda de pisos, telhado dependente de piso e parede, verificação de colisão e persistência.
+- **Qualidade:** modo Leve reduz emissão de partículas de chuva de 280 para 90 e conserva as otimizações anteriores de sombras e vegetação.
+- **Teste:** 182/182 verificações nativas da v0.6 passaram no Godot 4.6.1 Linux, incluindo esquemas de clima, suporte dos módulos, salvamento e botões touch. Sem medição de FPS nem inspeção visual no Android físico.
+- **Beta independente:** o pipeline Android utiliza pacote `com.sergiomrge.gptsurvivor.beta.v06` e assinatura de teste temporária para evitar sobrescrever a instalação estável e o beta anterior. Para atualizar a versão instalada com mesmo ID, será necessária a chave privada original.
+
+**Ainda não concluído:** reformulação integral da modelagem e materiais, animais com IA, interiores completos/cavernas exploráveis, portas/janelas, barco montado visualmente em etapas e otimização medida a 60 FPS no aparelho. Consulte `docs/ROADMAP_v06.md`.
 
 ## Atualização v0.5.0 — Acampamento e fuga por etapas
 
@@ -14,12 +27,12 @@ Um sobrevivente de um acidente aéreo precisa explorar uma ilha tropical de apro
 
 ## Abrir no celular com Godot Android
 
-1. Baixe e extraia `GPT_Survivor_Godot_v0_5_0.zip` em uma pasta acessível, por exemplo `Downloads/GPT_Survivor`.
+1. Baixe e extraia `GPT_Survivor_Godot_v0_6_0.zip` em uma pasta acessível, por exemplo `Downloads/GPT_Survivor`.
 2. Abra o Godot Android e escolha **Importar**. Selecione o arquivo `project.godot` da pasta extraída. Se a versão do editor permitir importar ZIP, também é possível selecionar o ZIP diretamente.
 3. Abra o projeto. Use o celular na horizontal e toque em **▶ Executar projeto**.
 4. No jogo, toque em **Nova sobrevivência** e depois **Acordar na praia**.
 
-A primeira importação pode levar alguns segundos. O projeto gera as malhas localmente e não depende de downloads, APIs ou plugins. Recomenda-se Godot 4.4 ou superior; a validação desta entrega foi feita no Godot 4.6.1 Linux. O APK assinado desta branch ainda não foi gerado. Para atualizar sem desinstalar, a exportação Android precisa usar a mesma chave privada de assinatura da instalação anterior. O projeto pode ser aberto no editor Godot para desenvolvimento.
+A primeira importação pode levar alguns segundos. O projeto gera as malhas localmente e não depende de downloads, APIs ou plugins. Recomenda-se Godot 4.4 ou superior; a validação desta entrega foi feita no Godot 4.6.1 Linux. A exportação Android beta da v0.6 é realizada pelo workflow Build Android Beta APK da branch; confira a execução e o artefato publicado antes de instalar. Para atualizar sem desinstalar, a exportação Android precisa usar a mesma chave privada de assinatura da instalação anterior. O projeto pode ser aberto no editor Godot para desenvolvimento.
 
 ## Controles
 
