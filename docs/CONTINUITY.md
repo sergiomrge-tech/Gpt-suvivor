@@ -1,3 +1,11 @@
+# Checkpoint v1.5.0 — 13/10/2026
+
+Branch `feat/island-biome-realism-v15` criada da `main` v1.4 já consolidada. A meta é refinamento real dentro do Godot, sem renders conceituais e sem APK. O terreno `SurvivorTerrain.height_at`, raio da costa, pontos de recursos, saves v3 e ações comerciais dos itens ficam invariantes.
+
+Implementados `scripts/biome_props.gd` (meshes detalhados de vegetação dunar, samambaias e pedras), `shaders/biome_props.gdshader` (padrões por material, vento apenas em folhas e resposta à umidade) e distribuição determinística em `SurvivorScenery._generate_biome_habitats()` com processamento em MultiMesh por chunk de 48 m e cap de distância. O método de remoção de decoração ao construir inclui os novos lotes. `SurvivorModels.canopy_tree` não usa mais as antigas copas esféricas: malha de folhagens/galhos, com vários tons e merge/caching 3D. `shaders/ground.gdshader` ganhou faixa móvel de areia úmida, microestrias da areia e gradação da geologia com a inclinação; `shaders/ocean.gdshader` apresenta bancos claros rasos, espuma interrompida e especularidade mais física. Não há novos assets com licença de terceiros.
+
+Adicionados testes nativos em `tests/test_survivor.gd`, capturador do framebuffer `tests/capture_biomes_v15.gd`, e workflow `.github/workflows/visual_biomes_v15.yml` para cenas reais da ilha (praia, floresta, centro, chuva e modo Leve). Conferir validação GitHub Actions no commit final, parser e capturas, antes de chamar a branch de concluída. Proibido inferir 60 FPS e homologação Android a partir do runner Linux. Não produzir APK sem pedido.
+
 # Checkpoint v1.4.0 — 13/10/2026
 
 Nova branch `feat/hero-anatomy-materials-v14` derivada diretamente do commit `c46bb954` da v1.3, preservando todo o gameplay, inventário, cavernas, fauna, save v3, progressão de ferramentas, som confortável e navegação de barco. Pedido anterior: cenário e protagonista substancialmente mais realistas, sem construir APK automaticamente.
