@@ -366,7 +366,15 @@ func interact() -> void:
                 save_game(false)
             else:
                 hud.toast("Reservatório vazio. Aguarde a próxima chuva tropical.")
-        "boat": escape_island()
+        "boat":
+            if state.boat_ready():
+                escape_island()
+            else:
+                var missing := state.boat_upgrade_error()
+                if missing != "":
+                    hud.toast(missing,5)
+                else:
+                    queue_work(target,"build",1.65,"boat_upgrade",9.5)
 
 func _enter_cave(entry: Dictionary) -> void:
     var id := SurvivorCaves.entrance_id(str(entry.get("title","")))
@@ -460,9 +468,12 @@ func _begin_placement(kind: String) -> void:
     preview_rotation = 0.0
     preview = Node3D.new()
     add_child(preview)
-    SurvivorModels.building(preview, kind)
+    if kind == "boat":
+        SurvivorModels.boat_stage(preview,1)
+    else:
+        SurvivorModels.building(preview, kind)
     if kind != "campfire":
-        SurvivorModels.merge_static(preview, "building_" + kind)
+        SurvivorModels.merge_static(preview, "boat_preview_stage_1" if kind == "boat" else "building_" + kind)
     # Area indicator marks the required footprint, not just the model geometry.
     var footprint := MeshInstance3D.new()
     footprint.name = "BuildFootprint"
@@ -551,6 +562,8 @@ func confirm_placement() -> void:
                 break
         world.remove_structure(relocation_kind)
     var entry := {"kind": kind, "x": point.x, "z": point.z}
+    if kind == "boat":
+        entry["stage"] = 1
     if kind not in ["boat","dock"]:
         entry["rotation"] = preview_rotation
     state.buildings.append(entry)
@@ -566,7 +579,7 @@ func confirm_placement() -> void:
             reach = 0.45
     queue_work(work_entry,"build",1.6,"station",reach)
     cancel_placement()
-    hud.toast("%s pronto!" % SurvivalState.RECIPES[kind].title)
+    hud.toast("Quilha do barco montada (1/5). Aproxime-se para continuar." if kind == "boat" else "%s pronto!" % SurvivalState.RECIPES[kind].title)
     save_game(false)
 
 func cancel_placement() -> void:
@@ -635,7 +648,7 @@ func fish_or_cancel() -> void:
         player.move_vector = Vector2.ZERO
 
 func escape_island() -> void:
-    if not state.owns("boat") or world.near_structure(player.position, "boat", 12).is_empty():
+    if not state.boat_ready() or world.near_structure(player.position, "boat", 12).is_empty():
         hud.toast("Aproxime-se do barco pronto para embarcar.")
         return
     cancel_work()
@@ -721,6 +734,15 @@ func _on_action_contact(kind: String,point: Vector3) -> void:
         save_game(false)
     if not pending_work.is_empty() and pending_work.mode == "cave_vault":
         pending_discovery = world.caves.puzzles.collect_vault(pending_work.entry)
+        pending_work.clear()
+    if not pending_work.is_empty() and pending_work.mode == "boat_upgrade":
+        var upgrading: Dictionary = pending_work.entry
+        if state.upgrade_boat():
+            world.refresh_boat_stage(upgrading)
+            hud.toast("Barco %d/5 • %s concluído!" % [state.boat_stage(),SurvivalState.BOAT_STAGE_NAMES[state.boat_stage()]],4)
+            save_game(false)
+        else:
+            hud.toast(state.boat_upgrade_error(),4)
         pending_work.clear()
     if not pending_work.is_empty() and pending_work.mode=="harvest":
         var entry: Dictionary = pending_work.entry
