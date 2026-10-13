@@ -21,6 +21,7 @@ signal journal_requested
 signal quality_requested
 signal zoom_requested(amount: float)
 signal sprint_requested
+signal voyage_steer_requested(direction: int)
 signal resume_requested
 
 var root: Control
@@ -64,6 +65,9 @@ var build_buttons: Dictionary = {}
 var selected_item := ""
 var inventory_tabs: Dictionary = {}
 var inventory_title_font: SystemFont
+var voyage_overlay: Control
+var voyage_status: Label
+var voyage_progress: ProgressBar
 var shortcut_bar: HBoxContainer
 var shortcut_buttons: Array[Button] = []
 var shortcut_visual_keys: Array[String] = []
@@ -997,6 +1001,68 @@ func _recipe_callback(kind: String) -> Callable:
         close_modal()
         build_requested.emit(kind)
 
+func show_voyage() -> void:
+    hide_voyage()
+    game_controls.visible = false
+    joystick.active = false
+    joystick.reset()
+    voyage_overlay = Control.new()
+    voyage_overlay.name = "VoyageControls"
+    voyage_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    voyage_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    root.add_child(voyage_overlay)
+    var top := PanelContainer.new()
+    top.add_theme_stylebox_override("panel",_bag_style(BAG_BG,true))
+    top.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+    top.offset_left = -275
+    top.offset_right = 275
+    top.offset_top = 15
+    top.offset_bottom = 104
+    voyage_overlay.add_child(top)
+    var info := VBoxContainer.new()
+    info.add_theme_constant_override("separation",4)
+    top.add_child(info)
+    voyage_status = _bag_heading("CANAL SEGURO • casco 100%",21)
+    voyage_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    info.add_child(voyage_status)
+    voyage_progress = ProgressBar.new()
+    voyage_progress.max_value = 100
+    voyage_progress.show_percentage = false
+    voyage_progress.custom_minimum_size = Vector2(290,9)
+    info.add_child(voyage_progress)
+    var hint := _label("Evite os recifes • manobre com as setas",15)
+    hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    hint.add_theme_color_override("font_color",BAG_TEXT)
+    info.add_child(hint)
+    for side in [-1,1]:
+        var button := _bag_button("◀  BOMBORDO" if side == -1 else "ESTIBORDO  ▶",func(): voyage_steer_requested.emit(side))
+        button.name = "TurnLeft" if side == -1 else "TurnRight"
+        button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT if side == -1 else Control.PRESET_BOTTOM_RIGHT)
+        if side == -1:
+            button.offset_left = 60
+            button.offset_right = 290
+        else:
+            button.offset_left = -290
+            button.offset_right = -60
+        button.offset_top = -104
+        button.offset_bottom = -34
+        button.add_theme_font_size_override("font_size",19)
+        voyage_overlay.add_child(button)
+
+func update_voyage(voyage: SurvivorVoyage) -> void:
+    if voyage_overlay == null or not is_instance_valid(voyage_overlay):
+        return
+    voyage_status.text = "CANAL SEGURO %d%% • CASCO %d%%" % [int(voyage.progress()*100.0),int(voyage.hull)]
+    voyage_progress.value = voyage.progress()*100.0
+
+func hide_voyage() -> void:
+    if is_instance_valid(voyage_overlay):
+        root.remove_child(voyage_overlay)
+        voyage_overlay.queue_free()
+    voyage_overlay = null
+    voyage_status = null
+    voyage_progress = null
+
 func show_end(victory: bool, elapsed: float) -> void:
     set_playing(false)
     _new_modal("end", "Você voltou para casa" if victory else "A ilha venceu esta vez", "Você construiu seu barco e deixou a ilha após %d minutos de sobrevivência." % int(elapsed / 60.0) if victory else "Sua saúde chegou a zero. Água, cocos e peixe assado ajudam a sobreviver. Descanse na casa para recuperar saúde.")
@@ -1048,6 +1114,8 @@ func _process(delta: float) -> void:
             action_button.text = {"palm": "Coletar madeira", "tree":"Cortar árvore", "discovery":"Investigar", "rock": "Extrair pedra", "fiber": "Coletar fibra", "metal": "Recuperar metal", "loose_log":"Pegar tronco", "loose_stone":"Pegar pedras", "crab":"Pegar caranguejo", "boar":"Caçar javali", "cave":"Entrar na caverna", "cave_exit":"Sair da caverna", "cave_cache":"Investigar caixa", "cave_seal":"Ativar selo", "cave_vault":"Abrir relicário", "spring": "Beber água", "campfire": "Assar peixe", "house": "Descansar", "bed":"Descansar", "chest":"Abrir baú", "rain_collector":"Beber chuva", "door_panel":"Abrir porta" if not bool(target.get("door_open", false)) else "Fechar porta", "boat": "Embarcar"}.get(str(target.kind), "Explorar")
             if target.kind == "boat" and state.boat_stage() < 5:
                 action_button.text = "Montar %s (%d/5)" % [SurvivalState.BOAT_STAGE_NAMES[state.boat_stage()+1],state.boat_stage()+1]
+            elif target.kind == "boat" and not bool(state.discoveries.get("voyage_prepared",false)):
+                action_button.text = "Preparar suprimentos"
     if not target.is_empty() and placement_kind == "" and activity_name == "":
         var error := state.harvest_error(str(target.kind))
         if error != "":
