@@ -183,6 +183,7 @@ func run() -> void:
     check(tools_saved != null and tools_saved.owns("stone_axe") and tools_saved.owns("stone_knife") and tools_saved.owns("stone_pickaxe"),"Crafted tools survive save round-trip")
     var legacy: Dictionary = game.state.to_data().duplicate(true)
     legacy.version = 1
+    legacy.erase("equipment")
     for key in ["stone_axe","stone_pickaxe","stone_knife"]: legacy.inventory.erase(key)
     var migrated := SurvivalState.from_data(legacy)
     check(migrated != null and migrated.inventory.wood == game.state.inventory.wood and migrated.owns("stone_axe") == false,"v0.4 saves migrate without loss or gifting tools")
@@ -196,6 +197,7 @@ func run() -> void:
     game.change_zoom(old_zoom-48)
     check(game.hud.joystick.size == Vector2(220,220) and game.hud.joystick.offset_left == 100 and SurvivorJoystick.RADIUS == 88,"Joystick is larger and moved inward from the corner")
     game.capture_mode = false
+    check(game.state.equip_tool("stone_axe") and game.state.is_equipped("stone_axe"),"Equipping axe activates resource harvesting")
     var sample: Dictionary = game.world.resources[0]
     var wood_before: int = game.state.inventory.wood
     game.world.harvest(sample)
@@ -301,6 +303,7 @@ func run() -> void:
     check(not bench.is_empty(), "Workbench close enough for crafting")
     game.select_recipe("fishing_rod")
     check(game.state.owns("fishing_rod"), "Fishing rod fabricated at workbench")
+    check(game.state.is_equipped("fishing_rod"), "Crafted rod is equipped in main hand so fishing is usable")
     game.player.position = Vector3(-10, game.terrain.height_at(-10, 135), 135)
     game.player.body_pivot.rotation.y = PI
     game.select_recipe("house")
@@ -322,6 +325,10 @@ func run() -> void:
     var offshore: Vector3 = dock_entry.position+Vector3(dock_entry.position.x,0,dock_entry.position.z).normalized()*6.0
     check(not game.terrain.is_land(offshore.x,offshore.z) and game.world.walkable(offshore,offshore),"Built pier provides walkable surface over the sea")
     check(game.world.surface_height(offshore)>game.terrain.sea_level+0.5,"Pier walkers stand on the deck rather than the seabed")
+    game.state.unequip_slot("main_hand")
+    game.fish_or_cancel()
+    check(game.fishing_remaining == 0,"Fishing requires the rod in the main-hand slot")
+    game.state.equip_tool("fishing_rod")
     game.fish_or_cancel()
     check(game.fishing_remaining == 3, "Fishing starts near dock")
     check(game.player.tools.rod.visible and game.player.fishing_line.visible,"Fishing visibly equips rod and fishing line")
