@@ -23,7 +23,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      # GitHub Ubuntu runners already provide a supported Android SDK manager.
       - name: Ensure Android SDK 35 tools
         run: |
           yes | sdkmanager --licenses >/dev/null || true
