@@ -1,0 +1,94 @@
+{
+  "license": "CC0",
+  "license_url": "https://polyhaven.com/license",
+  "game": "GPT Survivor",
+  "date": "2026-10-13",
+  "stage": "mobile_GLTF_optimized",
+  "tool": "@gltf-transform/cli@4.2.1 simplify / meshoptimizer",
+  "items": [
+    {
+      "id": "island_tree_01",
+      "source": "https://polyhaven.com/a/island_tree_01",
+      "source_sha256": "78e905a40670bfabb2760601d4d9a6c17193a50d68e6271c66893eb7bd75906d",
+      "original_triangles": null,
+      "ratio": 0.045,
+      "error": 0.075,
+      "output": "assets/real_nature/models/island_tree_01.glb",
+      "size": 12847976,
+      "sha256": "2080f51935a48d87928fb8796482845546acb894e8b23edbe12b8bb84e811039",
+      "license": "CC0"
+    },
+    {
+      "id": "tree_stump_01",
+      "source": "https://polyhaven.com/a/tree_stump_01",
+      "source_sha256": "9c66ba87d693f35eb404acaa96e0eeff831c295b61a0a903795584cbcc3527c9",
+      "original_triangles": null,
+      "ratio": 0.37,
+      "error": 0.015,
+      "output": "assets/real_nature/models/tree_stump_01.glb",
+      "size": 3353040,
+      "sha256": "20115f8468267caccfcd93323407b4323e3d48d8d57fa9d1da234a415f888fdc",
+      "license": "CC0"
+    },
+    {
+      "id": "dead_tree_trunk_02",
+      "source": "https://polyhaven.com/a/dead_tree_trunk_02",
+      "source_sha256": "b486ab1f0c7f4972e0eec97b19de53b26a34d09f07da5f9c2a70f8621f9e574c",
+      "original_triangles": null,
+      "ratio": 0.3,
+      "error": 0.02,
+      "output": "assets/real_nature/models/dead_tree_trunk_02.glb",
+      "size": 3566512,
+      "sha256": "ab5c8f16a20b2b3970df39bcb063588c2817315a6ed33754b4b5d6fb9728dca8",
+      "license": "CC0"
+    },
+    {
+      "id": "boulder_01",
+      "source": "https://polyhaven.com/a/boulder_01",
+      "source_sha256": "51487934db898b4c24072780a451e34eca5c02e3ada24a62bbc600bbc4019e92",
+      "original_triangles": null,
+      "ratio": 0.32,
+      "error": 0.017,
+      "output": "assets/real_nature/models/boulder_01.glb",
+      "size": 5045036,
+      "sha256": "38eb87bc809731e197ece4e8ca6352cd793dfe4e8571eb3a52273af6ef3bb4a0",
+      "license": "CC0"
+    },
+    {
+      "id": "rock_07",
+      "source": "https://polyhaven.com/a/rock_07",
+      "source_sha256": "efcc2dcaa133ff8ad5c865dc2135772e8f5dbc83fa38db2ee2cf25382436b6e6",
+      "original_triangles": null,
+      "ratio": 0.45,
+      "error": 0.012,
+      "output": "assets/real_nature/models/rock_07.glb",
+      "size": 1933580,
+      "sha256": "fc429192c415df816e6ad437621bd09f2c5fee4f91d27b2e1201932844b5a5e3",
+      "license": "CC0"
+    },
+    {
+      "id": "rock_face_01",
+      "source": "https://polyhaven.com/a/rock_face_01",
+      "source_sha256": "96c332c01d173a2431115f3bac29be101fba341e5500e2a08e384f4edd17299e",
+      "original_triangles": null,
+      "ratio": 0.53,
+      "error": 0.012,
+      "output": "assets/real_nature/models/rock_face_01.glb",
+      "size": 2827456,
+      "sha256": "5bbf7b272fac8d90f5d5697f3f02c6134e51ced245cf3dc4d84b72f64511021f",
+      "license": "CC0"
+    },
+    {
+      "id": "wooden_ladder_02",
+      "source": "https://polyhaven.com/a/wooden_ladder_02",
+      "source_sha256": "8fbb14700a4d0f6e44f538538f9294e4b3395d1923c719f18cb6dba9fd20a06a",
+      "original_triangles": null,
+      "ratio": 0.75,
+      "error": 0.009,
+      "output": "assets/real_nature/models/wooden_ladder_02.glb",
+      "size": 2300324,
+      "sha256": "ce1ebe05a21e12ead73b7c2f5181892b7742ca56b73ee950b6cc341af2b51b71",
+      "license": "CC0"
+    }
+  ]
+}
