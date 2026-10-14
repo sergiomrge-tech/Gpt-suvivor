@@ -1,0 +1,50 @@
+name: Acquire CC0 realistic trees rocks and structures
+on:
+  push:
+    branches: [assets/cc0-trees-rocks-structures-oct2026]
+    paths:
+      - tools/assetpacks/download_cc0_nature.py
+      - .github/workflows/acquire_cc0_nature.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: survivor-nature-assets-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  acquire-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download verified license-CC0 glTF and original material dependencies
+        run: python3 tools/assetpacks/download_cc0_nature.py
+      - name: Audit independent model archive integrity and license records
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,hashlib,zipfile
+          root=pathlib.Path("asset_downloads/2026-10-13")
+          d=json.loads((root/"CATALOGO_CC0.json").read_text())
+          assert d["license"]=="CC0"
+          for group,data in d["groups"].items():
+              if data["status"]!="downloaded_and_verified":continue
+              p=root/data["zip"]
+              assert p.stat().st_size==data["bytes"]
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==data["sha256"]
+              with zipfile.ZipFile(p) as z:
+                  assert z.testzip() is None
+              print("VERIFIED_REAL_CC0_ARCHIVE",group,data["assets"])
+          PY
+      - name: Save downloadable original model packs in dedicated GitHub branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add asset_downloads/2026-10-13
+          git diff --cached --quiet || git commit -m "assets(CC0): download and verify original trees rocks structures 1k"
+          git push origin HEAD:assets/cc0-trees-rocks-structures-oct2026
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Survivor-CC0-Nature-Assets-Models-And-Catalog
+          path: asset_downloads/2026-10-13/
+          retention-days: 60
