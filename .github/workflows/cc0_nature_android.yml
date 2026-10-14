@@ -1,0 +1,130 @@
+name: Import CC0 realistic nature, test Godot and build Android APK
+on:
+  push:
+    branches: [feat/survivor-nature-realistic-apk]
+    paths:
+      - tools/assetpacks/stage_nature_for_mobile.py
+      - .github/workflows/cc0_nature_android.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: cc0-nature-build-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  import-native-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Fetch verified source asset packs from dedicated GitHub archive branch
+        run: git fetch origin refs/heads/assets/cc0-trees-rocks-structures-oct2026:refs/remotes/origin/assets/cc0-trees-rocks-structures-oct2026
+      - name: Optimize and integrate all seven CC0 scan models as glb
+        run: python3 tools/assetpacks/stage_nature_for_mobile.py
+      - name: Publish audited GLB models in playable branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/real_nature
+          git diff --cached --quiet || git commit -m "assets(nature): import seven verified optimized CC0 GLBs with textured surfaces"
+          git push origin HEAD:feat/survivor-nature-realistic-apk
+      - name: Install pinned Godot 4.6.1
+        run: |
+          curl --fail --location --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          echo '/tmp/godot' >> "$GITHUB_PATH"
+      - name: Parse new CC0 glb assets and gameplay in Godot
+        run: |
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/cc0-import.log
+          if grep -E 'SCRIPT ERROR|Parse Error' /tmp/cc0-import.log; then exit 1; fi
+      - name: Native CC0 world integration tests
+        run: |
+          timeout 420 Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_world_cc0.gd 2>&1 | tee /tmp/nature-tests.log
+          grep -q "CC0_WORLD_TESTS:" /tmp/nature-tests.log
+          if grep -E 'FAIL_REAL_WORLD|SCRIPT ERROR|Parse Error' /tmp/nature-tests.log; then exit 1; fi
+      - name: Audit game source and audio files
+        run: |
+          python3 tests/audit_project.py
+          python3 tests/audit_audio.py
+      - name: Render genuine Godot gameplay screenshots of new nature models
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 490 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_cc0_world.gd 2>&1 | tee /tmp/nature-capture.log
+          for f in 17_new_real_tree_and_stumps 18_real_cave_rock_faces 19_scanned_harvestable_rocks 20_new_real_house_ladder; do
+            test -s "/tmp/survivor-biomes-cc0_v20/${f}.png"
+          done
+          if grep -E 'SCRIPT ERROR|Parse Error' /tmp/nature-capture.log; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-Nature-CC0-Real-Godot-Screenshots
+          path: /tmp/survivor-biomes-cc0_v20/*.png
+          retention-days: 30
+      - name: Install Android SDK 35 and Godot export templates
+        run: |
+          ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "build-tools;35.0.1" "platforms;android-35"
+          curl --fail --location --retry 3 -o /tmp/export.tpz https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_export_templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.6.1.stable"
+          unzip -q /tmp/export.tpz -d /tmp/godot-templates
+          cp /tmp/godot-templates/templates/* "$HOME/.local/share/godot/export_templates/4.6.1.stable/"
+      - name: Configure test application and isolated debug keystore
+        run: |
+          mkdir -p "$HOME/.android" "$HOME/.config/godot" out
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=GPT Survivor Nature Test,OU=Testing,O=Dev,C=BR"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('export_presets.cfg')
+          s=p.read_text()
+          assert 'package/unique_name="com.sergiomrge.gptsurvivor"' in s
+          s=s.replace('package/unique_name="com.sergiomrge.gptsurvivor"','package/unique_name="com.sergiomrge.gptsurvivor.naturebeta"')
+          s=s.replace('package/name="GPT Survivor"','package/name="GPT Survivor Nature Test"')
+          s=s.replace('version/name="1.2.0"','version/name="2.2.0-nature-test"')
+          s=s.replace('version/code=1200','version/code=2200')
+          p.write_text(s)
+          PY
+      - name: Export installable arm64 APK, align, sign and verify
+        run: |
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/.android/debug.keystore"
+          export GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --export-debug Android /tmp/survivor-nature-original.apk
+          python3 tools/android/fix_android_manifest.py /tmp/survivor-nature-original.apk /tmp/survivor-nature-fixed.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -f -P 16 4 /tmp/survivor-nature-fixed.apk /tmp/survivor-nature-aligned.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk /tmp/survivor-nature-aligned.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" verify --verbose out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -c -P 16 4 out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/aapt" dump badging out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk | head -4
+          python3 - <<'PY'
+          import zipfile
+          p='out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk'
+          with zipfile.ZipFile(p) as z: assert z.testzip() is None
+          print("NATIVE_ANDROID_APK_CRC_OK")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: GPT-Survivor-v2.2-Nature-Realista-Android-APK
+          path: out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk
+          retention-days: 30
