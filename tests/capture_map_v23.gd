@@ -17,6 +17,9 @@ func run() -> void:
     game = load("res://scenes/main.tscn").instantiate()
     root.add_child(game)
     game.capture_mode = true
+    game._create_world(SurvivalState.new())
+    game.light_visuals = false
+    game.apply_quality()
     game.set_process(false)
     game.player.set_physics_process(false)
     game.hud.close_modal()
