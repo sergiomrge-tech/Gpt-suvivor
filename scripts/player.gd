@@ -81,10 +81,14 @@ func _physics_process(delta: float) -> void:
             var candidate: Vector3 = position + axis
             if world.walkable(candidate,position):
                 position = candidate
-        body_pivot.rotation.y = lerp_angle(body_pivot.rotation.y,atan2(vec.x,vec.y),minf(1.0,delta*12))
     position.y = world.surface_height(position)
     var moved := Vector2(position.x-previous.x,position.z-previous.z).length()
     walking = walking and moved > 0.001
+    if walking:
+        # Collision may block just one axis. Face the real displacement so
+        # sliding along a rock does not leave the gait pointing diagonally.
+        var heading := atan2(position.x-previous.x,position.z-previous.z)
+        body_pivot.rotation.y = lerp_angle(body_pivot.rotation.y,heading,minf(1.0,delta*12))
     locomotion_blend = move_toward(locomotion_blend, 1.0 if sprinting and walking else 0.0,delta * 3.2)
     animation_clock += delta * ((11.0 + locomotion_blend * 4.6) if walking else 1.9)
     step_distance += moved
@@ -137,6 +141,13 @@ func _base_pose() -> void:
     left_elbow.rotation.y = -0.045*sin(animation_clock) if walking else 0.0
     right_elbow.rotation.y = 0.045*sin(animation_clock) if walking else 0.0
     head_pivot.rotation = Vector3(-torso.rotation.x * 0.32, -shoulder_turn * 0.56, lateral_sway * 0.44)
+    if using_skinned_hero:
+        # Native skin already animates weight transfer. Legacy pivot sway was
+        # being added on top, leaning the entire body and both planted soles.
+        body_pivot.rotation.x = 0.0
+        body_pivot.rotation.z = 0.0
+        body_pivot.position.y = 0.0
+        return
     body_pivot.rotation.x = 0.028 * locomotion_blend
     body_pivot.rotation.z = sin(animation_clock) * (0.021 if walking else 0.003)
     body_pivot.position.y = absf(sin(animation_clock)) * lerpf(0.042, 0.073, locomotion_blend) if walking else breathing * 0.30

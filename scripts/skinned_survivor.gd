@@ -47,6 +47,9 @@ func initialize(player: SurvivorPlayer, tool_hand: Node3D) -> bool:
         push_warning("Skinned MakeHuman rig lacks native idle/walk/run")
         character.queue_free()
         return false
+    # Replace incompatible source locomotion with rig-space, looping clips.
+    # Duplicate only the mapping: the imported GLB and its native wave stay intact.
+    clips.merge(SurvivorHeroLocomotion.install(skeleton,animator),true)
     # Measure the actual imported skinned vertices in world space so the scale
     # stays consistent even if the GLB exporter uses centimetre units.
     var minimum := Vector3(INF,INF,INF)
