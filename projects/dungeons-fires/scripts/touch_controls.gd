@@ -12,6 +12,7 @@ var mouse_down: bool = false
 var font: Font
 var buttons: Dictionary = {"attack":Vector2(1130,611),"dodge":Vector2(987,625),"skill0":Vector2(1050,504),"skill1":Vector2(1180,493),"supreme":Vector2(893,513),"potion":Vector2(398,628)}
 var cooldowns: Dictionary = {}
+var skill_names: Array = ["TÉCNICA","PODER"]
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -63,6 +64,8 @@ func _draw() -> void:
 	draw_circle(stick_center+thumb,34,Color(.50,.53,.58,.75))
 	draw_arc(stick_center+thumb,34,0,TAU,32,Color(.85,.77,.55,.9),2)
 	var labels = {"attack":"GOLPE","dodge":"ESQUIVA","skill0":"TÉCNICA","skill1":"PODER","supreme":"BRASA","potion":"CURAR"}
+	labels.skill0=str(skill_names[0]).split(" ")[0].to_upper()
+	labels.skill1=str(skill_names[1]).split(" ")[0].to_upper()
 	for name in buttons:
 		var center: Vector2 = buttons[name]
 		var r = 61 if name=="attack" else 45

@@ -35,7 +35,7 @@ func tick(delta: float) -> void:
 				if target.hp>0 and absf(target.position.y-p.pos.y)<24 and absf(target.position.x-p.pos.x)<30 and not p.hit.has(target.id):
 					p.hit.append(target.id)
 					if target.hurt(p.damage,Vector2(signf(p.velocity.x)*8,0)):
-						game.player.supreme=minf(100,game.player.supreme+4)
+						game.player.supreme=minf(100,game.player.supreme+4*(1+game.progress.talent_bonuses().supreme))
 					if not p.piercing:p.time=0;break
 		else:
 			if game.player!=null and game.player.hp>0 and game.player.position.distance_to(p.pos)<30:
@@ -45,6 +45,7 @@ func tick(delta: float) -> void:
 	overlay.queue_redraw()
 
 func missile(pos: Vector2, velocity: Vector2, damage: float, player: bool, color: Color, piercing: bool = false) -> void:
+	if projectiles.size()>=96:return
 	projectiles.append({"pos":pos,"velocity":velocity,"damage":damage,"player":player,"time":3.0,"color":color,"hit":[],"piercing":piercing})
 
 func fx(pos: Vector2, radius: float, color: Color, seconds: float = .4) -> void:
@@ -64,6 +65,7 @@ func _draw() -> void:
 		for i in range(int(game.progress.d.hub.archive)):
 			draw_rect(Rect2(890+i*15,355,10,45),Color(.49,.35,.26))
 func draw_effects() -> void:
+	if game.skills!=null:game.skills.draw(overlay)
 	for e in effects:
 		var alpha = e.time/e.duration
 		var color: Color = e.color; color.a*=alpha
@@ -79,3 +81,14 @@ func draw_effects() -> void:
 	for n in numbers:
 		var color = Color(1,.41,.32,n.time) if n.player else Color(1,.88,.58,n.time)
 		overlay.draw_string(font,n.pos,str(n.value),HORIZONTAL_ALIGNMENT_LEFT,-1,23,color)
+
+func snapshot_projectiles() -> Array:
+	var result:Array=[]
+	for p in projectiles:
+		result.append({"x":p.pos.x,"y":p.pos.y,"vx":p.velocity.x,"vy":p.velocity.y,"damage":p.damage,"player":p.player,"time":p.time,"color":p.color.to_html(),"hit":p.hit.duplicate(),"piercing":p.piercing})
+	return result
+
+func restore_projectiles(value: Array) -> void:
+	projectiles.clear()
+	for p in value:
+		projectiles.append({"pos":Vector2(p.x,p.y),"velocity":Vector2(p.vx,p.vy),"damage":p.damage,"player":p.player,"time":p.time,"color":Color(p.color),"hit":p.hit.duplicate(),"piercing":p.piercing})

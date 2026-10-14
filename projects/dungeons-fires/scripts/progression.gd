@@ -1,7 +1,7 @@
 class_name DFProgress
 extends RefCounted
 
-const VERSION = 1
+const VERSION = 2
 var path: String = "user://dungeons_fires_save.json"
 var db: DFContent
 var d: Dictionary = {}
@@ -13,7 +13,24 @@ func _init(content: DFContent, save_path: String = "user://dungeons_fires_save.j
 	d = fresh()
 
 func fresh() -> Dictionary:
-	return {"version":VERSION,"gold":160,"ore":12,"cloth":4,"ash":0,"cores":{},"hero":"varek","cleared":[],"inventory":["W_sword_0","W_staff_0","W_bow_0","A_body_0","A_boots_0","T_0"],"upgrades":{},"equipped":{"weapon":"W_sword_0","head":"","body":"A_body_0","boots":"A_boots_0","talisman":"T_0","relic":""},"heroes":{"varek":{"level":1,"xp":0,"talents":0},"maela":{"level":1,"xp":0,"talents":0},"neris":{"level":1,"xp":0,"talents":0}},"hub":{"forge":1,"sanctuary":1,"botica":1,"archive":1,"barracks":1},"settings":{"sound":true,"shake":true,"story_mode":false,"zoom":1.0},"run":{},"tutorial":false}
+	var result={"version":VERSION,"gold":160,"ore":12,"cloth":4,"ash":0,"cores":{},"hero":"varek","cleared":[],"inventory":["W_sword_0","W_staff_0","W_bow_0","A_body_0","A_boots_0","T_0"],"upgrades":{},"equipped":{"weapon":"W_sword_0","head":"","body":"A_body_0","boots":"A_boots_0","talisman":"T_0","relic":""},"heroes":{"varek":{"level":1,"xp":0,"talents":0},"maela":{"level":1,"xp":0,"talents":0},"neris":{"level":1,"xp":0,"talents":0}},"hub":{"forge":1,"sanctuary":1,"botica":1,"archive":1,"barracks":1},"settings":{"sound":true,"shake":true,"story_mode":false,"zoom":1.0},"run":{},"tutorial":false,"claimed_quests":[]}
+	for hero in result.heroes:
+		result.heroes[hero].nodes={}
+		result.heroes[hero].skills=["S_%s_0"%hero,""]
+	return result
+
+func migrate(value) -> Dictionary:
+	if not value is Dictionary:return {}
+	var copy=value.duplicate(true)
+	if int(copy.get("version",0))==1:
+		if not copy.get("heroes") is Dictionary:return {}
+		for hero in ["varek","maela","neris"]:
+			if not copy.heroes.get(hero) is Dictionary:return {}
+			var h=copy.heroes[hero]
+			h.talents=0;h.nodes={}
+			h.skills=["S_%s_0"%hero,"S_%s_1"%hero if int(h.get("level",1))>=4 else ""]
+		copy.version=VERSION;copy.claimed_quests=[]
+	return copy
 
 func valid(value) -> bool:
 	if not value is Dictionary or int(value.get("version",0)) != VERSION:
@@ -26,6 +43,7 @@ func valid(value) -> bool:
 			return false
 	if not value.get("inventory") is Array or not value.get("cleared") is Array or not value.hero in ["varek","maela","neris"]:
 		return false
+	if not value.get("claimed_quests") is Array:return false
 	for id in value.inventory:
 		if not db.items.has(id): return false
 	for slot in ["weapon","head","body","boots","talisman","relic"]:
@@ -36,6 +54,18 @@ func valid(value) -> bool:
 		if not value.heroes.get(hero) is Dictionary: return false
 		var h = value.heroes[hero]
 		if not h.has_all(["level","xp","talents"]) or h.level < 1 or h.level > 30 or h.xp < 0 or h.talents < 0: return false
+		if not h.get("nodes") is Dictionary or not h.get("skills") is Array or h.skills.size()!=2:return false
+		var spent=0
+		for id in h.nodes:
+			var def=db.talent(str(id))
+			if def.is_empty() or def.hero!=hero or h.nodes[id]<1 or h.nodes[id]>def.max_rank:return false
+			spent+=int(h.nodes[id])
+		if spent!=int(h.talents) or spent>int(h.level)-1:return false
+		for id in h.skills:
+			if id=="":continue
+			var def=db.skill(str(id))
+			if def.is_empty() or def.hero!=hero or int(def.level)>int(h.level):return false
+		if h.skills[0]!="" and h.skills[0]==h.skills[1]:return false
 	for key in ["forge","sanctuary","botica","archive","barracks"]:
 		if not value.hub.has(key) or value.hub[key] < 1 or value.hub[key] > 3: return false
 	return true
@@ -45,7 +75,7 @@ func load_save() -> bool:
 		if FileAccess.file_exists(candidate):
 			var parser = JSON.new()
 			if parser.parse(FileAccess.get_file_as_string(candidate)) != OK: continue
-			var value = parser.data
+			var value = migrate(parser.data)
 			if valid(value):
 				d = value
 				return true
@@ -68,6 +98,8 @@ func save() -> bool:
 	if DirAccess.rename_absolute(path+".tmp",path) != OK:
 		last_error = "Cannot commit save"
 		return false
+	# Keep the successful transaction in both copies; fallback must not replay a reward.
+	if DirAccess.copy_absolute(path,path+".bak")!=OK:last_error="Backup could not be refreshed"
 	return true
 
 func unlocked() -> int:
@@ -90,8 +122,71 @@ func hero_stats() -> Dictionary:
 		atk += float(def.attack)*(1+upgrade*.08)
 		defense += float(def.defense)*(1+upgrade*.08)
 		if def.get("effect","")=="vitality":bonus_hp+=12
-	atk *= 1+float(hero.talents)*.035
-	return {"attack":atk,"defense":defense,"hp":180+(int(hero.level)-1)*12+int(hero.talents)*8+bonus_hp,"level":int(hero.level)}
+	var bonuses=talent_bonuses()
+	atk *= 1+bonuses.attack
+	defense+=bonuses.defense
+	return {"attack":atk,"defense":defense,"hp":180+(int(hero.level)-1)*12+int(bonuses.hp)+bonus_hp,"level":int(hero.level)}
+
+func talent_bonuses() -> Dictionary:
+	var out={"hp":0.0,"defense":0.0,"heal":0.0,"dodge":0.0,"barrier":0.0,"attack":0.0,"rupture":0.0,"skill":0.0,"cooldown":0.0,"crit":0.0,"movement":0.0,"supreme":0.0,"mana":0.0}
+	for id in d.heroes[d.hero].nodes:
+		var def=db.talent(str(id))
+		out[def.effect]+=float(def.value)*int(d.heroes[d.hero].nodes[id])
+	out.cooldown=minf(.45,out.cooldown);out.dodge=minf(.4,out.dodge);out.crit=minf(.4,out.crit)
+	return out
+
+func available_points() -> int:
+	var h=d.heroes[d.hero]
+	return int(h.level)-1-int(h.talents)
+
+func invest_talent(id: String) -> bool:
+	var def=db.talent(id)
+	if def.is_empty() or def.hero!=d.hero or not d.run.is_empty() or available_points()<1:return false
+	var h=d.heroes[d.hero]
+	var rank=int(h.nodes.get(id,0))
+	if rank>=int(def.max_rank) or int(d.hub.sanctuary)<int(def.sanctuary):return false
+	var branch_points=0
+	for node in h.nodes:
+		if db.talent(node).branch==def.branch:branch_points+=int(h.nodes[node])
+	if branch_points<int(def.requires_points):return false
+	var old=d.duplicate(true)
+	h.nodes[id]=rank+1;h.talents+=1
+	if not save():d=old;return false
+	return true
+
+func respec() -> bool:
+	if not d.run.is_empty():return false
+	var old=d.duplicate(true)
+	d.heroes[d.hero].nodes={};d.heroes[d.hero].talents=0
+	if not save():d=old;return false
+	return true
+
+func active_skill(slot: int) -> Dictionary:
+	if slot<0 or slot>1:return {}
+	return db.skill(str(d.heroes[d.hero].skills[slot]))
+
+func equip_skill(slot: int, id: String) -> bool:
+	var def=db.skill(id)
+	if slot<0 or slot>1 or def.is_empty() or def.hero!=d.hero or not d.run.is_empty():return false
+	var h=d.heroes[d.hero]
+	if int(h.level)<int(def.level):return false
+	var old=d.duplicate(true)
+	var other=1-slot
+	if h.skills[other]==id:h.skills[other]=h.skills[slot]
+	h.skills[slot]=id
+	if not save():d=old;return false
+	return true
+
+func claim_quest(id: String) -> bool:
+	if d.claimed_quests.has(id):return false
+	var quest: Dictionary={}
+	for q in db.quests:
+		if q.id==id:quest=q;break
+	if quest.is_empty() or not d.cleared.has(int(quest.dungeon)) or d.hub.barracks<quest.barracks:return false
+	var old=d.duplicate(true)
+	d.claimed_quests.append(id);d.gold+=quest.gold;d.ore+=quest.ore;d.ash+=quest.ash
+	if not save():d=old;return false
+	return true
 
 func give_xp(amount: int) -> void:
 	var h = d.heroes[d.hero]
@@ -102,6 +197,7 @@ func give_xp(amount: int) -> void:
 		if h.xp < cost: break
 		h.xp -= cost
 		h.level += 1
+	if h.level>=4 and h.skills[1]=="":h.skills[1]="S_%s_%d"%[d.hero,0 if h.skills[0]=="S_%s_1"%d.hero else 1]
 
 func buy_item(id: String) -> bool:
 	var def = db.item(id)

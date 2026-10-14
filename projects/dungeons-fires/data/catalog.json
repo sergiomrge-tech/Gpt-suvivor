@@ -1,5 +1,5 @@
 {
-  "schema": 1,
+  "schema": 2,
   "regions": [
     "Fronteira de Fuligem",
     "Várzea dos Nomes",
@@ -1854,6 +1854,1803 @@
       "ore": 12,
       "core": "",
       "effect": "slow"
+    }
+  ],
+  "skills": [
+    {
+      "id": "S_varek_0",
+      "hero": "varek",
+      "name": "Investida da Forja",
+      "mode": "dash",
+      "level": 1,
+      "power": 2.0,
+      "cooldown": 5,
+      "mana": 0,
+      "description": "Avança e atinge inimigos na faixa à frente."
+    },
+    {
+      "id": "S_varek_1",
+      "hero": "varek",
+      "name": "Guarda Ardente",
+      "mode": "guard",
+      "level": 4,
+      "power": 1.0,
+      "cooldown": 9,
+      "mana": 0,
+      "description": "Escudo temporário e bônus para o próximo ataque."
+    },
+    {
+      "id": "S_varek_2",
+      "hero": "varek",
+      "name": "Fenda de Ferro",
+      "mode": "line",
+      "level": 8,
+      "power": 2.6,
+      "cooldown": 7,
+      "mana": 0,
+      "description": "Onda em linha que atravessa até três alvos."
+    },
+    {
+      "id": "S_varek_3",
+      "hero": "varek",
+      "name": "Grito da Vigília",
+      "mode": "weaken",
+      "level": 12,
+      "power": 0.8,
+      "cooldown": 10,
+      "mana": 0,
+      "description": "Enfraquece o dano dos inimigos próximos por 5 segundos."
+    },
+    {
+      "id": "S_varek_4",
+      "hero": "varek",
+      "name": "Retorno da Brasa",
+      "mode": "riposte",
+      "level": 18,
+      "power": 3.2,
+      "cooldown": 6,
+      "mana": 0,
+      "description": "Contra-ataque após evitar um golpe com esquiva."
+    },
+    {
+      "id": "S_varek_5",
+      "hero": "varek",
+      "name": "Muralha Viva",
+      "mode": "ward",
+      "level": 24,
+      "power": 1.1,
+      "cooldown": 12,
+      "mana": 0,
+      "description": "Campo protetor com escudo e lentidão nos inimigos."
+    },
+    {
+      "id": "S_maela_0",
+      "hero": "maela",
+      "name": "Dardo de Cinza",
+      "mode": "bolt",
+      "level": 1,
+      "power": 1.7,
+      "cooldown": 3,
+      "mana": 16,
+      "description": "Projétil rápido e preciso de baixo custo."
+    },
+    {
+      "id": "S_maela_1",
+      "hero": "maela",
+      "name": "Círculo de Nomes",
+      "mode": "burn",
+      "level": 4,
+      "power": 0.75,
+      "cooldown": 7,
+      "mana": 25,
+      "description": "Fogo persistente no chão por 4 segundos."
+    },
+    {
+      "id": "S_maela_2",
+      "hero": "maela",
+      "name": "Selo Partido",
+      "mode": "mark",
+      "level": 8,
+      "power": 3.0,
+      "cooldown": 6,
+      "mana": 20,
+      "description": "Marca o alvo. Um golpe posterior detona o selo."
+    },
+    {
+      "id": "S_maela_3",
+      "hero": "maela",
+      "name": "Véu Âmbar",
+      "mode": "shield",
+      "level": 12,
+      "power": 0,
+      "cooldown": 10,
+      "mana": 25,
+      "description": "Barreira que absorve dano por 6 segundos."
+    },
+    {
+      "id": "S_maela_4",
+      "hero": "maela",
+      "name": "Corrente da Memória",
+      "mode": "chain",
+      "level": 18,
+      "power": 2.2,
+      "cooldown": 8,
+      "mana": 30,
+      "description": "Salta entre até três alvos com dano decrescente."
+    },
+    {
+      "id": "S_maela_5",
+      "hero": "maela",
+      "name": "Vigília Incandescente",
+      "mode": "channel",
+      "level": 24,
+      "power": 1.0,
+      "cooldown": 12,
+      "mana": 35,
+      "description": "Campo contínuo poderoso com alcance limitado."
+    },
+    {
+      "id": "S_neris_0",
+      "hero": "neris",
+      "name": "Corte de Passagem",
+      "mode": "dash",
+      "level": 1,
+      "power": 1.9,
+      "cooldown": 4,
+      "mana": 0,
+      "description": "Deslocamento curto que corta a linha inimiga."
+    },
+    {
+      "id": "S_neris_1",
+      "hero": "neris",
+      "name": "Marca da Caça",
+      "mode": "hunt",
+      "level": 4,
+      "power": 0.8,
+      "cooldown": 7,
+      "mana": 0,
+      "description": "Marca um alvo para aumentar o dano por 5 segundos."
+    },
+    {
+      "id": "S_neris_2",
+      "hero": "neris",
+      "name": "Disparo Perfurante",
+      "mode": "pierce",
+      "level": 8,
+      "power": 2.5,
+      "cooldown": 7,
+      "mana": 0,
+      "description": "Flecha perfurante ou corte em linha, conforme a arma."
+    },
+    {
+      "id": "S_neris_3",
+      "hero": "neris",
+      "name": "Laço de Cinza",
+      "mode": "trap",
+      "level": 12,
+      "power": 1.7,
+      "cooldown": 8,
+      "mana": 0,
+      "description": "Armadilha que dispara uma vez e desacelera o alvo."
+    },
+    {
+      "id": "S_neris_4",
+      "hero": "neris",
+      "name": "Passo do Ausente",
+      "mode": "decoy",
+      "level": 18,
+      "power": 1.0,
+      "cooldown": 9,
+      "mana": 0,
+      "description": "Deixa uma distração breve e reposiciona o herói."
+    },
+    {
+      "id": "S_neris_5",
+      "hero": "neris",
+      "name": "Chuva de Estilhaços",
+      "mode": "rain",
+      "level": 24,
+      "power": 1.25,
+      "cooldown": 12,
+      "mana": 0,
+      "description": "Área persistente com flechas ou lâminas."
+    }
+  ],
+  "talents": [
+    {
+      "id": "N_varek_0_0",
+      "hero": "varek",
+      "branch": 0,
+      "branch_name": "Bastilha",
+      "order": 0,
+      "name": "Bastilha: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "hp",
+      "value": 12,
+      "description": "+12 vida por ponto."
+    },
+    {
+      "id": "N_varek_0_1",
+      "hero": "varek",
+      "branch": 0,
+      "branch_name": "Bastilha",
+      "order": 1,
+      "name": "Bastilha: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "defense",
+      "value": 5,
+      "description": "+5 defesa por ponto."
+    },
+    {
+      "id": "N_varek_0_2",
+      "hero": "varek",
+      "branch": 0,
+      "branch_name": "Bastilha",
+      "order": 2,
+      "name": "Bastilha: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "heal",
+      "value": 0.04,
+      "description": "+4.0% eficácia de cura por ponto."
+    },
+    {
+      "id": "N_varek_0_3",
+      "hero": "varek",
+      "branch": 0,
+      "branch_name": "Bastilha",
+      "order": 3,
+      "name": "Bastilha: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "dodge",
+      "value": 0.04,
+      "description": "+4.0% redução de recarga da esquiva por ponto."
+    },
+    {
+      "id": "N_varek_0_4",
+      "hero": "varek",
+      "branch": 0,
+      "branch_name": "Bastilha",
+      "order": 4,
+      "name": "Bastilha: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "barrier",
+      "value": 0.08,
+      "description": "+8.0% eficácia de barreira por ponto."
+    },
+    {
+      "id": "N_varek_0_5",
+      "hero": "varek",
+      "branch": 0,
+      "branch_name": "Bastilha",
+      "order": 5,
+      "name": "Bastilha: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "defense",
+      "value": 15,
+      "description": "+15 defesa por ponto."
+    },
+    {
+      "id": "N_varek_1_0",
+      "hero": "varek",
+      "branch": 1,
+      "branch_name": "Ruptura",
+      "order": 0,
+      "name": "Ruptura: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "attack",
+      "value": 0.025,
+      "description": "+2.5% ataque por ponto."
+    },
+    {
+      "id": "N_varek_1_1",
+      "hero": "varek",
+      "branch": 1,
+      "branch_name": "Ruptura",
+      "order": 1,
+      "name": "Ruptura: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "rupture",
+      "value": 0.1,
+      "description": "+10.0% ruptura de chefe por ponto."
+    },
+    {
+      "id": "N_varek_1_2",
+      "hero": "varek",
+      "branch": 1,
+      "branch_name": "Ruptura",
+      "order": 2,
+      "name": "Ruptura: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "skill",
+      "value": 0.045,
+      "description": "+4.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_varek_1_3",
+      "hero": "varek",
+      "branch": 1,
+      "branch_name": "Ruptura",
+      "order": 3,
+      "name": "Ruptura: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "cooldown",
+      "value": 0.03,
+      "description": "+3.0% redução de recarga das técnicas por ponto."
+    },
+    {
+      "id": "N_varek_1_4",
+      "hero": "varek",
+      "branch": 1,
+      "branch_name": "Ruptura",
+      "order": 4,
+      "name": "Ruptura: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "crit",
+      "value": 0.015,
+      "description": "+1.5% chance crítica por ponto."
+    },
+    {
+      "id": "N_varek_1_5",
+      "hero": "varek",
+      "branch": 1,
+      "branch_name": "Ruptura",
+      "order": 5,
+      "name": "Ruptura: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "rupture",
+      "value": 0.30000000000000004,
+      "description": "+30.0% ruptura de chefe por ponto."
+    },
+    {
+      "id": "N_varek_2_0",
+      "hero": "varek",
+      "branch": 2,
+      "branch_name": "Fervor",
+      "order": 0,
+      "name": "Fervor: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "attack",
+      "value": 0.025,
+      "description": "+2.5% ataque por ponto."
+    },
+    {
+      "id": "N_varek_2_1",
+      "hero": "varek",
+      "branch": 2,
+      "branch_name": "Fervor",
+      "order": 1,
+      "name": "Fervor: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "movement",
+      "value": 0.025,
+      "description": "+2.5% velocidade por ponto."
+    },
+    {
+      "id": "N_varek_2_2",
+      "hero": "varek",
+      "branch": 2,
+      "branch_name": "Fervor",
+      "order": 2,
+      "name": "Fervor: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "supreme",
+      "value": 0.06,
+      "description": "+6.0% ganho de Brasa por ponto."
+    },
+    {
+      "id": "N_varek_2_3",
+      "hero": "varek",
+      "branch": 2,
+      "branch_name": "Fervor",
+      "order": 3,
+      "name": "Fervor: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "crit",
+      "value": 0.015,
+      "description": "+1.5% chance crítica por ponto."
+    },
+    {
+      "id": "N_varek_2_4",
+      "hero": "varek",
+      "branch": 2,
+      "branch_name": "Fervor",
+      "order": 4,
+      "name": "Fervor: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "cooldown",
+      "value": 0.03,
+      "description": "+3.0% redução de recarga das técnicas por ponto."
+    },
+    {
+      "id": "N_varek_2_5",
+      "hero": "varek",
+      "branch": 2,
+      "branch_name": "Fervor",
+      "order": 5,
+      "name": "Fervor: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "attack",
+      "value": 0.07500000000000001,
+      "description": "+7.5% ataque por ponto."
+    },
+    {
+      "id": "N_maela_0_0",
+      "hero": "maela",
+      "branch": 0,
+      "branch_name": "Incêndio",
+      "order": 0,
+      "name": "Incêndio: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "attack",
+      "value": 0.025,
+      "description": "+2.5% ataque por ponto."
+    },
+    {
+      "id": "N_maela_0_1",
+      "hero": "maela",
+      "branch": 0,
+      "branch_name": "Incêndio",
+      "order": 1,
+      "name": "Incêndio: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "skill",
+      "value": 0.045,
+      "description": "+4.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_maela_0_2",
+      "hero": "maela",
+      "branch": 0,
+      "branch_name": "Incêndio",
+      "order": 2,
+      "name": "Incêndio: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "mana",
+      "value": 0.1,
+      "description": "+10.0% recuperação de mana por ponto."
+    },
+    {
+      "id": "N_maela_0_3",
+      "hero": "maela",
+      "branch": 0,
+      "branch_name": "Incêndio",
+      "order": 3,
+      "name": "Incêndio: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "crit",
+      "value": 0.015,
+      "description": "+1.5% chance crítica por ponto."
+    },
+    {
+      "id": "N_maela_0_4",
+      "hero": "maela",
+      "branch": 0,
+      "branch_name": "Incêndio",
+      "order": 4,
+      "name": "Incêndio: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "cooldown",
+      "value": 0.03,
+      "description": "+3.0% redução de recarga das técnicas por ponto."
+    },
+    {
+      "id": "N_maela_0_5",
+      "hero": "maela",
+      "branch": 0,
+      "branch_name": "Incêndio",
+      "order": 5,
+      "name": "Incêndio: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "skill",
+      "value": 0.135,
+      "description": "+13.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_maela_1_0",
+      "hero": "maela",
+      "branch": 1,
+      "branch_name": "Sigilo",
+      "order": 0,
+      "name": "Sigilo: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "skill",
+      "value": 0.045,
+      "description": "+4.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_maela_1_1",
+      "hero": "maela",
+      "branch": 1,
+      "branch_name": "Sigilo",
+      "order": 1,
+      "name": "Sigilo: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "cooldown",
+      "value": 0.03,
+      "description": "+3.0% redução de recarga das técnicas por ponto."
+    },
+    {
+      "id": "N_maela_1_2",
+      "hero": "maela",
+      "branch": 1,
+      "branch_name": "Sigilo",
+      "order": 2,
+      "name": "Sigilo: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "supreme",
+      "value": 0.06,
+      "description": "+6.0% ganho de Brasa por ponto."
+    },
+    {
+      "id": "N_maela_1_3",
+      "hero": "maela",
+      "branch": 1,
+      "branch_name": "Sigilo",
+      "order": 3,
+      "name": "Sigilo: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "crit",
+      "value": 0.015,
+      "description": "+1.5% chance crítica por ponto."
+    },
+    {
+      "id": "N_maela_1_4",
+      "hero": "maela",
+      "branch": 1,
+      "branch_name": "Sigilo",
+      "order": 4,
+      "name": "Sigilo: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "attack",
+      "value": 0.025,
+      "description": "+2.5% ataque por ponto."
+    },
+    {
+      "id": "N_maela_1_5",
+      "hero": "maela",
+      "branch": 1,
+      "branch_name": "Sigilo",
+      "order": 5,
+      "name": "Sigilo: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "skill",
+      "value": 0.135,
+      "description": "+13.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_maela_2_0",
+      "hero": "maela",
+      "branch": 2,
+      "branch_name": "Vigília",
+      "order": 0,
+      "name": "Vigília: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "hp",
+      "value": 12,
+      "description": "+12 vida por ponto."
+    },
+    {
+      "id": "N_maela_2_1",
+      "hero": "maela",
+      "branch": 2,
+      "branch_name": "Vigília",
+      "order": 1,
+      "name": "Vigília: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "defense",
+      "value": 5,
+      "description": "+5 defesa por ponto."
+    },
+    {
+      "id": "N_maela_2_2",
+      "hero": "maela",
+      "branch": 2,
+      "branch_name": "Vigília",
+      "order": 2,
+      "name": "Vigília: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "barrier",
+      "value": 0.08,
+      "description": "+8.0% eficácia de barreira por ponto."
+    },
+    {
+      "id": "N_maela_2_3",
+      "hero": "maela",
+      "branch": 2,
+      "branch_name": "Vigília",
+      "order": 3,
+      "name": "Vigília: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "mana",
+      "value": 0.1,
+      "description": "+10.0% recuperação de mana por ponto."
+    },
+    {
+      "id": "N_maela_2_4",
+      "hero": "maela",
+      "branch": 2,
+      "branch_name": "Vigília",
+      "order": 4,
+      "name": "Vigília: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "dodge",
+      "value": 0.04,
+      "description": "+4.0% redução de recarga da esquiva por ponto."
+    },
+    {
+      "id": "N_maela_2_5",
+      "hero": "maela",
+      "branch": 2,
+      "branch_name": "Vigília",
+      "order": 5,
+      "name": "Vigília: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "barrier",
+      "value": 0.24,
+      "description": "+24.0% eficácia de barreira por ponto."
+    },
+    {
+      "id": "N_neris_0_0",
+      "hero": "neris",
+      "branch": 0,
+      "branch_name": "Lâmina",
+      "order": 0,
+      "name": "Lâmina: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "attack",
+      "value": 0.025,
+      "description": "+2.5% ataque por ponto."
+    },
+    {
+      "id": "N_neris_0_1",
+      "hero": "neris",
+      "branch": 0,
+      "branch_name": "Lâmina",
+      "order": 1,
+      "name": "Lâmina: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "crit",
+      "value": 0.015,
+      "description": "+1.5% chance crítica por ponto."
+    },
+    {
+      "id": "N_neris_0_2",
+      "hero": "neris",
+      "branch": 0,
+      "branch_name": "Lâmina",
+      "order": 2,
+      "name": "Lâmina: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "skill",
+      "value": 0.045,
+      "description": "+4.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_neris_0_3",
+      "hero": "neris",
+      "branch": 0,
+      "branch_name": "Lâmina",
+      "order": 3,
+      "name": "Lâmina: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "movement",
+      "value": 0.025,
+      "description": "+2.5% velocidade por ponto."
+    },
+    {
+      "id": "N_neris_0_4",
+      "hero": "neris",
+      "branch": 0,
+      "branch_name": "Lâmina",
+      "order": 4,
+      "name": "Lâmina: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "cooldown",
+      "value": 0.03,
+      "description": "+3.0% redução de recarga das técnicas por ponto."
+    },
+    {
+      "id": "N_neris_0_5",
+      "hero": "neris",
+      "branch": 0,
+      "branch_name": "Lâmina",
+      "order": 5,
+      "name": "Lâmina: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "attack",
+      "value": 0.07500000000000001,
+      "description": "+7.5% ataque por ponto."
+    },
+    {
+      "id": "N_neris_1_0",
+      "hero": "neris",
+      "branch": 1,
+      "branch_name": "Sentinela",
+      "order": 0,
+      "name": "Sentinela: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "attack",
+      "value": 0.025,
+      "description": "+2.5% ataque por ponto."
+    },
+    {
+      "id": "N_neris_1_1",
+      "hero": "neris",
+      "branch": 1,
+      "branch_name": "Sentinela",
+      "order": 1,
+      "name": "Sentinela: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "skill",
+      "value": 0.045,
+      "description": "+4.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_neris_1_2",
+      "hero": "neris",
+      "branch": 1,
+      "branch_name": "Sentinela",
+      "order": 2,
+      "name": "Sentinela: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "supreme",
+      "value": 0.06,
+      "description": "+6.0% ganho de Brasa por ponto."
+    },
+    {
+      "id": "N_neris_1_3",
+      "hero": "neris",
+      "branch": 1,
+      "branch_name": "Sentinela",
+      "order": 3,
+      "name": "Sentinela: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "crit",
+      "value": 0.015,
+      "description": "+1.5% chance crítica por ponto."
+    },
+    {
+      "id": "N_neris_1_4",
+      "hero": "neris",
+      "branch": 1,
+      "branch_name": "Sentinela",
+      "order": 4,
+      "name": "Sentinela: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "cooldown",
+      "value": 0.03,
+      "description": "+3.0% redução de recarga das técnicas por ponto."
+    },
+    {
+      "id": "N_neris_1_5",
+      "hero": "neris",
+      "branch": 1,
+      "branch_name": "Sentinela",
+      "order": 5,
+      "name": "Sentinela: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "skill",
+      "value": 0.135,
+      "description": "+13.5% dano de técnica por ponto."
+    },
+    {
+      "id": "N_neris_2_0",
+      "hero": "neris",
+      "branch": 2,
+      "branch_name": "Passagem",
+      "order": 0,
+      "name": "Passagem: Fundação",
+      "max_rank": 3,
+      "requires_points": 0,
+      "sanctuary": 1,
+      "effect": "movement",
+      "value": 0.025,
+      "description": "+2.5% velocidade por ponto."
+    },
+    {
+      "id": "N_neris_2_1",
+      "hero": "neris",
+      "branch": 2,
+      "branch_name": "Passagem",
+      "order": 1,
+      "name": "Passagem: Disciplina",
+      "max_rank": 3,
+      "requires_points": 3,
+      "sanctuary": 1,
+      "effect": "dodge",
+      "value": 0.04,
+      "description": "+4.0% redução de recarga da esquiva por ponto."
+    },
+    {
+      "id": "N_neris_2_2",
+      "hero": "neris",
+      "branch": 2,
+      "branch_name": "Passagem",
+      "order": 2,
+      "name": "Passagem: Vigor",
+      "max_rank": 3,
+      "requires_points": 6,
+      "sanctuary": 1,
+      "effect": "hp",
+      "value": 12,
+      "description": "+12 vida por ponto."
+    },
+    {
+      "id": "N_neris_2_3",
+      "hero": "neris",
+      "branch": 2,
+      "branch_name": "Passagem",
+      "order": 3,
+      "name": "Passagem: Domínio",
+      "max_rank": 3,
+      "requires_points": 9,
+      "sanctuary": 2,
+      "effect": "heal",
+      "value": 0.04,
+      "description": "+4.0% eficácia de cura por ponto."
+    },
+    {
+      "id": "N_neris_2_4",
+      "hero": "neris",
+      "branch": 2,
+      "branch_name": "Passagem",
+      "order": 4,
+      "name": "Passagem: Herança",
+      "max_rank": 3,
+      "requires_points": 12,
+      "sanctuary": 2,
+      "effect": "barrier",
+      "value": 0.08,
+      "description": "+8.0% eficácia de barreira por ponto."
+    },
+    {
+      "id": "N_neris_2_5",
+      "hero": "neris",
+      "branch": 2,
+      "branch_name": "Passagem",
+      "order": 5,
+      "name": "Passagem: Juramento",
+      "max_rank": 1,
+      "requires_points": 15,
+      "sanctuary": 3,
+      "effect": "dodge",
+      "value": 0.12,
+      "description": "+12.0% redução de recarga da esquiva por ponto."
+    }
+  ],
+  "quests": [
+    {
+      "id": "Q_0",
+      "name": "A ferramenta de Doran",
+      "dungeon": 0,
+      "barracks": 1,
+      "gold": 80,
+      "ore": 4,
+      "ash": 1,
+      "text": "Doran: Os sinos da mina ainda chamam os trabalhadores. Traga minério e procure minha ferramenta."
+    },
+    {
+      "id": "Q_1",
+      "name": "Nomes nas raízes",
+      "dungeon": 1,
+      "barracks": 1,
+      "gold": 95,
+      "ore": 5,
+      "ash": 1,
+      "text": "Iria: O bosque guarda nomes nas raízes. Liberte-os do fogo que não aquece."
+    },
+    {
+      "id": "Q_2",
+      "name": "Libertar o Portão",
+      "dungeon": 2,
+      "barracks": 1,
+      "gold": 110,
+      "ore": 6,
+      "ash": 1,
+      "text": "Iria: Garron era nosso guardião. Agora seu escudo é o portão de uma prisão."
+    },
+    {
+      "id": "Q_5",
+      "name": "Vozes que retornam",
+      "dungeon": 5,
+      "barracks": 2,
+      "gold": 155,
+      "ore": 9,
+      "ash": 1,
+      "text": "Iria: Cada sino daquela catedral carrega uma lembrança roubada."
+    },
+    {
+      "id": "Q_8",
+      "name": "Um novo amanhecer",
+      "dungeon": 8,
+      "barracks": 2,
+      "gold": 200,
+      "ore": 12,
+      "ash": 1,
+      "text": "Iria: O rei mantém o sol preso para que seu último dia nunca termine."
+    },
+    {
+      "id": "Q_11",
+      "name": "O peso das correntes",
+      "dungeon": 11,
+      "barracks": 2,
+      "gold": 245,
+      "ore": 15,
+      "ash": 1,
+      "text": "Oren: O colosso nasceu para proteger. Agora obedece apenas ao ferro."
+    },
+    {
+      "id": "Q_14",
+      "name": "O último nome",
+      "dungeon": 14,
+      "barracks": 2,
+      "gold": 290,
+      "ore": 18,
+      "ash": 1,
+      "text": "Severan: Se a chama morrer, perderei minha filha outra vez. Iria: Ela precisa de liberdade, não de outra prisão."
+    }
+  ],
+  "encounters": [
+    {
+      "id": "DUN_00",
+      "rooms": [
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "charge"
+    },
+    {
+      "id": "DUN_01",
+      "rooms": [
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "roots"
+    },
+    {
+      "id": "DUN_02",
+      "rooms": [
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "shield"
+    },
+    {
+      "id": "DUN_03",
+      "rooms": [
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 2,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 0,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "hook"
+    },
+    {
+      "id": "DUN_04",
+      "rooms": [
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "sweep"
+    },
+    {
+      "id": "DUN_05",
+      "rooms": [
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "echo"
+    },
+    {
+      "id": "DUN_06",
+      "rooms": [
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "rush"
+    },
+    {
+      "id": "DUN_07",
+      "rooms": [
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 2,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 0,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "crystal"
+    },
+    {
+      "id": "DUN_08",
+      "rooms": [
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "frost"
+    },
+    {
+      "id": "DUN_09",
+      "rooms": [
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "hook"
+    },
+    {
+      "id": "DUN_10",
+      "rooms": [
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "molten"
+    },
+    {
+      "id": "DUN_11",
+      "rooms": [
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 2,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 0,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "chain"
+    },
+    {
+      "id": "DUN_12",
+      "rooms": [
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "mirrors"
+    },
+    {
+      "id": "DUN_13",
+      "rooms": [
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "rush"
+    },
+    {
+      "id": "DUN_14",
+      "rooms": [
+        {
+          "encounter": [
+            "archer",
+            "knight",
+            "archer",
+            "brute"
+          ],
+          "layout": 2,
+          "hazard": false,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "knight",
+            "knight"
+          ],
+          "layout": 3,
+          "hazard": true,
+          "treasure": false,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "knight",
+            "knight",
+            "archer"
+          ],
+          "layout": 0,
+          "hazard": true,
+          "treasure": true,
+          "rest": false
+        },
+        {
+          "encounter": [
+            "brute",
+            "archer",
+            "knight"
+          ],
+          "layout": 1,
+          "hazard": false,
+          "treasure": false,
+          "rest": true
+        }
+      ],
+      "boss_pattern": "white"
     }
   ]
 }

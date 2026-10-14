@@ -4,6 +4,10 @@ extends RefCounted
 var dungeons: Array = []
 var items: Dictionary = {}
 var regions: Array = []
+var skills: Dictionary = {}
+var talents: Dictionary = {}
+var quests: Array = []
+var encounters: Array = []
 
 func _init() -> void:
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/catalog.json"))
@@ -14,6 +18,16 @@ func _init() -> void:
 	regions = parsed.regions
 	for item in parsed.items:
 		items[item.id] = item
+	for def in parsed.get("skills",[]):skills[def.id]=def
+	for def in parsed.get("talents",[]):talents[def.id]=def
+	quests=parsed.get("quests",[])
+	encounters=parsed.get("encounters",[])
+
+func skill(id: String) -> Dictionary:
+	return skills.get(id,{})
+
+func talent(id: String) -> Dictionary:
+	return talents.get(id,{})
 
 func item(id: String) -> Dictionary:
 	return items.get(id, {})

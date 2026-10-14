@@ -40,14 +40,21 @@ jobs:
           set -o pipefail
           Godot_v4.6.1-stable_linux.x86_64 --headless --script tests/test_game.gd -- --qa 2>&1 | tee /tmp/df-tests.log
           if grep -E 'SCRIPT ERROR|ERROR:' /tmp/df-tests.log; then exit 1; fi
+      - name: Test skills, talents and version 1 save migration
+        run: |
+          set -o pipefail
+          Godot_v4.6.1-stable_linux.x86_64 --headless --script tests/test_v02.gd -- --qa 2>&1 | tee /tmp/df-v02.log
+          if grep -E 'SCRIPT ERROR|ERROR:' /tmp/df-v02.log; then exit 1; fi
       - name: Test real combat without forced enemy deaths
         run: |
           set -o pipefail
           Godot_v4.6.1-stable_linux.x86_64 --headless --script tests/test_combat_bot.gd -- --qa 2>&1 | tee /tmp/df-combat.log
           if grep -E 'SCRIPT ERROR|ERROR:' /tmp/df-combat.log; then exit 1; fi
       - name: Pack clean independent source
-        run: git archive --format=zip --prefix=Dungeons_Fires_Godot_v0_1_0/ HEAD:projects/dungeons-fires -o /tmp/Dungeons_Fires_Godot_v0_1_0.zip
+        run: git archive --format=zip --prefix=Dungeons_Fires_Godot_v0_2_0/ HEAD:projects/dungeons-fires -o /tmp/Dungeons_Fires_Godot_v0_2_0.zip
+      - name: Verify source archive integrity
+        run: python3 -c 'import zipfile; z=zipfile.ZipFile("/tmp/Dungeons_Fires_Godot_v0_2_0.zip"); assert z.testzip() is None'
       - uses: actions/upload-artifact@v4
         with:
-          name: Dungeons-Fires-Godot-source-v010
-          path: /tmp/Dungeons_Fires_Godot_v0_1_0.zip
+          name: Dungeons-Fires-Godot-source-v020
+          path: /tmp/Dungeons_Fires_Godot_v0_2_0.zip

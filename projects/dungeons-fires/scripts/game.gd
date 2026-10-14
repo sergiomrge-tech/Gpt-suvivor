@@ -5,6 +5,8 @@ const World = preload("res://scripts/world.gd")
 const Touch = preload("res://scripts/touch_controls.gd")
 const Progress = preload("res://scripts/progression.gd")
 const Content = preload("res://scripts/content.gd")
+const Skills = preload("res://scripts/skills.gd")
+const Encounter = preload("res://scripts/encounter.gd")
 
 var db: DFContent
 var progress: DFProgress
@@ -44,6 +46,15 @@ var qa_mode: bool = false
 var current_map_region: int = 0
 var guard_charge: float = 0
 var resource_cd: float = 0
+var skills: DFSkills
+var encounter: DFEncounter
+var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var training: bool = false
+var training_damage: float = 0
+var training_time: float = 0
+var hud_timer: float = 0
+var skill_slot: int = 0
+var talent_branch: int = 0
 
 func _ready() -> void:
 	get_tree().quit_on_go_back=false
@@ -53,6 +64,8 @@ func _ready() -> void:
 	if "--qa" in OS.get_cmdline_user_args():
 		qa_mode=true;progress.path="user://qa_save.json"
 	progress.load_save()
+	skills=Skills.new(self);encounter=Encounter.new(self)
+	rng.seed=417
 	game_theme = make_theme()
 	world=World.new();world.game=self;add_child(world)
 	actors=Node2D.new();add_child(actors)
@@ -100,6 +113,7 @@ func clear_ui() -> void:
 func clear_actors() -> void:
 	for a in actors.get_children():a.queue_free();actors.remove_child(a)
 	player=null;enemies.clear();world.projectiles.clear();world.effects.clear();world.numbers.clear()
+	skills.reset();encounter.reset()
 
 func title(text: String, subtitle: String = "") -> void:
 	panel(Vector2(28,20),Vector2(1224,76))
@@ -119,7 +133,7 @@ func show_menu() -> void:
 	button("RETOMAR EXPEDIÇÃO",Vector2(180,390),Vector2(540,58),resume_run,progress.d.run.is_empty())
 	button("HISTÓRIA",Vector2(180,463),Vector2(250,58),func():show_lore(false))
 	button("OPÇÕES",Vector2(447,463),Vector2(273,58),func():previous_screen="menu";show_settings())
-	label("v0.1.0 • Solo offline • Projeto original em Godot",Vector2(180,570),Vector2(900,28),16,Color("a79d8d"))
+	label("v0.2.0 • Solo offline • Projeto original em Godot",Vector2(180,570),Vector2(900,28),16,Color("a79d8d"))
 	spawn_actor(progress.d.hero,Vector2(950,508),true,180,28)
 
 func spawn_actor(kind: String, pos: Vector2, human: bool, life: float, damage: float, boss: bool = false) -> DFActor:
@@ -138,7 +152,7 @@ func relic_effect() -> String:
 	return db.item(str(progress.d.equipped.relic)).get("effect","")
 
 func show_hub() -> void:
-	clear_ui();clear_actors();screen="hub";hero_dead=false;world.change_theme(5)
+	clear_ui();clear_actors();screen="hub";hero_dead=false;training=false;world.change_theme(5)
 	title("REFÚGIO DA ÚLTIMA CHAMA",resources())
 	spawn_actor(progress.d.hero,Vector2(635,488),true,progress.hero_stats().hp,progress.hero_stats().attack)
 	spawn_actor("knight",Vector2(289,473),false,100,0)
@@ -152,8 +166,10 @@ func show_hub() -> void:
 	button("APRIMORAR REFÚGIO",Vector2(724,549),Vector2(310,62),show_buildings)
 	button("HERÓIS",Vector2(54,628),Vector2(190,52),show_heroes)
 	button("TALENTOS",Vector2(267,628),Vector2(200,52),show_talents)
-	button("LORE",Vector2(490,628),Vector2(175,52),func():show_lore(true))
-	button("OPÇÕES",Vector2(689,628),Vector2(185,52),func():previous_screen="hub";show_settings())
+	button("HABILIDADES",Vector2(490,628),Vector2(205,52),show_skills)
+	button("QUARTEL",Vector2(716,628),Vector2(180,52),show_quarter)
+	button("LORE",Vector2(1054,478),Vector2(178,52),func():show_lore(true))
+	button("OPÇÕES",Vector2(1054,405),Vector2(178,52),func():previous_screen="hub";show_settings())
 	button("MENU",Vector2(1060,628),Vector2(170,52),show_menu)
 	if not progress.d.run.is_empty():button("Retomar",Vector2(1052,550),Vector2(180,62),resume_run)
 	if not progress.d.tutorial:
@@ -199,7 +215,8 @@ func confirm_start(index: int) -> void:
 	else:start_dungeon(index)
 
 func start_dungeon(index: int, resume: bool = false) -> void:
-	clear_ui();clear_actors();screen="combat";hero_dead=false;dungeon=index;room=0;cleared_room=false;wave_ready=0;next_enemy_id=1
+	clear_ui();clear_actors();screen="combat";hero_dead=false;training=false;dungeon=index;room=0;cleared_room=false;wave_ready=0;next_enemy_id=1
+	rng.seed=int(db.dungeons[index].seed)
 	world.change_theme(int(db.dungeons[index].region))
 	var stats=progress.hero_stats();spawn_actor(progress.d.hero,Vector2(265,505),true,stats.hp,stats.attack);player.defense=stats.defense
 	potions=3 if progress.d.hub.botica>=3 else 2
@@ -208,10 +225,15 @@ func start_dungeon(index: int, resume: bool = false) -> void:
 		var run=progress.d.run.duplicate(true)
 		room=int(run.room);potions=int(run.potions);loot=run.loot;cleared_room=run.cleared
 		player.hp=float(run.hp);player.position=Vector2(run.x,run.y);player.supreme=float(run.get("supreme",0));player.mana=float(run.get("mana",100))
+		player.restore(run.get("player_state",{}))
 		for data in run.enemies:
 			var a=spawn_actor(data.kind,Vector2(data.x,data.y),false,data.max_hp,data.attack,data.boss)
 			a.hp=data.hp;a.id=int(data.id);a.facing=int(data.facing)
+			a.restore(data)
 			next_enemy_id=maxi(next_enemy_id,a.id+1)
+		skills.restore(run.get("skills_state",{}));encounter.restore(run.get("encounter",{}))
+		world.restore_projectiles(run.get("projectiles",[]))
+		rng.state=int(run.get("rng_state",str(rng.state)))
 	else:spawn_room()
 	combat_ui();save_run()
 	if resume:toast("Expedição restaurada. Vida, poções e saque preservados.",4)
@@ -227,20 +249,23 @@ func resume_run() -> void:
 func spawn_room() -> void:
 	for a in enemies:
 		if is_instance_valid(a): a.queue_free();actors.remove_child(a)
-	enemies.clear();world.projectiles.clear();cleared_room=false
+	enemies.clear();world.projectiles.clear();skills.reset();encounter.reset();cleared_room=false
 	player.position=Vector2(205,505)
 	var region=int(db.dungeons[dungeon].region)
-	var count=3+room%2
 	if room==4:
 		var kind="brute"
 		if db.dungeons[dungeon].guardian:kind=["garron","sereia","rei","colosso","severan"][region]
 		var life=230+dungeon*47
-		spawn_actor(kind,Vector2(900,480),false,life,20+region*4,true)
+		var boss_actor=spawn_actor(kind,Vector2(900,480),false,life,20+region*4,true)
+		boss_actor.pattern=db.encounters[dungeon].boss_pattern
+		if boss_actor.pattern=="shield":boss_actor.defense=30
 		if region>0:spawn_actor("knight",Vector2(1040,531),false,50+region*15,10+region*3)
 	else:
-		for i in range(count):
-			var kind=["knight","archer","brute"][(i+room+dungeon)%3]
-			spawn_actor(kind,Vector2(660+i*118,436+(i*41+room*19)%116),false,43+dungeon*11+(15 if kind=="brute" else 0),9+region*3)
+		var profile=encounter.room_data()
+		var formations=[[Vector2(660,438),Vector2(820,510),Vector2(1060,455),Vector2(990,540)],[Vector2(680,540),Vector2(1020,433),Vector2(840,484),Vector2(1150,537)],[Vector2(690,465),Vector2(850,465),Vector2(1040,530),Vector2(990,415)],[Vector2(880,420),Vector2(740,530),Vector2(1140,480),Vector2(990,545)]]
+		for i in range(profile.encounter.size()):
+			var kind=profile.encounter[i]
+			spawn_actor(kind,formations[int(profile.layout)][i],false,43+dungeon*11+(15 if kind=="brute" else 0),9+region*3)
 		if room==3:
 			player.hp=minf(player.max_hp,player.hp+player.max_hp*.25)
 			toast("Descanso: recuperou 25% da vida. Prepare-se para o chefe.",5)
@@ -257,19 +282,22 @@ func combat_ui() -> void:
 	panel(Vector2(25,18),Vector2(660,90));hud=label("",Vector2(43,30),Vector2(638,74),17)
 	hud.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	button("MOCHILA",Vector2(838,24),Vector2(170,57),func():save_run();previous_screen="combat";show_inventory())
-	button("PAUSA",Vector2(1023,24),Vector2(200,57),show_pause)
+	button("SAIR DO TREINO" if training else "PAUSA",Vector2(1023,24),Vector2(230,57),show_hub if training else show_pause)
 	boss_hud=label("",Vector2(630,135),Vector2(600,62),21,Color("efb777"))
 	if cleared_room:
 		button("PRÓXIMA SALA  →",Vector2(469,284),Vector2(350,62),next_room)
 		button("DEPOSITAR E RETIRAR",Vector2(469,357),Vector2(350,54),retreat)
+		if room==2 and not encounter.treasure_claimed:button("ABRIR BAÚ",Vector2(880,285),Vector2(290,62),claim_treasure)
 	update_hud()
 
 func update_hud() -> void:
 	if player==null or hud==null:return
 	var info="%s  •  Nível %d  •  Vida %d/%d\n%s  •  Sala %d/5  •  Poções %d" %[progress.d.hero.capitalize(),progress.hero_stats().level,player.hp,player.max_hp,db.dungeons[dungeon].name,room+1,potions]
 	if player.kind=="maela":info+="  •  Mana %d"%player.mana
+	if training:info="TREINO DE OREN • Dano total %d\nDPS %.1f • Sem custo, loot ou perda de recursos"%[training_damage,training_damage/maxf(1,training_time)]
 	hud.text=info
 	controls.cooldowns={"dodge":player.dodge_cd,"skill0":player.skill_cd[0],"skill1":player.skill_cd[1],"charge":player.supreme}
+	controls.skill_names=[progress.active_skill(0).get("name","NÍV. 1"),progress.active_skill(1).get("name","NÍV. 4")]
 	controls.queue_redraw()
 	if boss_hud!=null:
 		boss_hud.text=""
@@ -289,10 +317,15 @@ func windup_count() -> int:
 	return count
 
 func player_strike(a: DFActor, action_name: String) -> void:
+	if action_name.begins_with("S_"):
+		skills.execute(a,action_name);return
+	if action_name=="supreme":skills.supreme(a);return
 	var weapon=db.item(progress.d.equipped.weapon)
 	var family=weapon.get("family","sword")
 	var ranged=family in ["staff","focus","bow"]
 	var damage=a.attack_power*(1.3 if a.combo==2 else 1.0)
+	if a.buff_attack>0:damage*=1.3;a.buff_attack=0
+	if rng.randf()<progress.talent_bonuses().crit:damage*=1.5
 	var range_x=145.0 if family=="hammer" else 116.0
 	var depth=56.0
 	var color=Color("ffd179")
@@ -330,32 +363,35 @@ func player_strike(a: DFActor, action_name: String) -> void:
 			if relic_effect()=="guard" and guard_charge>0:boost=1.25;guard_charge=0
 			if relic_effect()=="rupture" and action_name!="basic":boost=1.20
 			if e.hurt(damage*boost,Vector2(a.facing*(18 if not e.boss else 4),0)):
-				a.supreme=minf(100,a.supreme+8)
+				a.supreme=minf(100,a.supreme+8*(1+progress.talent_bonuses().supreme))
 				if action_name=="skill1" or relic_effect()=="slow":e.slowed=2.5
 
 func enemy_strike(a: DFActor) -> void:
 	if player.hp<=0:return
+	if encounter.cast_boss(a):return
+	var power=a.attack_power*(.75 if a.weakened>0 else 1)
 	if a.kind in ["archer","sereia","severan"]:
 		var vel=(a.aim-a.position).normalized()*320
-		world.missile(a.position,vel,a.attack_power,false,Color("ee7068"))
+		world.missile(a.position,vel,power,false,Color("ee7068"))
 		if a.boss and a.hp<a.max_hp*.5:
-			world.missile(a.position,vel.rotated(.12),a.attack_power*.8,false,Color("c2dceb"))
-			world.missile(a.position,vel.rotated(-.12),a.attack_power*.8,false,Color("c2dceb"))
+			world.missile(a.position,vel.rotated(.12),power*.8,false,Color("c2dceb"))
+			world.missile(a.position,vel.rotated(-.12),power*.8,false,Color("c2dceb"))
 	else:
 		var reach=150.0 if a.boss else 89.0
 		var depth=70.0 if a.boss else 45.0
 		world.fx(a.position+Vector2(a.facing*40,-12),reach*.5,Color(1,.35,.24),.28)
 		var diff: Vector2=player.position-a.position
 		if absf(diff.x)<reach and absf(diff.y)<depth and diff.x*a.facing>-20:
-			player.hurt(a.attack_power*(1.25 if a.boss and a.hp<a.max_hp*.5 else 1.0),Vector2(a.facing*13,0))
+			player.hurt(power*(1.25 if a.boss and a.hp<a.max_hp*.5 else 1.0),Vector2(a.facing*13,0))
 		if a.boss and a.hp<a.max_hp*.5:
 			world.fx(a.position,110,Color("ed7851"),.5)
-			if player.position.distance_to(a.position)<110:player.hurt(a.attack_power*.65)
+			if player.position.distance_to(a.position)<110:player.hurt(power*.65)
 
 func damage_text(pos: Vector2, value: int, human: bool) -> void:
 	world.numbers.append({"pos":pos,"value":value,"time":1.0,"player":human})
 
 func on_enemy_dead(a: DFActor) -> void:
+	if training:return
 	loot.gold+=8+dungeon*2;loot.ore+=1;loot.xp+=18+dungeon*7
 	if a.id%3==0:loot.cloth+=1
 	if a.id%4==0:
@@ -409,7 +445,7 @@ func use_potion() -> void:
 	if potions<1 or player==null or player.hp<=0 or player.hp>=player.max_hp:return
 	potions-=1
 	var cure=[.30,.40,.45][int(progress.d.hub.botica)-1]
-	player.hp=minf(player.max_hp,player.hp+player.max_hp*cure)
+	player.hp=minf(player.max_hp,player.hp+player.max_hp*cure*(1+progress.talent_bonuses().heal))
 	world.fx(player.position-Vector2(0,50),60,Color("93cd89"),.5);play_sfx("magic");save_run()
 
 func on_action(name: String, held: bool) -> void:
@@ -426,11 +462,14 @@ func on_action(name: String, held: bool) -> void:
 			"potion":use_potion()
 
 func save_run() -> void:
-	if player==null or player.hp<=0 or hero_dead:return
+	if player==null or player.hp<=0 or hero_dead or training:return
 	var enemy_data:Array=[]
 	for a in enemies:
 		if a.hp>0:enemy_data.append(a.snapshot())
 	progress.d.run={"dungeon":dungeon,"room":room,"hp":player.hp,"x":player.position.x,"y":player.position.y,"potions":potions,"loot":loot.duplicate(true),"enemies":enemy_data,"cleared":cleared_room,"supreme":player.supreme,"mana":player.mana}
+	progress.d.run.player_state=player.snapshot()
+	progress.d.run.skills_state=skills.snapshot();progress.d.run.encounter=encounter.snapshot()
+	progress.d.run.projectiles=world.snapshot_projectiles();progress.d.run.rng_state=str(rng.state)
 	if not progress.save():toast("Não foi possível salvar a expedição.")
 
 func show_pause() -> void:
@@ -511,14 +550,90 @@ func show_heroes() -> void:
 	button("VOLTAR / X",Vector2(870,627),Vector2(300,55),show_hub)
 
 func show_talents() -> void:
-	clear_ui();screen="talents";panel(Vector2(160,90),Vector2(960,550));title("SANTUÁRIO DAS BRASAS",resources())
+	clear_ui();screen="talents";panel(Vector2(25,20),Vector2(1230,677));title("SANTUÁRIO DAS BRASAS","Escolha um ramo. Aprimoramentos do santuário liberam os nós avançados.")
 	var h=progress.d.heroes[progress.d.hero]
-	var available=int(h.level)-1-int(h.talents)
-	label("%s • Pontos disponíveis: %d"%[progress.d.hero.capitalize(),available],Vector2(215,172),Vector2(850,48),28)
-	label("Vigília do Portador • Ranks %d\nCada ponto: +3,5%% ataque e +8 vida máxima.\nA árvore completa de especializações será expandida nas próximas versões."%h.talents,Vector2(215,267),Vector2(850,115),22)
-	button("INVESTIR UM PONTO",Vector2(215,428),Vector2(460,62),func():h.talents+=1;progress.save();show_talents(),available<=0)
-	button("REDEFINIR GRÁTIS",Vector2(705,428),Vector2(350,62),func():h.talents=0;progress.save();show_talents())
-	button("VOLTAR / X",Vector2(760,550),Vector2(300,55),show_hub)
+	label("%s • %d pontos disponíveis • %d investidos"%[progress.d.hero.capitalize(),progress.available_points(),h.talents],Vector2(53,118),Vector2(1050,36),22)
+	var defs=db.talents.values().filter(func(t):return t.hero==progress.d.hero)
+	for branch in range(3):
+		var name=db.talent("N_%s_%d_0"%[progress.d.hero,branch]).branch_name
+		button(name,Vector2(54+branch*400,174),Vector2(370,55),select_talent_branch.bind(branch))
+	var branch_points=0
+	for node in h.nodes:
+		if db.talent(node).branch==talent_branch:branch_points+=int(h.nodes[node])
+	for index in range(6):
+		var id="N_%s_%d_%d"%[progress.d.hero,talent_branch,index]
+		var def=db.talent(id);var rank=int(h.nodes.get(id,0))
+		var pos=Vector2(54+(index%3)*400,245+(index/3)*183)
+		panel(pos,Vector2(370,174))
+		label(def.name,pos+Vector2(14,12),Vector2(344,29),19,Color("edc17c"))
+		label(def.description,pos+Vector2(14,49),Vector2(344,30),16)
+		label("Ramo: %d/%d pts • Santuário %d"%[branch_points,def.requires_points,def.sanctuary],pos+Vector2(14,82),Vector2(344,28),15)
+		var disabled=rank>=def.max_rank or branch_points<def.requires_points or progress.d.hub.sanctuary<def.sanctuary or progress.available_points()<1 or not progress.d.run.is_empty()
+		button("INVESTIR • %d/%d"%[rank,def.max_rank],pos+Vector2(14,115),Vector2(342,48),invest_node.bind(id),disabled)
+	button("REDEFINIR GRÁTIS",Vector2(54,629),Vector2(360,53),reset_nodes,not progress.d.run.is_empty())
+	button("VOLTAR / X",Vector2(881,629),Vector2(343,53),show_hub)
+
+func select_talent_branch(branch: int) -> void:
+	talent_branch=branch;show_talents()
+
+func invest_node(id: String) -> void:
+	if progress.invest_talent(id):show_talents();toast("Talento aprimorado.")
+	else:toast("Confira pontos, pré-requisitos e expedição pendente.")
+
+func reset_nodes() -> void:
+	if progress.respec():show_talents();toast("Pontos devolvidos para redistribuição.")
+
+func show_skills() -> void:
+	clear_ui();screen="skills";panel(Vector2(25,20),Vector2(1230,677));title("HABILIDADES DO PORTADOR","Equipe duas técnicas no refúgio. Novas técnicas nos níveis 1, 4, 8, 12, 18 e 24.")
+	for slot in range(2):
+		button("SLOT %d • %s"%[slot+1,progress.active_skill(slot).get("name","Vazio")],Vector2(55+slot*603,127),Vector2(570,60),select_skill_slot.bind(slot))
+	label("Selecionado: slot %d"%[skill_slot+1],Vector2(58,206),Vector2(800,28),18,Color("edc07c"))
+	var scroll=ScrollContainer.new();scroll.position=Vector2(54,250);scroll.size=Vector2(1170,350);ui.add_child(scroll)
+	var list=VBoxContainer.new();list.size_flags_horizontal=Control.SIZE_EXPAND_FILL;list.add_theme_constant_override("separation",8);scroll.add_child(list)
+	for index in range(6):
+		var id="S_%s_%d"%[progress.d.hero,index];var def=db.skill(id)
+		var row=HBoxContainer.new();row.custom_minimum_size=Vector2(1130,92);list.add_child(row)
+		var text=Label.new();text.text="%s • Nível %d • Recarga %ds%s\n%s"%[def.name,def.level,def.cooldown," • Mana %d"%def.mana if def.mana>0 else "",def.description];text.custom_minimum_size=Vector2(843,90);text.add_theme_font_size_override("font_size",18);row.add_child(text)
+		var b=Button.new();b.custom_minimum_size=Vector2(274,78);b.text="EQUIPAR NO SLOT %d"%[skill_slot+1];b.add_theme_font_size_override("font_size",16);row.add_child(b)
+		b.disabled=int(progress.d.heroes[progress.d.hero].level)<int(def.level) or not progress.d.run.is_empty()
+		b.pressed.connect(set_skill.bind(id))
+	label("Expedições pendentes bloqueiam alterações de build.",Vector2(55,641),Vector2(795,30),17)
+	button("VOLTAR / X",Vector2(899,625),Vector2(324,58),show_hub)
+
+func select_skill_slot(slot: int) -> void:
+	skill_slot=slot;show_skills()
+
+func set_skill(id: String) -> void:
+	if progress.equip_skill(skill_slot,id):show_skills();toast("Habilidade equipada.")
+
+func show_quarter() -> void:
+	clear_ui();screen="quarter";panel(Vector2(25,20),Vector2(1230,677));title("QUARTEL DE OREN","Treino sem risco e contratos da história com recompensa única.")
+	button("ENTRAR NO TREINO",Vector2(55,126),Vector2(500,64),start_training,not progress.d.run.is_empty())
+	label("Quartel nível %d • O treino não concede saque ou experiência."%progress.d.hub.barracks,Vector2(588,144),Vector2(630,40),17)
+	var scroll=ScrollContainer.new();scroll.position=Vector2(53,219);scroll.size=Vector2(1170,375);ui.add_child(scroll)
+	var list=VBoxContainer.new();list.size_flags_horizontal=Control.SIZE_EXPAND_FILL;list.add_theme_constant_override("separation",9);scroll.add_child(list)
+	for quest in db.quests:
+		var row=HBoxContainer.new();row.custom_minimum_size=Vector2(1130,92);list.add_child(row)
+		var text=Label.new();text.custom_minimum_size=Vector2(795,85);text.add_theme_font_size_override("font_size",18);text.text="%s\nConcluir %s • +%d ouro / +%d minério / +1 Cinza"%[quest.name,db.dungeons[int(quest.dungeon)].name,quest.gold,quest.ore];row.add_child(text)
+		var done=progress.d.claimed_quests.has(quest.id)
+		var ready=progress.d.cleared.has(int(quest.dungeon)) and progress.d.hub.barracks>=quest.barracks
+		var b=Button.new();b.custom_minimum_size=Vector2(340,78);b.text="RECEBIDA" if done else ("RECEBER" if ready else "CONCLUIR OBJETIVO");row.add_child(b);b.disabled=done or not ready;b.pressed.connect(claim_contract.bind(quest.id))
+	button("VOLTAR / X",Vector2(896,625),Vector2(326,58),show_hub)
+
+func claim_contract(id: String) -> void:
+	if progress.claim_quest(id):show_quarter();toast("Recompensa registrada no refúgio.")
+
+func start_training() -> void:
+	if not progress.d.run.is_empty():return
+	clear_ui();clear_actors();screen="combat";training=true;training_damage=0;training_time=0;hero_dead=false;cleared_room=false;room=0;dungeon=0
+	world.change_theme(5)
+	var stats=progress.hero_stats()
+	spawn_actor(progress.d.hero,Vector2(405,490),true,stats.hp,stats.attack);player.defense=stats.defense
+	var dummy=spawn_actor("knight",Vector2(805,490),false,500,0);dummy.passive=true
+	potions=2;combat_ui();toast("Teste suas armas e técnicas. O alvo não contra-ataca.",5)
+
+func claim_treasure() -> void:
+	if encounter.treasure():combat_ui();toast("Baú aberto: item e materiais guardados no saque pendente.",4)
 
 func show_lore(from_hub: bool) -> void:
 	var back=show_hub if from_hub else show_menu
@@ -592,14 +707,18 @@ func _physics_process(delta: float) -> void:
 		var keys=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)))
 		move_axis=controls.axis if controls.axis.length()>.1 else keys.normalized()
 		player.tick(delta)
-		for enemy in enemies:enemy.tick(delta)
+		for enemy in enemies.duplicate():enemy.tick(delta)
+		skills.tick(delta)
+		if training:training_time+=delta
+		else:encounter.tick(delta)
 		world.tick(delta)
-		update_hud()
+		hud_timer+=delta
+		if hud_timer>=.1:hud_timer=0;update_hud()
 		if hero_dead:
 			wave_ready-=delta
 			if wave_ready<=0:fail_screen()
 			return
-		if not cleared_room and enemies.all(func(a):return a.hp<=0):
+		if not training and not cleared_room and enemies.all(func(a):return a.hp<=0):
 			cleared_room=true
 			if room==4:finish_dungeon();return
 			save_run();combat_ui();toast("Sala liberada. Avance ou deposite o saque e retorne.",4)
