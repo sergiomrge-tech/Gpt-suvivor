@@ -467,35 +467,36 @@ static func boat_stage(parent: Node3D, stage: int) -> void:
     var timber := Color(0.39,0.25,0.12)
     var plank := Color(0.64,0.45,0.23)
     var iron := Color(0.43,0.47,0.46)
-    # 1/5: timber keel, upward-curving bow and five cross ribs.
-    beam(parent,Vector3(0,-0.18,-4.45),Vector3(0,-0.18,4.40),0.22,timber)
-    beam(parent,Vector3(0,-0.18,-4.45),Vector3(0,1.12,-5.15),0.17,timber)
-    beam(parent,Vector3(0,-0.18,4.40),Vector3(0,0.75,4.66),0.15,timber)
-    for i in range(5):
-        var z := -3.6 + float(i)*1.75
-        var width := 1.15 + 0.55 * sin(float(i+1)/6.0*PI)
-        for side in [-1.0,1.0]:
-            beam(parent,Vector3(0,-0.12,z),Vector3(side*width,0.82,z),0.12,timber)
-            beam(parent,Vector3(side*width,0.82,z),Vector3(side*(width+0.06),1.15,z),0.095,timber)
-        beam(parent,Vector3(-width,0.76,z),Vector3(width,0.76,z),0.09,timber)
-    if stage >= 2:
-        # 2/5: overlapping hull strakes with a pointed bow.
-        var hull := PackedVector3Array()
-        for i in range(12):
-            var z := -4.2 + float(i)*0.7
-            var next_z := z + 0.7
-            var width := maxf(0.15,sin((float(i)+0.3)/12.6*PI)*1.85)
-            var next_width := maxf(0.15,sin((float(i)+1.3)/12.6*PI)*1.85)
+    if not bool(parent.get_meta("native_hull",false)):
+        # 1/5: timber keel, upward-curving bow and five cross ribs.
+        beam(parent,Vector3(0,-0.18,-4.45),Vector3(0,-0.18,4.40),0.22,timber)
+        beam(parent,Vector3(0,-0.18,-4.45),Vector3(0,1.12,-5.15),0.17,timber)
+        beam(parent,Vector3(0,-0.18,4.40),Vector3(0,0.75,4.66),0.15,timber)
+        for i in range(5):
+            var z := -3.6 + float(i)*1.75
+            var width := 1.15 + 0.55 * sin(float(i+1)/6.0*PI)
             for side in [-1.0,1.0]:
-                var a := Vector3(side*width,0.79,z)
-                var b := Vector3(side*next_width,0.79,next_z)
-                var c := Vector3(0,-0.19,z)
-                var d := Vector3(0,-0.19,next_z)
-                hull.append_array(PackedVector3Array([a,c,b,b,c,d]))
-        triangles(parent,hull,timber.lightened(0.08))
-        for side in [-1.0,1.0]:
-            beam(parent,Vector3(side*0.15,0.47,-4.33),
-                Vector3(side*0.15,0.60,4.20),0.05,plank)
+                beam(parent,Vector3(0,-0.12,z),Vector3(side*width,0.82,z),0.12,timber)
+                beam(parent,Vector3(side*width,0.82,z),Vector3(side*(width+0.06),1.15,z),0.095,timber)
+            beam(parent,Vector3(-width,0.76,z),Vector3(width,0.76,z),0.09,timber)
+        if stage >= 2:
+            # 2/5: overlapping hull strakes with a pointed bow.
+            var hull := PackedVector3Array()
+            for i in range(12):
+                var z := -4.2 + float(i)*0.7
+                var next_z := z + 0.7
+                var width := maxf(0.15,sin((float(i)+0.3)/12.6*PI)*1.85)
+                var next_width := maxf(0.15,sin((float(i)+1.3)/12.6*PI)*1.85)
+                for side in [-1.0,1.0]:
+                    var a := Vector3(side*width,0.79,z)
+                    var b := Vector3(side*next_width,0.79,next_z)
+                    var c := Vector3(0,-0.19,z)
+                    var d := Vector3(0,-0.19,next_z)
+                    hull.append_array(PackedVector3Array([a,c,b,b,c,d]))
+            triangles(parent,hull,timber.lightened(0.08))
+            for side in [-1.0,1.0]:
+                beam(parent,Vector3(side*0.15,0.47,-4.33),
+                    Vector3(side*0.15,0.60,4.20),0.05,plank)
     if stage >= 3:
         # 3/5: visible deck timbers and cross ties.
         for i in range(12):
@@ -537,7 +538,7 @@ static var mesh_cache: Dictionary = {}
 static func merge_static(parent: Node3D, cache_key: String = "") -> void:
     var meshes: Array[MeshInstance3D] = []
     for child in parent.get_children():
-        if child is MeshInstance3D:
+        if child is MeshInstance3D and not bool(child.get_meta("preserve_pbr",false)):
             meshes.append(child)
     if meshes.is_empty():
         return
@@ -590,6 +591,8 @@ static func merge_static(parent: Node3D, cache_key: String = "") -> void:
         merged_material = ShaderMaterial.new()
         merged_material.shader = load("res://shaders/surfaces.gdshader")
         merged_material.set_shader_parameter("detail_noise", load("res://assets/materials/detail_noise.png"))
+        merged_material.set_shader_parameter("camera_world_position",Vector3(9999,9999,9999))
+        merged_material.set_shader_parameter("wood_scan",load("res://assets/survival_props/textures/wooden_floor_01/wooden_floor_01_diff.jpg"))
     var result := MeshInstance3D.new()
     result.mesh = merged
     result.material_override = merged_material

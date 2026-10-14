@@ -23,6 +23,10 @@ jobs:
         run: |
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/import.log
           if grep -E 'SCRIPT ERROR|ERROR:' /tmp/import.log; then echo 'Import/parsing failed'; exit 1; fi
+      - name: Bake normalized material batches and mobile distance LODs
+        run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tools/bake_world_assets.gd
+      - name: Validate complete map asset coverage and clearances
+        run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_map_assets_v23.gd
       - name: Test rigged hero posture and looping locomotion
         run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_hero_locomotion.gd
       - name: Test complete survival progression

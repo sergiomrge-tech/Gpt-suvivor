@@ -83,7 +83,7 @@ func generate() -> void:
         node.name = "Vein_" + str(id)
         node.visible = not bool(state.discoveries.get(id,false))
         owner.add_child(node)
-        SurvivorModels.rock(node,23,0.72)
+        SurvivorRealWorldAssets.attach(node,"rock_07",1.15,60.0)
         for i in range(5):
             var angle := TAU*float(i)/5.0
             SurvivorModels.stone(node,0.32,i+33,Color(0.22,0.65,0.71),Vector3(cos(angle)*0.65,0.72,sin(angle)*0.65),Vector3(0.6,1.5,0.7))
@@ -97,26 +97,25 @@ func generate() -> void:
 func _model_room(room: Node3D, id: String) -> void:
     var rock := Color(0.22,0.25,0.27) if id == "east" else Color(0.25,0.23,0.19)
     var damp := Color(0.30,0.33,0.31) if id == "east" else Color(0.32,0.30,0.22)
-    SurvivorModels.box(room, Vector3(37.0,0.7,30.0),Color(0.20,0.22,0.20),Vector3(0,-0.40,0))
+    _scanned_floor(room,Vector2(37,30),Vector3.ZERO)
     # Corte superior aberto: é possível visualizar o personagem com a câmera top-down.
     for i in range(20):
         if i in [7,8,9,10,11,12]:
             continue # 11 m wide gallery opening to the actual back chamber.
         var x := -18.0 + i * 1.9
         var h := 3.1 + 1.0 * sin(float(i)*2.0)
-        SurvivorModels.sphere(room,2.15,rock,Vector3(x,h*0.40,-15.0),Vector3(0.65,h*0.47,0.90))
-        SurvivorModels.sphere(room,1.25,damp,Vector3(x,0.20,-13.9),Vector3(1.1,0.65,0.8))
+        _scanned_rock(room,Vector3(x,-0.12,-15.0),h,"rock_face_01",float(i)*0.45)
+        _scanned_rock(room,Vector3(x,-0.1,-13.9),0.65,"rock_07",float(i))
     for side in [-1.0,1.0]:
         for i in range(12):
             var z := -14.0 + i*2.6
             var h := 2.2 + absf(sin(float(i)*1.7))*2.0
-            SurvivorModels.sphere(room,2.0,rock,Vector3(side*18.1,h*0.38,z),Vector3(0.75,h*0.53,0.90))
+            _scanned_rock(room,Vector3(side*18.1,-0.1,z),h,"rock_face_01",side*0.6+float(i)*0.35)
         for i in range(5):
             var x: float = float(side)*(2.8+float(i)*3.0)
-            SurvivorModels.sphere(room,1.2,damp,Vector3(x,0.15,14.1),Vector3(1.2,0.6,0.9))
+            _scanned_rock(room,Vector3(x,-0.1,14.1),0.95,"rock_07",float(i))
     for pos in [Vector3(0,0,-4),Vector3(-12,0,2),Vector3(12,0,3)]:
-        SurvivorModels.sphere(room,1.9,rock,pos+Vector3(0,0.75,0),Vector3(1.0,0.82,0.88))
-        SurvivorModels.sphere(room,0.62,damp,pos+Vector3(0,1.6,0),Vector3(0.72,0.9,0.72))
+        _scanned_rock(room,pos+Vector3(0,-0.12,0),2.4,"boulder_01",pos.x*0.1)
     if id == "roots":
         for i in range(8):
             var z := -11.0 + i*3.0
@@ -141,14 +140,14 @@ func _model_deep_chamber(room: Node3D,id: String,rock: Color,damp: Color) -> voi
     # Connected back chamber extends south through a real opening. Keeps original
     # entrance, previous save coordinates and first four cache positions intact.
     var floor_color := Color(0.18,0.21,0.22) if id == "east" else Color(0.20,0.20,0.17)
-    SurvivorModels.box(room,Vector3(35.5,0.68,26.5),floor_color,Vector3(0,-0.40,-25.8))
+    _scanned_floor(room,Vector2(35.5,26.5),Vector3(0,0,-25.8))
     for i in range(19):
         var x := -17.5+float(i)*1.95
-        SurvivorModels.stone(room,1.6,i+12,rock,Vector3(x,1.12,-38.5),Vector3(0.85,1.6,0.85))
+        _scanned_rock(room,Vector3(x,-0.12,-38.5),3.3,"rock_face_01",float(i)*0.4)
     for side in [-1.0,1.0]:
         for i in range(10):
             var z := -37.2+float(i)*2.4
-            SurvivorModels.stone(room,1.6,i+22,damp,Vector3(side*18.0,0.80,z),Vector3(0.9,1.15,1.25))
+            _scanned_rock(room,Vector3(side*18.0,-0.12,z),2.8,"rock_face_01",float(i)*0.4+side*0.4)
         for i in range(4):
             var z := -34.0+float(i)*5.2
             if id == "roots":
@@ -163,7 +162,7 @@ func _model_deep_chamber(room: Node3D,id: String,rock: Color,damp: Color) -> voi
     # Rock arches and pointed crystal clusters introduce a readable deep biome.
     for z in [-19.0,-31.0]:
         for side in [-1.0,1.0]:
-            SurvivorModels.stone(room,1.2,int(z)+int(side*5)+60,rock,Vector3(side*6.3,1.05,z),Vector3(0.75,1.7,0.9))
+            _scanned_rock(room,Vector3(side*6.3,-0.05,z),2.3,"boulder_01",side*0.5)
         for i in range(4):
             var x := -4.6+float(i)*3.1
             SurvivorModels.stone(room,0.30,i+14,Color(0.21,0.56,0.64) if id == "east" else Color(0.49,0.60,0.27),
@@ -201,12 +200,8 @@ static func vent_is_active(id: String, elapsed: float) -> bool:
     return phase < VENT_ACTIVE_SECONDS
 
 func _model_cache(node: Node3D, id: String) -> void:
-    SurvivorModels.box(node,Vector3(1.5,0.75,1.05),Color(0.32,0.20,0.10),Vector3(0,0.43,0))
-    for x in [-0.6,0.6]:
-        SurvivorModels.box(node,Vector3(0.10,0.82,1.13),Color(0.58,0.46,0.23),Vector3(x,0.45,0))
-    SurvivorModels.box(node,Vector3(1.55,0.12,1.13),Color(0.59,0.42,0.20),Vector3(0,0.85,0))
-    SurvivorModels.sphere(node,0.17,Color(0.31,0.81,0.88) if id.begins_with("east") else Color(0.86,0.73,0.33),Vector3(0,1.18,0))
-    SurvivorModels.merge_static(node,"cache_"+id)
+    SurvivorRealWorldAssets.attach(node,"wooden_crate",0.95,75.0)
+    SurvivorModels.sphere(node,0.10,Color(0.31,0.81,0.88) if id.begins_with("east") else Color(0.86,0.73,0.33),Vector3(0,1.15,0))
 
 func hazard_rate_at(pos: Vector3, elapsed: float = 0.0) -> float:
     var cave_id := cave_at(pos)
@@ -286,3 +281,21 @@ func collect_cache(entry: Dictionary) -> Dictionary:
     for item in info.reward:
         state.add_item(item,int(info.reward[item]))
     return {"title":info.title,"text":info.text,"reward":info.reward.duplicate(true)}
+
+func _scanned_rock(parent: Node3D, pos: Vector3, height: float, source: String, angle: float) -> void:
+    var anchor := Node3D.new()
+    anchor.position = pos
+    anchor.rotation.y = angle
+    parent.add_child(anchor)
+    SurvivorRealWorldAssets.attach(anchor,source,height,80.0)
+
+func _scanned_floor(parent: Node3D,size: Vector2,pos: Vector3) -> void:
+    var floor_mesh := MeshInstance3D.new()
+    floor_mesh.name = "ScannedCaveFloor"
+    floor_mesh.set_meta("preserve_pbr",true)
+    var plane := PlaneMesh.new()
+    plane.size = size
+    floor_mesh.mesh = plane
+    floor_mesh.position = pos+Vector3(0,-0.04,0)
+    floor_mesh.material_override = SurvivorWorldAssetRenderer.surface_material("rock")
+    parent.add_child(floor_mesh)

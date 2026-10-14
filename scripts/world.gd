@@ -119,7 +119,8 @@ func _resource(kind: String, id: String, p: Vector2) -> void:
                 SurvivorModels.rock(node, variant)
             radius = 1.7
         "fiber":
-            SurvivorModels.fern(node,variant)
+            if not SurvivorRealWorldAssets.attach(node,"fern",0.85,47.0):
+                SurvivorModels.fern(node,variant)
         "loose_log":
             # Scanned fallen timber is decorative only: hand-pickup stays unchanged.
             if not SurvivorRealWorldAssets.attach(node,"dead_tree_trunk_02",0.78,43.0):
@@ -144,18 +145,19 @@ func _landmark(kind: String, title: String, p: Vector2) -> void:
     add_child(node)
     match kind:
         "wreck":
-            if SurvivorRealWorldAssets.attach(node,"airplane_propeller",4.25,155.0):
+            if SurvivorRealWorldAssets.attach(node,"airplane_propeller",3.3,135.0):
                 var aircraft := node.get_node_or_null("CC0_airplane_propeller") as Node3D
                 if aircraft != null:
                     aircraft.rotation_degrees = Vector3(-10.0,23.0,11.5)
                     aircraft.position.y -= 0.55
                 var fractured := SurvivorRealWorldAssets.fracture_airplane(aircraft) if aircraft != null else 0
                 node.set_meta("aircraft_fracture_count",fractured)
+                SurvivorWorldAssetRenderer.compact_aircraft(aircraft)
                 SurvivorRealWorldAssets.add_crash_damage(node)
             else:
                 SurvivorModels.wreck(node)
         "cave":
-            SurvivorModels.cave(node)
+            _scanned_cave_entrance(node)
             # PBR rock faces flank the accessible cave instead of replacing
             # its interaction trigger or blocking the original corridor.
             for side in [-1,1]:
@@ -175,7 +177,11 @@ func _landmark(kind: String, title: String, p: Vector2) -> void:
                 SurvivorRealWorldAssets.attach(cave_ladder,"wooden_ladder_02",2.7,50.0)
         "spring":
             for i in range(9):
-                SurvivorModels.sphere(node, 0.6, Color(0.32, 0.42, 0.36), Vector3(cos(i * TAU / 9) * 2.4, 0.18, sin(i * TAU / 9) * 2.4))
+                var stone := Node3D.new()
+                stone.position = Vector3(cos(i*TAU/9)*2.4,-0.06,sin(i*TAU/9)*2.4)
+                stone.rotation.y = i*0.61
+                node.add_child(stone)
+                SurvivorRealWorldAssets.attach(stone,"rock_07",0.58,66.0)
             SurvivorModels.sphere(node, 2.3, Color(0.13, 0.57, 0.63), Vector3(0, 0.12, 0), Vector3(1, 0.08, 1))
     SurvivorModels.merge_static(node, "landmark_" + kind)
     landmarks.append({"kind": kind, "title": title, "node": node, "position": node.position})
@@ -200,7 +206,12 @@ func add_structure(entry: Dictionary) -> Node3D:
             # Keep fire/glow/recipe state from original procedural fire, but
             # replace its simple stone-only silhouette with a real cooking grate.
             SurvivorModels.building(node,entry.kind)
-            SurvivorRealWorldAssets.attach(node,"camp_fire_grill",1.26,73.0)
+            for child in node.get_children():
+                if child is MeshInstance3D:
+                    node.remove_child(child)
+                    child.free()
+            SurvivorRealWorldAssets.attach(node,"camp_fire_grill",1.05,73.0)
+            _camp_flames(node)
         elif entry.kind == "chest":
             if not SurvivorRealWorldAssets.attach(node,"storage_chest",1.15,70.0):
                 SurvivorModels.building(node,entry.kind)
@@ -247,6 +258,21 @@ func _build_boat_model(parent: Node3D, stage: int) -> void:
     var model := Node3D.new()
     model.name = "BoatModel"
     parent.add_child(model)
+    if stage>=2 and SurvivorRealWorldAssets.attach(model,"canoe",0.90,115.0):
+        model.set_meta("native_hull",true)
+        var canoe := model.get_node("CC0_canoe") as Node3D
+        var bounds := AABB()
+        var first := true
+        for part in canoe.get_children():
+            if part is MeshInstance3D:
+                bounds = part.mesh.get_aabb() if first else bounds.merge(part.mesh.get_aabb())
+                first = false
+        if bounds.size.x>bounds.size.z:
+            canoe.scale = Vector3(8.8/bounds.size.x,0.9,3.5/bounds.size.z)
+            canoe.rotation.y = PI*0.5
+        else:
+            canoe.scale = Vector3(3.5/bounds.size.x,0.9,8.8/bounds.size.z)
+        canoe.position.y = -0.45
     SurvivorModels.boat_stage(model,stage)
     SurvivorModels.merge_static(model,"boat_model_stage_%d" % stage)
 
@@ -384,6 +410,8 @@ func walkable(pos: Vector3, previous: Vector3) -> bool:
     if caves != null and caves.is_inside(pos):
         return false
     if not terrain.is_land(pos.x, pos.z) and not is_on_dock(pos):
+        return false
+    if scenery != null and not scenery.scenery_walkable(pos):
         return false
     var horizontal := Vector2(pos.x - previous.x, pos.z - previous.z).length()
     if horizontal > 0.001 and absf(surface_height(pos)-surface_height(previous)) > horizontal * 1.3:
@@ -604,3 +632,33 @@ func _ground_resources() -> void:
                 _resource(kind,"%s_%d" % [kind,i],p)
                 break
     refresh_resources()
+
+func _scanned_cave_entrance(parent: Node3D) -> void:
+    # A 6m clear throat matches the portal/collision corridor. Original sphere
+    # rocks are replaced by textured scan modules, not overlaid with duplicates.
+    for side in [-1.0,1.0]:
+        for i in range(3):
+            var rock := Node3D.new()
+            rock.position = Vector3(side*5.25,-0.12,-float(i)*3.3)
+            rock.rotation.y = side*0.42+float(i)*0.55
+            parent.add_child(rock)
+            SurvivorRealWorldAssets.attach(rock,"boulder_01",3.2+float(i%2)*0.5,92.0)
+    var lintel := Node3D.new()
+    lintel.position = Vector3(0,3.9,-6.1)
+    parent.add_child(lintel)
+    SurvivorRealWorldAssets.attach(lintel,"rock_face_01",1.5,92.0)
+    lintel.scale.x = 2.8
+
+func _camp_flames(parent: Node3D) -> void:
+    var material := ShaderMaterial.new()
+    material.shader = load("res://shaders/camp_flame.gdshader")
+    for i in range(3):
+        var node := MeshInstance3D.new()
+        var card := QuadMesh.new()
+        card.size = Vector2(0.62,0.95)
+        node.mesh = card
+        node.position = Vector3(0,0.92,0)
+        node.rotation.y = float(i)*PI/3.0
+        node.material_override = material
+        node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+        parent.add_child(node)

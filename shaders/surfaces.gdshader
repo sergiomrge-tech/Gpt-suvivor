@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode cull_disabled;
 uniform sampler2D detail_noise : filter_linear_mipmap, repeat_enable;
 uniform float rain_amount = 0.0;
+uniform sampler2D wood_scan : source_color, filter_linear_mipmap, repeat_enable;
 uniform float wind_strength = 0.45;
 uniform vec3 survivor_position = vec3(9999.0);
 uniform vec3 camera_world_position = vec3(9999.0);
@@ -19,6 +20,10 @@ void vertex() {
 }
 void fragment() {
     vec3 base = COLOR.rgb;
+    if (UV2.x < 1.5) {
+        vec3 scan = texture(wood_scan,UV*0.28).rgb;
+        base = mix(base,scan*vec3(0.90,0.80,0.66),0.58);
+    }
     float family = UV2.x;
     float grain = 1.0;
     float rough = 0.87;

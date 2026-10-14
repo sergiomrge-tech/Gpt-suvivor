@@ -1,3 +1,8 @@
+## Atualização v2.3 — mapa e APK
+
+Mapa integrado com os assets novos, caminhada corrigida e APK de teste ARM64
+validado. Detalhes, testes e reprodução: [MAP_ASSETS_V23_ANDROID](docs/MAP_ASSETS_V23_ANDROID.md).
+
 # GPT Survivor — Ilha: Último Voo
 
 ## v1.8.0 — Silhueta orgânica e materiais separados do herói (fonte Godot; SEM APK)

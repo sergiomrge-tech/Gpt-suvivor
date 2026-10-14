@@ -257,11 +257,9 @@ func run() -> void:
             upward = false
             break
     check(upward, "Terrain faces and normals point upward")
-    var resource_meshes := 0
-    for child in game.world.resources[0].node.get_children():
-        if child is MeshInstance3D:
-            resource_meshes += 1
-    check(resource_meshes == 1, "Static palm merged to one mesh for mobile rendering")
+    var palm_model: Node = game.world.resources[0].node.find_child("CC0_palm*",true,false)
+    var resource_meshes: int = palm_model.get_child_count() if palm_model!=null else 0
+    check(palm_model != null and resource_meshes>0 and resource_meshes<=5,"Real palm preserves five authored material groups with bounded draw calls")
     check(game.world.scenery.cover_count > 1000, "Decorative groundcover generated without replacing harvestable resources")
     var decor: SurvivorScenery = game.world.scenery
     check(decor.coastal_detail_count > 80 and decor.forest_detail_count > 200, "Deterministic real 3D shells, smooth shore pebbles and forest leaf litter populate both biomes")
@@ -299,11 +297,11 @@ func run() -> void:
     decor.set_weather(0.0, 0.0)
     check(is_equal_approx(game.terrain.height_at(0.0,170.0),preserved_height) and SurvivalState.SAVE_VERSION == 3, "New visual habitats do not disturb persisted terrain elevations or save v3")
 
-    var foliage_material: ShaderMaterial = SurvivorModels.merged_material
-    check(foliage_material != null, "Biome foliage has the shared draw-call-saving shader")
-    if foliage_material != null:
-        var sight_camera: Vector3 = foliage_material.get_shader_parameter("camera_world_position")
-        check(sight_camera.distance_to(game.camera.global_position) < 0.5, "Foreground palm foliage tracks the actual camera viewpoint instead of using a fixed transparency")
+    var imported_foliage := SurvivorWorldAssetRenderer.parts("fern")
+    check(not imported_foliage.is_empty() and imported_foliage[0].material is StandardMaterial3D,"Imported foliage preserves original PBR material instead of obsolete placeholder shader")
+    if not imported_foliage.is_empty():
+        var fern_arrays: Array = imported_foliage[0].mesh.surface_get_arrays(0)
+        check(fern_arrays[Mesh.ARRAY_TEX_UV]!=null and fern_arrays[Mesh.ARRAY_NORMAL]!=null,"Batched foliage retains photographed UVs and normals")
 
     var shore_mesh: Mesh
     var leaf_mesh: Mesh
@@ -383,14 +381,14 @@ func run() -> void:
     for resource in game.world.resources:
         if resource.kind != "tree":
             continue
-        for leaf_node in resource.node.get_children():
+        for leaf_node in resource.node.find_children("*","MeshInstance3D",true,false):
             if leaf_node is MeshInstance3D:
                 var canopy_mesh: Mesh = leaf_node.mesh
                 var packed_vertices: PackedVector3Array = canopy_mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
                 detailed_canopy = packed_vertices.size() > 500
                 break
         break
-    check(detailed_canopy, "Harvestable broadleaf crowns are now branched leaf geometry, not five solid green boulders")
+    check(detailed_canopy, "Harvestable broadleaf trees retain real imported detailed mesh geometry")
     check(game.world.discoverables.size()==5,"Unique clues available at crash site and caves")
     check(game.soundscape.streams.size()==17 and game.soundscape.voices.size()==7,"Original ambience and pooled positional effect voices loaded")
     check(game.soundscape.streams.sea.loop_mode==AudioStreamWAV.LOOP_FORWARD,"Sea ambience loops natively")
@@ -855,8 +853,13 @@ func run() -> void:
         check(game.state.boat_stage() == next_stage, "Action finish cannot charge boat phase twice")
     check(game.state.boat_ready() and game.state.boat_stage() == 5 and int(built_boat.stage) == 5, "Five-phase boat complete in save and live world")
     var final_model: Node3D = built_boat.node.get_node("BoatModel")
-    var final_mesh: MeshInstance3D = final_model.get_child(0) as MeshInstance3D
-    check(final_mesh.get_aabb().size.y > keel_height + 4.0, "Visible boat model gains tall mast and sail only at late construction phase")
+    var final_height := 0.0
+    for child in final_model.find_children("*","MeshInstance3D",true,false):
+        var leaf := child as MeshInstance3D
+        var transform := SurvivorWorldAssetRenderer.relative_transform(leaf,final_model)
+        var bounds := transform*leaf.mesh.get_aabb()
+        final_height = maxf(final_height,bounds.end.y)
+    check(final_height > keel_height + 4.0, "Visible boat model gains tall mast and sail only at late construction phase")
     check(game.state.inventory.wood == total_wood - 142, "Staged keel, hull and mast preserve exact original wood budget")
     check(game.state.boat_upgrade_error() == "Barco pronto para embarcar.", "Completed boat rejects all extra material payments")
     game.state.player_position = game.player.position

@@ -101,7 +101,11 @@ void fragment() {
         vec3 scanned_rock = texture(pbr_rock_diff,pbr_uv * 0.65).rgb;
         // Preserve the island palette to avoid fluorescent texture seams.
         ground = mix(ground,scanned_sand,0.63 * (1.0-sand_to_vegetation));
-        ground = mix(ground,scanned_jungle,0.67 * sand_to_vegetation * (1.0-rock_exposure));
+        // The original coast scan is grey. Retain its photographed grains
+        // while grading forest ground toward sheltered loam and moss.
+        float soil_luma = dot(scanned_jungle,vec3(0.2126,0.7152,0.0722));
+        vec3 organic_soil = mix(scanned_jungle,soil_luma*vec3(0.66,0.82,0.49),0.58);
+        ground = mix(ground,organic_soil,0.62 * sand_to_vegetation * (1.0-rock_exposure));
         ground = mix(ground,scanned_rock,0.75 * rock_exposure);
     }
     ground *= 0.967 + grain*0.066;

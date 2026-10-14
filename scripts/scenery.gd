@@ -21,6 +21,8 @@ var real_forest_counts := {"fern":0,"calathea":0,"pachira":0}
 # Real Poly Haven fern meshes batched in 48m sectors (not handmade foliage).
 var tropical_floor_batches: Array[Dictionary] = []
 var tropical_floor_count := 0
+var canopy_batches: Array[Dictionary] = []
+var canopy_obstacles: Array[Dictionary] = []
 
 func generate() -> void:
     var rng := RandomNumberGenerator.new()
@@ -29,7 +31,7 @@ func generate() -> void:
     noise.seed = 983
     noise.frequency = 0.045
     var buckets: Dictionary = {}
-    for i in range(13000):
+    for i in range(3200):
         var p := Vector2(rng.randf_range(-184, 184), rng.randf_range(-184, 184))
         var h := terrain.height_at(p.x, p.y)
         if h < 3.0 or h > 25.0 or noise.get_noise_2d(p.x, p.y) < -0.28 or _protected(p):
@@ -38,36 +40,19 @@ func generate() -> void:
         if not buckets.has(key):
             buckets[key] = []
         buckets[key].append({"position": Vector3(p.x, h + 0.01, p.y), "angle": rng.randf_range(0, TAU), "size": rng.randf_range(0.65, 1.4), "tint": Color(0.20 + rng.randf() * 0.08, 0.35 + rng.randf() * 0.10, 0.13 + rng.randf() * 0.06)})
-    var mesh := _grass_mesh()
-    var material := ShaderMaterial.new()
-    material.shader = load("res://shaders/groundcover.gdshader")
-    grass_material = material
+    # Real low fern clusters replace the old three-triangle grass spikes.
+    grass_material = ShaderMaterial.new()
+    grass_material.shader = load("res://shaders/groundcover.gdshader")
     for key in buckets:
         var entries: Array = buckets[key]
-        var center := Vector3((key.x + 0.5) * CHUNK_SIZE, 0, (key.y + 0.5) * CHUNK_SIZE)
-        var multi := MultiMesh.new()
-        multi.transform_format = MultiMesh.TRANSFORM_3D
-        multi.use_custom_data = true
-        multi.mesh = mesh
-        multi.instance_count = entries.size()
-        for i in range(entries.size()):
-            var entry: Dictionary = entries[i]
-            var basis := Basis(Vector3.UP, entry.angle).scaled(Vector3.ONE * entry.size)
-            multi.set_instance_transform(i, Transform3D(basis, entry.position - center))
-            multi.set_instance_custom_data(i, entry.tint)
-        var node := MultiMeshInstance3D.new()
-        node.position = center
-        node.multimesh = multi
-        node.material_override = material
-        node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-        node.visibility_range_end = 82.0
-        add_child(node)
-        batches.append({"node": node, "entries": entries})
+        var center := Vector3((key.x+0.5)*CHUNK_SIZE,0,(key.y+0.5)*CHUNK_SIZE)
+        batches.append_array(SurvivorWorldAssetRenderer.batch(self,"fern",entries,center,0.30,42.0))
         cover_count += entries.size()
     _generate_surface_details()
     _generate_biome_habitats()
     _generate_imported_forest()
     _generate_batched_cc0_understory()
+    _generate_island_canopy()
     set_light_mode(light_mode)
 
 
@@ -149,37 +134,17 @@ func _generate_biome_habitats() -> void:
             biome_counts["driftwood"] += 1
         else:
             biome_counts["roots"] += 1
-    var habitat_meshes := [
-        SurvivorBiomeProps.dune_reeds(),
-        SurvivorBiomeProps.forest_seedlings(),
-        SurvivorBiomeProps.coastal_stones(),
-        SurvivorBiomeProps.driftwood(),
-        SurvivorBiomeProps.moss_roots()
-    ]
     biome_material = ShaderMaterial.new()
     biome_material.shader = load("res://shaders/biome_props.gdshader")
+    var assets := ["fern","fern","rock_07","dead_tree_trunk_02","tree_stump_01"]
+    var heights := [0.38,0.85,0.24,0.26,0.24]
     for key in buckets:
         var entries: Array = buckets[key]
         var center := Vector3((float(key.x)+0.5)*CHUNK_SIZE,0,(float(key.y)+0.5)*CHUNK_SIZE)
-        var multi := MultiMesh.new()
-        multi.transform_format = MultiMesh.TRANSFORM_3D
-        multi.use_custom_data = true
-        multi.mesh = habitat_meshes[key.z]
-        multi.instance_count = entries.size()
-        for i in range(entries.size()):
-            var item: Dictionary = entries[i]
-            var basis := Basis(Vector3.UP,float(item.angle)).scaled(Vector3.ONE*float(item.size))
-            multi.set_instance_transform(i,Transform3D(basis,item.position-center))
-            multi.set_instance_custom_data(i,item.tint)
-        var node := MultiMeshInstance3D.new()
-        node.name = ["DuneReeds","ForestFerns","ErodedStones","StrandedTimber","MossyRootClusters"][key.z]
-        node.position = center
-        node.multimesh = multi
-        node.material_override = biome_material
-        node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-        node.visibility_range_end = 74.0 if key.z == 1 else (48.0 if key.z >= 3 else 64.0)
-        add_child(node)
-        biome_batches.append({"node":node, "entries":entries, "family":key.z})
+        var native := SurvivorWorldAssetRenderer.batch(self,assets[key.z],entries,center,heights[key.z],46.0)
+        for batch in native:
+            batch.family = key.z
+        biome_batches.append_array(native)
 
 # Favors the interior jungle. All seeds are independent of resource placement
 # and cannot affect the existing palm/tree/loot coordinates or pathfinding.
@@ -230,19 +195,6 @@ func _generate_batched_cc0_understory() -> void:
     tropical_floor_count = 0
     if not SurvivorRealWorldAssets.available("fern"):
         return
-    var template: Node3D = (load(SurvivorRealWorldAssets.SOURCES["fern"]) as PackedScene).instantiate() as Node3D
-    if template == null:
-        return
-    var source_meshes: Array[Mesh] = []
-    for node in template.find_children("*","MeshInstance3D",true,false):
-        var instance: MeshInstance3D = node as MeshInstance3D
-        if instance.mesh != null:
-            source_meshes.append(instance.mesh)
-        if source_meshes.size()>=2:
-            break
-    template.free()
-    if source_meshes.is_empty():
-        return
     var forest_centers := [
         Vector2(-55,72),Vector2(45,80),Vector2(66,-26),
         Vector2(-45,-36),Vector2(14,-87),Vector2(-110,2),Vector2(52,-85)
@@ -256,7 +208,7 @@ func _generate_batched_cc0_understory() -> void:
         var h := terrain.height_at(p.x,p.y)
         if not terrain.is_land(p.x,p.y) or h<6.0 or h>24.0 or _protected(p):
             continue
-        var variant := i % source_meshes.size()
+        var variant := 0
         var sector := Vector2i(floori(p.x/CHUNK_SIZE),floori(p.y/CHUNK_SIZE))
         var key := Vector3i(sector.x,sector.y,variant)
         if not buckets.has(key):
@@ -267,27 +219,8 @@ func _generate_batched_cc0_understory() -> void:
         tropical_floor_count += 1
     for key in buckets:
         var entries: Array = buckets[key]
-        var mesh: Mesh = source_meshes[key.z]
-        var center := Vector3((float(key.x)+0.5)*CHUNK_SIZE,0.0,
-                              (float(key.y)+0.5)*CHUNK_SIZE)
-        var multi := MultiMesh.new()
-        multi.transform_format = MultiMesh.TRANSFORM_3D
-        multi.mesh = mesh
-        multi.instance_count = entries.size()
-        for i in range(entries.size()):
-            var entry: Dictionary = entries[i]
-            var sc: float = entry.scale
-            var mat := Basis(Vector3.UP,float(entry.angle)).scaled(Vector3.ONE*sc)
-            multi.set_instance_transform(i,Transform3D(mat,entry.position-center))
-        var node := MultiMeshInstance3D.new()
-        node.name = "PolyHavenB_TropicalUnderstory"
-        node.position = center
-        node.multimesh = multi
-        node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-        node.visibility_range_end = 53.0
-        node.visibility_range_end_margin = 8.0
-        add_child(node)
-        tropical_floor_batches.append({"node":node,"entries":entries,"family":key.z})
+        var center := Vector3((float(key.x)+0.5)*CHUNK_SIZE,0,(float(key.y)+0.5)*CHUNK_SIZE)
+        tropical_floor_batches.append_array(SurvivorWorldAssetRenderer.batch(self,"fern",entries,center,0.76,51.0))
 
 func _protected(p: Vector2) -> bool:
     if world.trails != null and world.trails.distance_to(p)<2.2:
@@ -330,7 +263,11 @@ func clear_area(pos: Vector3, radius: float) -> void:
     for model in real_forest_nodes:
         if Vector2(model.position.x-pos.x,model.position.z-pos.z).length_squared() < radius*radius:
             model.visible = false
-    for batch in batches + detail_batches + biome_batches:
+            model.set_meta("cleared_for_building",true)
+    for obstacle in canopy_obstacles:
+        if Vector2(obstacle.position.x-pos.x,obstacle.position.z-pos.z).length_squared()<radius*radius:
+            obstacle.cleared = true
+    for batch in batches + detail_batches + biome_batches + canopy_batches:
         for i in range(batch.entries.size()):
             var point: Vector3 = batch.entries[i].position
             if Vector2(point.x - pos.x, point.z - pos.z).length_squared() < radius * radius:
@@ -370,7 +307,7 @@ func set_light_mode(value: bool) -> void:
                 if Vector2(p.x-entry.position.x,p.z-entry.position.z).length() < (5.0 if entry.kind=="house" else 2.8):
                     safe = false
                     break
-            real_forest_nodes[i].visible = safe
+            real_forest_nodes[i].visible = safe and not bool(real_forest_nodes[i].get_meta("cleared_for_building",false))
 
 # Two deterministic debris families. Small meshes are batched by spatial chunk
 # rather than creating thousands of Godot nodes and draw calls.
@@ -408,32 +345,16 @@ func _generate_surface_details() -> void:
             coastal_detail_count += 1
         else:
             forest_detail_count += 1
-    var shore_mesh := _shore_debris_mesh()
-    var leaf_mesh := _forest_litter_mesh()
     details_material = ShaderMaterial.new()
     details_material.shader = load("res://shaders/surface_details.gdshader")
     for key in buckets:
         var entries: Array = buckets[key]
         var center := Vector3((key.x+0.5)*CHUNK_SIZE,0,(key.y+0.5)*CHUNK_SIZE)
-        var multi := MultiMesh.new()
-        multi.transform_format = MultiMesh.TRANSFORM_3D
-        multi.use_custom_data = true
-        multi.mesh = shore_mesh if key.z == 0 else leaf_mesh
-        multi.instance_count = entries.size()
-        for i in range(entries.size()):
-            var entry: Dictionary = entries[i]
-            var basis := Basis(Vector3.UP,float(entry.angle)).scaled(Vector3.ONE*float(entry.size))
-            multi.set_instance_transform(i,Transform3D(basis,entry.position-center))
-            multi.set_instance_custom_data(i,entry.tint)
-        var node := MultiMeshInstance3D.new()
-        node.name = "ShorePebbles" if key.z == 0 else "ForestLeafLitter"
-        node.position = center
-        node.multimesh = multi
-        node.material_override = details_material
-        node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-        node.visibility_range_end = 62.0
-        add_child(node)
-        detail_batches.append({"node":node,"entries":entries,"family":key.z})
+        var source := "rock_07" if key.z == 0 else "dead_tree_trunk_02"
+        var native := SurvivorWorldAssetRenderer.batch(self,source,entries,center,0.11 if key.z==0 else 0.13,34.0)
+        for batch in native:
+            batch.family = key.z
+        detail_batches.append_array(native)
 
 static func _detail_triangle(st: SurfaceTool,a: Vector3,b: Vector3,c: Vector3,tint: Color) -> void:
     st.set_color(tint)
@@ -489,3 +410,42 @@ func _forest_litter_mesh() -> ArrayMesh:
             Vector3(x-0.028,0.022,0.23),stem)
     st.generate_normals()
     return st.commit()
+
+# Whole-island canopy, not seven isolated display patches. Seeded placements
+# keep both shores and the central/northern forests populated after reload.
+func _generate_island_canopy() -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 224103
+    var buckets: Dictionary = {}
+    for i in range(320):
+        var p := Vector2(rng.randf_range(-177,177),rng.randf_range(-177,177))
+        var h := terrain.height_at(p.x,p.y)
+        if h<4.8 or h>26.0 or _protected(p):
+            continue
+        var crowded := false
+        for obstacle in canopy_obstacles:
+            if p.distance_to(Vector2(obstacle.position.x,obstacle.position.z))<6.5:
+                crowded = true
+                break
+        if crowded:
+            continue
+        var source := "island_tree_01" if i%3==0 else "pachira"
+        var sector := Vector2i(floori(p.x/CHUNK_SIZE),floori(p.y/CHUNK_SIZE))
+        var key := str(sector.x)+":"+str(sector.y)+":"+source
+        if not buckets.has(key):
+            buckets[key] = {"source":source,"sector":sector,"entries":[]}
+        var point := Vector3(p.x,h-0.025,p.y)
+        var item := {"position":point,"angle":rng.randf_range(0,TAU),"size":rng.randf_range(0.86,1.15)}
+        buckets[key].entries.append(item)
+        canopy_obstacles.append({"position":point,"radius":0.60,"cleared":false})
+    for key in buckets:
+        var group: Dictionary = buckets[key]
+        var sector: Vector2i = group.sector
+        var center := Vector3((sector.x+0.5)*CHUNK_SIZE,0,(sector.y+0.5)*CHUNK_SIZE)
+        canopy_batches.append_array(SurvivorWorldAssetRenderer.batch(self,group.source,group.entries,center,8.6 if group.source=="island_tree_01" else 7.5,100.0))
+
+func scenery_walkable(pos: Vector3) -> bool:
+    for obstacle in canopy_obstacles:
+        if not obstacle.cleared and Vector2(pos.x-obstacle.position.x,pos.z-obstacle.position.z).length()<float(obstacle.radius)+0.42:
+            return false
+    return true

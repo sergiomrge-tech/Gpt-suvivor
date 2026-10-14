@@ -37,6 +37,11 @@ static func available(asset_id: String) -> bool:
 static func attach(parent: Node3D,asset_id: String,target_height: float,draw_range: float=90.0) -> bool:
     if not available(asset_id):
         return false
+    if asset_id != "airplane_propeller":
+        var attached := SurvivorWorldAssetRenderer.attach(parent,asset_id,target_height,draw_range)
+        if attached:
+            instances[asset_id] = int(instances.get(asset_id,0))+1
+        return attached
     var packed: PackedScene = cache.get(asset_id) as PackedScene
     if packed == null:
         packed = load(SOURCES[asset_id]) as PackedScene
@@ -145,7 +150,7 @@ static func fracture_airplane(model: Node3D) -> int:
         return 0
     var original_root := Vector3(-0.20,1.39,0.50)
     var wing_group := _detach_airframe_part(
-        right_wing,original_root,Vector3(1.1,-0.72,4.1),Vector3(24,-41,38))
+        right_wing,original_root,Vector3(1.1,-0.72,4.1),Vector3(9,-41,-8))
     if wing_group == null:
         return 0
     wing_group.name = "FracturedRightWingActualGLB"
@@ -185,8 +190,6 @@ static func add_crash_damage(parent: Node3D) -> void:
         var tint := Color(0.34,0.34,0.32).lerp(Color(0.53,0.24,0.16),rng.randf_range(0.06,0.42))
         var shard := SurvivorModels.box(parent,size,tint,spread)
         shard.rotation_degrees = Vector3(rng.randf_range(-24,24),rng.randf_range(-90,90),rng.randf_range(-34,34))
-    var scar := SurvivorModels.stone(parent,2.45,78,Color(0.31,0.27,0.24),Vector3(5.1,0.12,3.15),Vector3(1.8,0.27,0.7))
-    scar.rotation.y = -0.56
     for i in range(4):
         var wing_fragment := SurvivorModels.box(parent,Vector3(1.35,0.06,2.1),Color(0.52,0.56,0.55),Vector3(-5.4+float(i)*1.7,0.2,3.5-float(i%2)*1.3))
         wing_fragment.rotation_degrees = Vector3(-5,24+25*i,8)
