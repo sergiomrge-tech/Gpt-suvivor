@@ -22,7 +22,13 @@ APK: 28,415,938 bytes. SHA-256:
 - Catálogo presente no APK, com 120 definições; cenas e scripts remapeados carregam a partir do payload exportado.
 - Testes internos removidos do pacote; licenças adicionadas. Nenhuma chave, senha ou fonte de projeto estranho incluída.
 
-## Limitações de validação
+## Retomada e validação independente — 14/10/2026
+
+O primeiro workflow do repositório falhou porque o auditor do Survivor resolveu os caminhos `res://` do projeto independente contra a raiz do Survivor. O auditor agora respeita as fronteiras dos projetos Godot; o Dungeons Fires tem auditor próprio e workflow dedicado com diretório de trabalho correto. Nenhum código de jogabilidade nem byte do APK foi alterado nesta correção.
+
+Na retomada: importação Godot 4.6.1 sem erros; 139/139 verificações nativas aprovadas; bot venceu a primeira masmorra; auditorias de ambos os projetos aprovadas. Testes negativos confirmaram que a referência realmente ausente no Survivor e um cenário dinâmico ausente no Dungeons continuam sendo recusados. APK recuperado com SHA-256 idêntico ao registrado acima, CRC integral aprovado e catálogo de 120 itens presente.
+
+## Limitações de validação física e visual
 
 Não havia aparelho Android/emulador conectado. Instalação, primeira abertura no Android, toque físico, aquecimento e FPS GPU ainda não foram confirmados. O ambiente também não permitiu criar o servidor de tela necessário para renderizar a revisão gráfica; os testes Godot foram headless. Não há screenshot real desta entrega, nem aprovação de fidelidade visual a Golden Axe.
 

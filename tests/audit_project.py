@@ -10,6 +10,10 @@ for path in root.rglob('*'):
     relative = path.relative_to(root)
     if any(part in {'.git', '.godot', '__pycache__'} for part in relative.parts) or not path.is_file():
         continue
+    # Each nested Godot project has its own res:// root and validation suite.
+    # Match the editor's boundary instead of interpreting its files as Survivor.
+    if any((parent / 'project.godot').is_file() for parent in path.parents if parent != root and root in parent.parents):
+        continue
     files.append(path)
     if path.suffix in {'.tmp', '.log', '.bak', '.pyc', '.zip', '.apk'}:
         errors.append(f'Unexpected file: {relative}')

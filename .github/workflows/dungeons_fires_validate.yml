@@ -1,0 +1,53 @@
+name: Validate Dungeons Fires
+on:
+  push:
+    paths:
+      - 'projects/dungeons-fires/**'
+      - '.github/workflows/dungeons_fires_validate.yml'
+  pull_request:
+    paths:
+      - 'projects/dungeons-fires/**'
+      - '.github/workflows/dungeons_fires_validate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dungeons-fires-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  dungeons-native-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: projects/dungeons-fires
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Godot
+        run: |
+          curl --fail --location --retry 3 -o /tmp/df-godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip
+          unzip /tmp/df-godot.zip -d /tmp/df-godot
+          echo '/tmp/df-godot' >> "$GITHUB_PATH"
+      - name: Audit independent project
+        run: python3 tests/audit_project.py
+      - name: Import and parse
+        run: |
+          set -o pipefail
+          Godot_v4.6.1-stable_linux.x86_64 --headless --editor --import --quit 2>&1 | tee /tmp/df-import.log
+          if grep -E 'SCRIPT ERROR|ERROR:' /tmp/df-import.log; then exit 1; fi
+      - name: Test campaign, transactions, saves and multitouch
+        run: |
+          set -o pipefail
+          Godot_v4.6.1-stable_linux.x86_64 --headless --script tests/test_game.gd -- --qa 2>&1 | tee /tmp/df-tests.log
+          if grep -E 'SCRIPT ERROR|ERROR:' /tmp/df-tests.log; then exit 1; fi
+      - name: Test real combat without forced enemy deaths
+        run: |
+          set -o pipefail
+          Godot_v4.6.1-stable_linux.x86_64 --headless --script tests/test_combat_bot.gd -- --qa 2>&1 | tee /tmp/df-combat.log
+          if grep -E 'SCRIPT ERROR|ERROR:' /tmp/df-combat.log; then exit 1; fi
+      - name: Pack clean independent source
+        run: git archive --format=zip --prefix=Dungeons_Fires_Godot_v0_1_0/ HEAD:projects/dungeons-fires -o /tmp/Dungeons_Fires_Godot_v0_1_0.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dungeons-Fires-Godot-source-v010
+          path: /tmp/Dungeons_Fires_Godot_v0_1_0.zip
