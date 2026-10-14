@@ -71,46 +71,101 @@ static func attach(parent: Node3D,asset_id: String,target_height: float,draw_ran
     instances[asset_id] = int(instances.get(asset_id,0))+1
     return true
 
-# Actual source GLB consists of independent real meshes for wings, wingtips,
-# canopy, landing gear and fuselage. Detach the authored geometry itself rather
-# than pretending some cubes scattered near a pristine aircraft are a crash.
+# The authored CC0 GLB has 93 separate mesh objects with wings, lamps,
+# cockpit glazing and a propeller. All those original triangles remain intact
+# in the imported resource; we rearrange selected instances to stage a crash.
+# Rotating wing meshes around their *world origin* looked almost intact.
+# Explicit fracture pivots at the actual wing roots produce a visible break.
+static func _detach_airframe_part(
+        part: MeshInstance3D,pivot_origin: Vector3,offset: Vector3,
+        angles: Vector3,existing_pivot: Node3D=null) -> Node3D:
+    var host: Node3D = part.get_parent() as Node3D
+    if host == null:
+        return null
+    var hinge: Node3D = existing_pivot
+    if hinge == null:
+        hinge = Node3D.new()
+        hinge.name = "BrokenOriginalGLBPart"
+        host.add_child(hinge)
+        hinge.position = pivot_origin
+        hinge.position += offset
+        hinge.rotation_degrees = angles
+    # Mesh vertices are authored in the asset's absolute local coordinates.
+    # Counter-translate them so the child rotates about the actual hinge.
+    part.reparent(hinge,false)
+    part.position = -pivot_origin
+    part.rotation = Vector3.ZERO
+    part.set_meta("wreck_detached",true)
+    return hinge
+
 static func fracture_airplane(model: Node3D) -> int:
-    var wing_parts: Array[MeshInstance3D] = []
-    var tip_parts: Array[MeshInstance3D] = []
+    var right_wing: MeshInstance3D
+    var right_tip: MeshInstance3D
+    var canopy: MeshInstance3D
+    var prop_blade: MeshInstance3D
+    var tip_lamps: Array[MeshInstance3D] = []
+    var weathered: Dictionary = {}
     for child in model.find_children("*","MeshInstance3D",true,false):
-        var body: MeshInstance3D = child as MeshInstance3D
-        var label := String(body.name).to_lower().replace(" ","").replace("_","")
-        if label.contains("finitetaperedwing"):
-            wing_parts.append(body)
-        if label.contains("colouredwingtip"):
-            tip_parts.append(body)
-    if wing_parts.size() < 2:
-        push_warning("GLB had no separable wing, preserving intact source visual")
+        var part: MeshInstance3D = child as MeshInstance3D
+        var label: String = String(part.name).to_lower().replace(" ","").replace("_","")
+        if label.contains("finitetaperedwing-1"):
+            right_wing = part
+        elif label.contains("colouredwingtip-1"):
+            right_tip = part
+        elif label.contains("tiplamp-1"):
+            tip_lamps.append(part)
+        elif label.contains("finitecurvedtransparentcanopy"):
+            canopy = part
+        elif label.contains("finitetwistedblade2"):
+            prop_blade = part
+        # The airplane has the distinctive white paint of a pristine prop.
+        # Use original shared texture/material data, duplicate by material only,
+        # and darken selectively to represent dust, scratches and soot.
+        var original: Material = part.material_override
+        if original == null and part.mesh != null and part.mesh.get_surface_count()>0:
+            original = part.mesh.surface_get_material(0)
+        if original is StandardMaterial3D and not label.contains("lamp") and not label.contains("optic"):
+            var key: int = original.get_instance_id()
+            if not weathered.has(key):
+                var worn: StandardMaterial3D = (original as StandardMaterial3D).duplicate() as StandardMaterial3D
+                var factor := 0.76 if not label.contains("fuselage") else 0.67
+                worn.albedo_color = worn.albedo_color * Color(factor,factor*0.95,factor*0.88,1.0)
+                worn.roughness = maxf(0.86,worn.roughness)
+                weathered[key] = worn
+            part.material_override = weathered[key]
+    if right_wing == null:
+        push_warning("Cannot detach wing: the pinned CC0 airplane structure changed")
         return 0
-    var broken: MeshInstance3D = wing_parts[1]
-    # Keep the impact wing in the crash site footprint, not as a floating
-    # full-size plane wing outside the camera bounds.
-    broken.position += Vector3(0.95,-0.32,1.18)
-    broken.rotation = Vector3(0.20,-0.38,0.42)
-    broken.scale = Vector3(0.76,0.86,0.82)
-    broken.set_meta("wreck_detached",true)
-    var surface: Material = broken.material_override
-    if surface == null and broken.mesh != null and broken.mesh.get_surface_count() > 0:
-        surface = broken.mesh.surface_get_material(0)
-    if surface is StandardMaterial3D:
-        var burned := (surface as StandardMaterial3D).duplicate() as StandardMaterial3D
-        burned.albedo_color = burned.albedo_color * Color(0.59,0.53,0.48)
-        burned.roughness = 0.95
-        broken.material_override = burned
-    if tip_parts.size() >= 2:
-        var tip: MeshInstance3D = tip_parts[1]
-        tip.position += Vector3(0.95,-0.32,1.18)
-        tip.rotation = Vector3(0.20,-0.38,0.42)
-        tip.scale = Vector3(0.76,0.86,0.82)
-        tip.set_meta("wreck_detached",true)
-    # Four pieces of actual in-game aircraft mesh geometry, one visibly
-    # separated and weathered. No collision/search radius changes.
-    return 1 + (1 if tip_parts.size() >= 2 else 0)
+    var original_root := Vector3(-0.20,1.39,0.50)
+    var wing_group := _detach_airframe_part(
+        right_wing,original_root,Vector3(1.1,-0.72,4.1),Vector3(24,-41,38))
+    if wing_group == null:
+        return 0
+    wing_group.name = "FracturedRightWingActualGLB"
+    var pieces := 1
+    if right_tip != null:
+        _detach_airframe_part(right_tip,original_root,Vector3.ZERO,Vector3.ZERO,wing_group)
+        pieces += 1
+    for light in tip_lamps:
+        _detach_airframe_part(light,original_root,Vector3.ZERO,Vector3.ZERO,wing_group)
+        pieces += 1
+    if canopy != null:
+        # Uncovered cockpit shows actual GLB seats and instrument panel below.
+        # Lift original glazing rather than hiding the cockpit completely.
+        var canopy_pivot := _detach_airframe_part(
+            canopy,Vector3(0,1.88,0),Vector3(-0.8,-0.50,-2.9),Vector3(-18,66,-61))
+        if canopy_pivot != null:
+            canopy_pivot.name = "ShatteredCockpitCanopy"
+            pieces += 1
+    if prop_blade != null:
+        var nose_pivot := _detach_airframe_part(
+            prop_blade,Vector3(3.8,1.52,0),Vector3(2.0,-1.20,-1.8),Vector3(73,-28,48))
+        if nose_pivot != null:
+            nose_pivot.name = "BrokenPropellerBlade"
+            pieces += 1
+    model.set_meta("aircraft_fracture_count",pieces)
+    model.set_meta("aircraft_original_wing_broken",true)
+    return pieces
 
 static func add_crash_damage(parent: Node3D) -> void:
     # Original airframe remains the imported authored GLB. Debris is a separate

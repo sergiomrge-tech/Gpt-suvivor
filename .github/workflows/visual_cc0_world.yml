@@ -1,7 +1,7 @@
 name: Native Godot realistic island CC0 world review
 on:
   push:
-    branches: [feat/cc0-aviation-palms-crafting-world, feat/cc0-world-structures-lot2, feat/survivor-integrated-cc0-world-and-hero]
+    branches: [feat/cc0-aviation-palms-crafting-world, feat/cc0-world-structures-lot2, feat/cc0-wreck-and-jungle-polish, feat/survivor-integrated-cc0-world-and-hero, feat/survivor-realism-integrated-polish]
     paths-ignore: [".github/workflows/download_cc0_world.yml"]
   workflow_dispatch:
 permissions:
@@ -34,7 +34,7 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE: "1"
         run: |
           xvfb-run -a -s "-screen 0 1280x720x24" timeout 420 Godot_v4.6.1-stable_linux.x86_64 --path . --script res://tests/capture_cc0_world.gd 2>&1 | tee /tmp/capture-world.log
-          for f in 01_tropical_beach_full 03_forest_understory 06_mobile_light_preset 09_authored_aircraft_crash 10_real_carpentry_workbench 11_real_coconut_trees 12_dense_B_forest_scanned 13_new_chest_and_firepit_CC0 14_cc0_buckets_and_crates; do
+          for f in 01_tropical_beach_full 03_forest_understory 06_mobile_light_preset 09_authored_aircraft_crash 10_real_carpentry_workbench 11_real_coconut_trees 12_dense_B_forest_scanned 13_new_chest_and_firepit_CC0 14_cc0_buckets_and_crates 15_actual_broken_airframe_3d_closeup 16_real_polyhaven_dense_jungle_3d_closeup; do
             test -s "/tmp/survivor-biomes-cc0_v20/${f}.png"
           done
           if grep -E 'SCRIPT ERROR|Parse Error' /tmp/capture-world.log; then exit 1; fi
