@@ -27,6 +27,8 @@ func run() -> void:
     check(SurvivorRealWorldAssets.available("airplane_propeller"),"Real airframe available")
     check(SurvivorRealWorldAssets.available("workbench_carpenter"),"Real carpenter workbench available")
     check(SurvivorRealWorldAssets.available("pachira") and SurvivorRealWorldAssets.available("calathea") and SurvivorRealWorldAssets.available("fern"),"B-heavy forest foliage GLTF files import")
+    for model_id in ["island_tree_01","tree_stump_01","dead_tree_trunk_02","boulder_01","rock_07","rock_face_01","wooden_ladder_02"]:
+        check(SurvivorRealWorldAssets.available(model_id),"Optimized scanned CC0 nature model present: "+model_id)
     var wreck_found := false
     var wreck_asset := false
     for entry in world.landmarks:
@@ -49,6 +51,19 @@ func run() -> void:
             check(wing_pivot != null and (wing_pivot as Node3D).position.z > 4.5,"Detached wing now uses a fracture pivot at its root and lies away from the fuselage")
             check(plane.find_child("ShatteredCockpitCanopy",true,false)!=null and plane.find_child("BrokenPropellerBlade",true,false)!=null,"Cockpit canopy and propeller are also damaged, not intact")
             break
+    var counts_nature := {"island_tree_01":0,"pachira":0,"boulder_01":0,"rock_07":0,"dead_tree_trunk_02":0}
+    for item in world.resources:
+        for nature_id in counts_nature:
+            if item.node.get_node_or_null("CC0_"+nature_id) != null:
+                counts_nature[nature_id] += 1
+    for nature_id in counts_nature:
+        check(int(counts_nature[nature_id])>=1,"Scanned "+nature_id+" model visible on actual island resources")
+    var caves_with_scanned_faces := 0
+    for point in world.landmarks:
+        if point.kind=="cave" and point.node.find_child("CC0_rock_face_01",true,false)!=null:
+            caves_with_scanned_faces += 1
+    check(caves_with_scanned_faces==2,"Both caves display CC0 scanned cliff faces")
+    check(world.find_child("CC0_tree_stump_01",true,false)!=null,"Scanned stump placed in tropical forest")
     var real_palm_count := 0
     for resource in world.resources:
         if resource.kind=="palm" and resource.node.get_node_or_null("CC0_palm_light")!=null or resource.kind=="palm" and resource.node.get_node_or_null("CC0_palm_detailed")!=null:
@@ -74,6 +89,7 @@ func run() -> void:
     check(bench_model != null,"Craftable workbench uses imported carpenter workbench GLB")
     var house := world.add_structure({"kind":"house","x":37.0,"z":147.0,"rotation":0.0})
     check(house.get_node_or_null("CC0_garden_shed") != null,"Constructed shelter uses real CC0 GLB instead of box primitive")
+    check(house.find_child("CC0_wooden_ladder_02",true,false)!=null,"Scanned ladder accompanies buildable shelter")
     var chest := world.add_structure({"kind":"chest","x":-17.0,"z":145.0,"rotation":0.0})
     check(chest.get_node_or_null("CC0_storage_chest") != null,"Original CC0 travel chest replaces procedural timber storage")
     var fire := world.add_structure({"kind":"campfire","x":-20.0,"z":148.0,"rotation":0.0})

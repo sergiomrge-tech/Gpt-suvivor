@@ -19,10 +19,17 @@ const SOURCES := {
     "camp_chair":"res://assets/survival_props/models/camp_chair.glb",
     "canoe":"res://assets/survival_props/models/canoe.glb",
     "wooden_bucket":"res://assets/survival_props/models/polyhaven/wooden_bucket_01/wooden_bucket_01.gltf",
-    "wooden_crate":"res://assets/survival_props/models/polyhaven/wooden_crate_01/wooden_crate_01.gltf"
+    "wooden_crate":"res://assets/survival_props/models/polyhaven/wooden_crate_01/wooden_crate_01.gltf",
+    "island_tree_01":"res://assets/real_nature/models/island_tree_01.glb",
+    "tree_stump_01":"res://assets/real_nature/models/tree_stump_01.glb",
+    "dead_tree_trunk_02":"res://assets/real_nature/models/dead_tree_trunk_02.glb",
+    "boulder_01":"res://assets/real_nature/models/boulder_01.glb",
+    "rock_07":"res://assets/real_nature/models/rock_07.glb",
+    "rock_face_01":"res://assets/real_nature/models/rock_face_01.glb",
+    "wooden_ladder_02":"res://assets/real_nature/models/wooden_ladder_02.glb"
 }
 static var cache: Dictionary = {}
-static var instances := {"palm_detailed":0,"palm_light":0,"airplane_propeller":0,"workbench_carpenter":0,"garden_shed":0,"fern":0,"calathea":0,"pachira":0,"camp_fire_grill":0,"storage_chest":0,"camp_kitchen":0,"camp_chair":0,"canoe":0,"wooden_bucket":0,"wooden_crate":0}
+static var instances := {"palm_detailed":0,"palm_light":0,"airplane_propeller":0,"workbench_carpenter":0,"garden_shed":0,"fern":0,"calathea":0,"pachira":0,"camp_fire_grill":0,"storage_chest":0,"camp_kitchen":0,"camp_chair":0,"canoe":0,"wooden_bucket":0,"wooden_crate":0,"island_tree_01":0,"tree_stump_01":0,"dead_tree_trunk_02":0,"boulder_01":0,"rock_07":0,"rock_face_01":0,"wooden_ladder_02":0}
 
 static func available(asset_id: String) -> bool:
     return SOURCES.has(asset_id) and ResourceLoader.exists(SOURCES[asset_id])
@@ -66,7 +73,7 @@ static func attach(parent: Node3D,asset_id: String,target_height: float,draw_ran
         var node: MeshInstance3D = child as MeshInstance3D
         node.visibility_range_end = draw_range
         node.visibility_range_end_margin = 8.0
-        if asset_id in ["palm_light","fern","calathea"]:
+        if asset_id in ["palm_light","fern","calathea","tree_stump_01","rock_07"]:
             node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     instances[asset_id] = int(instances.get(asset_id,0))+1
     return true

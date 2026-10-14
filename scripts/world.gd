@@ -107,21 +107,30 @@ func _resource(kind: String, id: String, p: Vector2) -> void:
                 SurvivorModels.palm(node,variant)
             radius = 0.8
         "tree":
-            SurvivorModels.canopy_tree(node,variant)
+            # Harvestable forest trees keep their IDs and axe gate; native CC0
+            # tree and existing photogrammetric pachira replace geometric cones.
+            var source_id := "island_tree_01" if variant % 7 == 0 else "pachira"
+            if not SurvivorRealWorldAssets.attach(node,source_id,9.3 if source_id == "island_tree_01" else 7.3,65.0 if source_id == "island_tree_01" else 78.0):
+                SurvivorModels.canopy_tree(node,variant)
             radius = 1.1
         "rock":
-            SurvivorModels.rock(node, variant)
+            var rock_source := "boulder_01" if variant % 5 == 0 else "rock_07"
+            if not SurvivorRealWorldAssets.attach(node,rock_source,2.2 if rock_source == "boulder_01" else 1.45,65.0):
+                SurvivorModels.rock(node, variant)
             radius = 1.7
         "fiber":
             SurvivorModels.fern(node,variant)
         "loose_log":
-            SurvivorModels.beam(node, Vector3(-1.1,0.3,0), Vector3(1.1,0.3,0), 0.3, Color(0.37,0.23,0.10))
-            SurvivorModels.sphere(node,0.29,Color(0.73,0.53,0.28),Vector3(-1.11,0.3,0),Vector3(0.08,1,1))
-            SurvivorModels.sphere(node,0.29,Color(0.73,0.53,0.28),Vector3(1.11,0.3,0),Vector3(0.08,1,1))
-            SurvivorModels.beam(node,Vector3(0.4,0.4,0),Vector3(0.6,0.5,0.5),0.09,Color(0.37,0.23,0.10))
+            # Scanned fallen timber is decorative only: hand-pickup stays unchanged.
+            if not SurvivorRealWorldAssets.attach(node,"dead_tree_trunk_02",0.78,43.0):
+                SurvivorModels.beam(node, Vector3(-1.1,0.3,0), Vector3(1.1,0.3,0), 0.3, Color(0.37,0.23,0.10))
+                SurvivorModels.sphere(node,0.29,Color(0.73,0.53,0.28),Vector3(-1.11,0.3,0),Vector3(0.08,1,1))
+                SurvivorModels.sphere(node,0.29,Color(0.73,0.53,0.28),Vector3(1.11,0.3,0),Vector3(0.08,1,1))
+                SurvivorModels.beam(node,Vector3(0.4,0.4,0),Vector3(0.6,0.5,0.5),0.09,Color(0.37,0.23,0.10))
         "loose_stone":
-            SurvivorModels.sphere(node,0.42,Color(0.5,0.53,0.49),Vector3(0,0.23,0),Vector3(1.1,0.65,0.9))
-            SurvivorModels.sphere(node,0.26,Color(0.39,0.43,0.41),Vector3(0.55,0.12,0.18),Vector3(1,0.6,0.8))
+            if not SurvivorRealWorldAssets.attach(node,"rock_07",0.45,38.0):
+                SurvivorModels.sphere(node,0.42,Color(0.5,0.53,0.49),Vector3(0,0.23,0),Vector3(1.1,0.65,0.9))
+                SurvivorModels.sphere(node,0.26,Color(0.39,0.43,0.41),Vector3(0.55,0.12,0.18),Vector3(1,0.6,0.8))
         "metal":
             for i in range(3):
                 var part := SurvivorModels.box(node, Vector3(0.8, 0.2, 1.0), Color(0.47, 0.54, 0.56), Vector3((i - 1) * 0.7, 0.2 + i * 0.15, 0))
@@ -147,6 +156,23 @@ func _landmark(kind: String, title: String, p: Vector2) -> void:
                 SurvivorModels.wreck(node)
         "cave":
             SurvivorModels.cave(node)
+            # PBR rock faces flank the accessible cave instead of replacing
+            # its interaction trigger or blocking the original corridor.
+            for side in [-1,1]:
+                var cliff := Node3D.new()
+                cliff.name = "Nature_CaveCliff_%d" % side
+                var dx := float(side)*5.7
+                cliff.position = Vector3(dx,terrain.height_at(p.x+dx,p.y+2.1)-node.position.y,2.1)
+                cliff.rotation.y = float(side)*0.4
+                node.add_child(cliff)
+                SurvivorRealWorldAssets.attach(cliff,"rock_face_01",4.15,85.0)
+            if p.x < -50.0:
+                var cave_ladder := Node3D.new()
+                cave_ladder.name = "Nature_CliffLadder"
+                cave_ladder.position = Vector3(7.5,terrain.height_at(p.x+7.5,p.y)-node.position.y,0.0)
+                cave_ladder.rotation.y = -0.4
+                node.add_child(cave_ladder)
+                SurvivorRealWorldAssets.attach(cave_ladder,"wooden_ladder_02",2.7,50.0)
         "spring":
             for i in range(9):
                 SurvivorModels.sphere(node, 0.6, Color(0.32, 0.42, 0.36), Vector3(cos(i * TAU / 9) * 2.4, 0.18, sin(i * TAU / 9) * 2.4))
@@ -198,6 +224,12 @@ func add_structure(entry: Dictionary) -> Node3D:
             # doorway logic, save and progression stay owned by SurvivorWorld.
             if not SurvivorRealWorldAssets.attach(node,"garden_shed",4.15,110.0):
                 SurvivorModels.building(node,entry.kind)
+            var ladder := Node3D.new()
+            ladder.name = "Nature_HouseLadder"
+            ladder.position = Vector3(2.45,0.0,1.55)
+            ladder.rotation.y = 0.2
+            node.add_child(ladder)
+            SurvivorRealWorldAssets.attach(ladder,"wooden_ladder_02",2.35,56.0)
         else:
             SurvivorModels.building(node,entry.kind)
     if entry.kind == "door_panel":
@@ -499,6 +531,17 @@ func _forest_groups() -> void:
                 if protected:
                     continue
                 _resource("tree","forest_tree_%d"%index,p)
+                # Deterministic scanned stumps sit near select forest trees.
+                # Decoration has no collider, loot ID or harvest requirement.
+                if index % 6 == 0:
+                    var stump := Node3D.new()
+                    stump.name = "Nature_ForestStump_%d" % index
+                    var sx := p.x + 3.3
+                    var sz := p.y - 2.2
+                    stump.position = Vector3(sx,terrain.height_at(sx,sz),sz)
+                    stump.rotation.y = float(index)*0.38
+                    add_child(stump)
+                    SurvivorRealWorldAssets.attach(stump,"tree_stump_01",0.73,51.0)
                 index += 1
                 break
     refresh_resources()
