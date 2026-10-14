@@ -8,9 +8,15 @@ func run() -> void:
     for source in SurvivorRealWorldAssets.SOURCES:
         if source == "airplane_propeller":
             continue
+        var destination := directory.path_join(source+".scn")
+        if FileAccess.file_exists(destination):
+            assert(DirAccess.remove_absolute(destination)==OK)
+        SurvivorWorldAssetRenderer.geometry.erase(source)
         var parts := SurvivorWorldAssetRenderer.parts(source)
         assert(not parts.is_empty(),"Missing native asset "+source)
         var root := Node3D.new()
+        if SurvivorWorldAssetRenderer.collision_boxes.has(source):
+            root.set_meta("collision_bounds",SurvivorWorldAssetRenderer.collision_boxes[source])
         for part in parts:
             var mesh := MeshInstance3D.new()
             mesh.mesh = part.mesh

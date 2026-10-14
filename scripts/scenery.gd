@@ -21,6 +21,7 @@ var real_forest_counts := {"fern":0,"calathea":0,"pachira":0}
 # Real Poly Haven fern meshes batched in 48m sectors (not handmade foliage).
 var tropical_floor_batches: Array[Dictionary] = []
 var tropical_floor_count := 0
+var canopy_resources: Array[Dictionary] = []
 var canopy_batches: Array[Dictionary] = []
 var canopy_obstacles: Array[Dictionary] = []
 
@@ -233,6 +234,8 @@ func _protected(p: Vector2) -> bool:
         if p.distance_to(Vector2(entry.position.x, entry.position.z)) < (5.0 if entry.kind == "house" else 2.5):
             return true
     for entry in world.resources:
+        if bool(entry.get("canopy",false)):
+            continue
         if entry.radius > 0.0 and p.distance_to(Vector2(entry.position.x, entry.position.z)) < entry.radius + 0.3:
             return true
     return false
@@ -267,6 +270,11 @@ func clear_area(pos: Vector3, radius: float) -> void:
     for obstacle in canopy_obstacles:
         if Vector2(obstacle.position.x-pos.x,obstacle.position.z-pos.z).length_squared()<radius*radius:
             obstacle.cleared = true
+    for tree in canopy_resources:
+        if Vector2(tree.position.x-pos.x,tree.position.z-pos.z).length_squared()<radius*radius:
+            tree.cleared = true
+            tree.node.visible = false
+    sync_canopy()
     for batch in batches + detail_batches + biome_batches + canopy_batches:
         for i in range(batch.entries.size()):
             var point: Vector3 = batch.entries[i].position
@@ -435,17 +443,42 @@ func _generate_island_canopy() -> void:
         if not buckets.has(key):
             buckets[key] = {"source":source,"sector":sector,"entries":[]}
         var point := Vector3(p.x,h-0.025,p.y)
-        var item := {"position":point,"angle":rng.randf_range(0,TAU),"size":rng.randf_range(0.86,1.15)}
+        var item := {"position":point,"angle":rng.randf_range(0,TAU),"size":rng.randf_range(0.86,1.15),"id":"canopy_tree_%03d" % i}
         buckets[key].entries.append(item)
         canopy_obstacles.append({"position":point,"radius":0.60,"cleared":false})
     for key in buckets:
         var group: Dictionary = buckets[key]
         var sector: Vector2i = group.sector
         var center := Vector3((sector.x+0.5)*CHUNK_SIZE,0,(sector.y+0.5)*CHUNK_SIZE)
-        canopy_batches.append_array(SurvivorWorldAssetRenderer.batch(self,group.source,group.entries,center,8.6 if group.source=="island_tree_01" else 7.5,100.0))
+        var height := 8.6 if group.source=="island_tree_01" else 7.5
+        var native := SurvivorWorldAssetRenderer.batch(self,group.source,group.entries,center,height,100.0)
+        canopy_batches.append_array(native)
+        for index in range(group.entries.size()):
+            var item: Dictionary = group.entries[index]
+            var proxy := Node3D.new()
+            proxy.name = item.id
+            proxy.position = item.position
+            proxy.rotation.y = item.angle
+            world.add_child(proxy)
+            var entry := {"kind":"tree","id":item.id,"node":proxy,"position":item.position,"radius":0.6,"canopy":true,"source_asset":group.source,"height":height*float(item.size),"batches":native,"instance":index,"cleared":false,"shown":true}
+            world.resources.append(entry)
+            canopy_resources.append(entry)
+    sync_canopy()
+
+func sync_canopy() -> void:
+    for entry in canopy_resources:
+        var shown: bool = entry.node.visible and not entry.cleared
+        if bool(entry.shown)==shown:
+            continue
+        entry.shown = shown
+        for batch in entry.batches:
+            var item: Dictionary = batch.entries[int(entry.instance)]
+            var height: float = entry.height
+            var transform := Transform3D(Basis(Vector3.UP,float(item.angle)).scaled(Vector3.ONE*height),item.position-batch.node.position)
+            if not shown:
+                transform.basis = Basis.IDENTITY.scaled(Vector3.ZERO)
+            batch.node.multimesh.set_instance_transform(int(entry.instance),transform)
 
 func scenery_walkable(pos: Vector3) -> bool:
-    for obstacle in canopy_obstacles:
-        if not obstacle.cleared and Vector2(pos.x-obstacle.position.x,pos.z-obstacle.position.z).length()<float(obstacle.radius)+0.42:
-            return false
+    # The world resource collider is authoritative for every instanced tree.
     return true

@@ -1,3 +1,7 @@
+## Atualização v2.4 — seis melhorias completas
+
+Árvores cortáveis, ações no esqueleto, prévias fiéis, acabamento natural, efeitos com troncos salvos e APK otimizado com painel de FPS/memória. Detalhes e validação: [SURVIVAL_POLISH_V24](docs/SURVIVAL_POLISH_V24.md).
+
 ## Atualização v2.3 — mapa e APK
 
 Mapa integrado com os assets novos, caminhada corrigida e APK de teste ARM64

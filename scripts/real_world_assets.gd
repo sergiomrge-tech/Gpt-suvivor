@@ -32,7 +32,10 @@ static var cache: Dictionary = {}
 static var instances := {"palm_detailed":0,"palm_light":0,"airplane_propeller":0,"workbench_carpenter":0,"garden_shed":0,"fern":0,"calathea":0,"pachira":0,"camp_fire_grill":0,"storage_chest":0,"camp_kitchen":0,"camp_chair":0,"canoe":0,"wooden_bucket":0,"wooden_crate":0,"island_tree_01":0,"tree_stump_01":0,"dead_tree_trunk_02":0,"boulder_01":0,"rock_07":0,"rock_face_01":0,"wooden_ladder_02":0}
 
 static func available(asset_id: String) -> bool:
-    return SOURCES.has(asset_id) and ResourceLoader.exists(SOURCES[asset_id])
+    if not SOURCES.has(asset_id):
+        return false
+    var optimized := "res"+"://assets/optimized_world/"+asset_id+".scn"
+    return ResourceLoader.exists(optimized) or ResourceLoader.exists(SOURCES[asset_id])
 
 static func attach(parent: Node3D,asset_id: String,target_height: float,draw_range: float=90.0) -> bool:
     if not available(asset_id):

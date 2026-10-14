@@ -1,7 +1,7 @@
 extends RefCounted
 class_name SurvivalState
 
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 const TOOLS := ["stone_knife", "stone_axe", "stone_pickaxe", "stone_spear", "fishing_rod", "reinforced_axe", "reinforced_pickaxe"]
 const MATERIAL_RECIPES := ["rope", "plank"]
 const FOOD_RECIPES := ["meal", "grilled_crab", "cooked_meat"]
@@ -58,6 +58,7 @@ var storage: Dictionary = {"wood": 0, "stone": 0, "fiber": 0, "metal": 0, "rope"
 var rain_water := 0.0
 var buildings: Array[Dictionary] = []
 var harvested: Dictionary = {}
+var wood_drops: Array[Dictionary] = []
 var discoveries: Dictionary = {}
 var health := 100.0
 var hunger := 100.0
@@ -292,10 +293,10 @@ func prepare_voyage() -> bool:
     return true
 
 func to_data() -> Dictionary:
-    return {"version": SAVE_VERSION, "inventory": inventory, "storage": storage.duplicate(true), "rain_water": rain_water, "equipment": equipment.duplicate(true), "buildings": buildings, "harvested": harvested, "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
+    return {"version": SAVE_VERSION, "inventory": inventory, "storage": storage.duplicate(true), "rain_water": rain_water, "equipment": equipment.duplicate(true), "buildings": buildings, "harvested": harvested, "wood_drops": wood_drops.duplicate(true), "discoveries": discoveries, "health": health, "hunger": hunger, "thirst": thirst, "elapsed": elapsed, "escaped": escaped, "position": [player_position.x, player_position.z]}
 
 static func from_data(data: Dictionary) -> SurvivalState:
-    if int(data.get("version", 0)) not in [1, 2, SAVE_VERSION]:
+    if int(data.get("version", 0)) not in [1, 2, 3, SAVE_VERSION]:
         return null
     var state := SurvivalState.new()
     var inv = data.get("inventory", {})
@@ -392,6 +393,21 @@ static func from_data(data: Dictionary) -> SurvivalState:
         if not (value is int or value is float) or not is_finite(float(value)):
             return null
         state.harvested[str(key)] = maxf(0.0, float(value))
+    var drops = data.get("wood_drops",[])
+    if not drops is Array or drops.size()>256:
+        return null
+    var drop_ids := {}
+    for drop in drops:
+        if not drop is Dictionary or not drop.has("x") or not drop.has("z") or not drop.get("id") is String or str(drop.id).length()>128 or drop_ids.has(drop.id):
+            return null
+        if not drop.get("amount") is int or drop.amount<1 or drop.amount>12:
+            return null
+        for axis in ["x","z","rotation"]:
+            var number = drop.get(axis,0.0)
+            if not (number is int or number is float) or not is_finite(float(number)) or absf(float(number))>(TAU if axis=="rotation" else 240.0):
+                return null
+        state.wood_drops.append({"id":drop.id,"amount":drop.amount,"x":float(drop.x),"z":float(drop.z),"rotation":float(drop.get("rotation",0.0))})
+        drop_ids[drop.id] = true
     var discovered = data.get("discoveries",{})
     if not discovered is Dictionary or discovered.size()>128:
         return null

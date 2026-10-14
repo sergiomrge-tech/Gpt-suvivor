@@ -8,7 +8,8 @@ signal footstep(surface: String, point: Vector3)
 var terrain: SurvivorTerrain
 var world: SurvivorWorld
 var move_vector := Vector2.ZERO
-var speed := 8.5
+var speed := 1.6
+var measured_speed := 0.0
 var sprint_enabled := false
 var locomotion_blend := 0.0
 var walking := false
@@ -76,13 +77,14 @@ func _physics_process(delta: float) -> void:
     walking = vec.length_squared() > 0.012 and not is_busy()
     var sprinting := walking and sprint_enabled and vec.length() > 0.68
     if walking:
-        var offset := Vector3(vec.x,0,vec.y) * (speed * (1.36 if sprinting else 1.0)) * delta
+        var offset := Vector3(vec.x,0,vec.y) * (speed * (1.8 if sprinting else 1.0)) * delta
         for axis in [Vector3(offset.x,0,0),Vector3(0,0,offset.z)]:
             var candidate: Vector3 = position + axis
             if world.walkable(candidate,position):
                 position = candidate
     position.y = world.surface_height(position)
     var moved := Vector2(position.x-previous.x,position.z-previous.z).length()
+    measured_speed = moved/maxf(delta,0.0001)
     walking = walking and moved > 0.001
     if walking:
         # Collision may block just one axis. Face the real displacement so
@@ -93,6 +95,8 @@ func _physics_process(delta: float) -> void:
     animation_clock += delta * ((11.0 + locomotion_blend * 4.6) if walking else 1.9)
     step_distance += moved
     var stride := lerpf(1.55,1.95,locomotion_blend)
+    if using_skinned_hero:
+        stride = lerpf(0.66,0.76,locomotion_blend)*rigged_hero.character.scale.y
     if step_distance > stride:
         step_distance = fmod(step_distance,stride)
         footstep.emit("wood" if world.is_on_dock(position) else ("sand" if position.y<3.1 else "grass"),position)
@@ -187,6 +191,13 @@ func cancel_action() -> void:
         _base_pose()
 
 func pose_action(progress: float) -> void:
+    if using_skinned_hero:
+        # The imported skeleton owns action poses; old hidden joints must not
+        # translate/lean its parent or bend the fishing grip a second time.
+        body_pivot.position.y = 0.0
+        body_pivot.rotation.x = 0.0
+        body_pivot.rotation.z = 0.0
+        return
     var wave := sin(progress*PI)
     match action_kind:
         "chop", "mine":
@@ -465,9 +476,8 @@ func _build_tools() -> void:
                 root.rotation.x = -0.95
                 SurvivorModels.beam(root,Vector3(0,0.12,0),Vector3(0,-2.75,0),0.04,Color(0.62,0.43,0.19))
                 SurvivorModels.sphere(root,0.09,metal,Vector3(0,-0.15,0.05))
-                SurvivorModels.beam(root,Vector3(0,-2.75,0),Vector3(0,-2.95,1.35),0.008,Color(0.82,0.83,0.71))
             "food":
-                SurvivorModels.sphere(root,0.16,Color(0.48,0.34,0.18),Vector3(0,-0.10,0))
+                SurvivorModels.sphere(root,0.105,Color(0.48,0.34,0.18),Vector3(0,-0.10,0))
             "skewer":
                 SurvivorModels.beam(root,Vector3(0,0.1,0),Vector3(0,-1.2,0),0.018,timber)
                 SurvivorModels.sphere(root,0.14,Color(0.61,0.42,0.18),Vector3(0,-0.8,0),Vector3(0.8,1.9,0.6))

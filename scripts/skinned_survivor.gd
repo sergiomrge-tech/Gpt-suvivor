@@ -12,6 +12,7 @@ var clips: Dictionary = {}
 var grip: BoneAttachment3D
 var owner_player: SurvivorPlayer
 var normalized_height := 0.0
+var equipment_basis := Basis.IDENTITY
 
 func initialize(player: SurvivorPlayer, tool_hand: Node3D) -> bool:
     owner_player = player
@@ -82,6 +83,10 @@ func initialize(player: SurvivorPlayer, tool_hand: Node3D) -> bool:
     tool_hand.position = Vector3(0,-0.025,0)
     tool_hand.rotation = Vector3.ZERO
     animator.play(clips["idle"],0.0)
+    animator.advance(0.0)
+    skeleton.force_update_all_bone_transforms()
+    equipment_basis = skeleton.get_bone_global_pose(hand_bone).basis.orthonormalized().inverse()
+    tool_hand.basis = equipment_basis
     print("REAL_HERO_ACTIVE bones=%d height=%.2f grip=%s clips=%s" % [
         skeleton.get_bone_count(),normalized_height,grip.bone_name,str(clips.keys())])
     return true
@@ -102,24 +107,44 @@ func _process(_delta: float) -> void:
         return
     var target := "idle"
     if owner_player.is_busy():
-        if owner_player.action_kind in ["chop","mine","cut","build","craft","handcraft","spear","gather","search"]:
-            target = "wave" if clips.has("wave") else "idle"
-    elif owner_player.walking:
-        target = "run" if owner_player.locomotion_blend > 0.52 else "walk"
-    if clips.has(target) and animator.current_animation != clips[target]:
-        animator.play(clips[target],0.18)
-    if target == "walk":
-        animator.speed_scale = 1.0
-    elif target == "run":
-        animator.speed_scale = 1.12
+        target = owner_player.action_kind if clips.has(owner_player.action_kind) else "gather"
+        if animator.current_animation!=clips[target]:
+            animator.play(clips[target],0.0)
+        animator.speed_scale = 0.0
+        var progress := clampf(1.0-owner_player.action_remaining/owner_player.action_duration,0.0,1.0)
+        animator.seek(progress*animator.current_animation_length,true)
     else:
-        animator.speed_scale = 1.0
-    # Fishing remains procedural through the old controller; move only the
-    # grip (not the whole skeleton), keeping the line connected to rod tip.
+        if owner_player.walking:
+            target = "run" if owner_player.locomotion_blend>0.52 else "walk"
+        if animator.current_animation!=clips[target]:
+            animator.play(clips[target],0.16)
+        # Calibrated support phase stride in world units; cadence responds to
+        # actual displacement, including slow analog input and collision sliding.
+        if target in ["walk","run"]:
+            var reference := (4.0*0.38/0.72 if target=="run" else 4.0*0.33)*character.scale.y
+            animator.speed_scale = clampf(owner_player.measured_speed/reference,0.20,1.65)
+        else:
+            animator.speed_scale = 1.0
+    # Equipment dimensions are authored in metres, independent of the imported
+    # character scale. Orient the grip in actor space instead of inheriting the
+    # exporter's wrist axis; the attachment still follows the real wrist position.
     if grip != null and owner_player.right_hand != null:
-        var lean := 0.0
+        skeleton.force_update_all_bone_transforms()
+        var wrist := skeleton.get_bone_global_pose(skeleton.find_bone(grip.bone_name)).basis.orthonormalized()
+        var pitch := -0.45
         if owner_player.action_kind == "fish":
-            lean = -0.38
+            pitch = -1.88
+            owner_player.tools.rod.rotation.x = 0.0
+        elif owner_player.action_kind == "spear":
+            pitch = -PI*0.5
         elif owner_player.action_kind in ["chop","mine","build","craft","cut"]:
-            lean = -0.22
-        owner_player.right_hand.rotation.x = lerpf(owner_player.right_hand.rotation.x,lean,0.2)
+            var phase := clampf(1.0-owner_player.action_remaining/owner_player.action_duration,0.0,1.0)
+            if phase<0.25:
+                pitch = lerpf(-0.45,-2.3,phase/0.25)
+            elif phase<0.47:
+                pitch = lerpf(-2.3,-0.65,(phase-0.25)/0.22)
+            else:
+                pitch = lerpf(-0.65,-0.45,(phase-0.47)/0.53)
+        elif owner_player.action_kind in ["eat","cook"]:
+            pitch = 0.0
+        owner_player.right_hand.basis = (wrist.inverse()*Basis(Vector3.RIGHT,pitch)).scaled(Vector3.ONE/character.scale.y)

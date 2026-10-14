@@ -8,6 +8,8 @@ var structures: Array[Dictionary] = []
 var landmarks: Array[Dictionary] = []
 var _rng := RandomNumberGenerator.new()
 var _refresh_clock := 0.0
+var harvest_effects: SurvivorHarvestEffects
+static var footprint_cache: Dictionary = {}
 var scenery: SurvivorScenery
 var fauna: SurvivorFauna
 var caves: SurvivorCaves
@@ -75,6 +77,11 @@ func generate() -> void:
     caves.state = state
     add_child(caves)
     caves.generate()
+    harvest_effects = SurvivorHarvestEffects.new()
+    add_child(harvest_effects)
+    for drop in state.wood_drops:
+        _spawn_wood_drop(drop)
+    refresh_resources()
 
 func _reserved(p: Vector2) -> bool:
     if p.distance_to(Vector2(0, 170)) < 17.0:
@@ -199,56 +206,17 @@ func add_structure(entry: Dictionary) -> Node3D:
     elif entry.kind != "boat":
         node.rotation.y = float(entry.get("rotation", 0.0))
     add_child(node)
-    if entry.kind == "boat":
-        _build_boat_model(node,int(entry.get("stage",5)))
-    else:
-        if entry.kind == "campfire":
-            # Keep fire/glow/recipe state from original procedural fire, but
-            # replace its simple stone-only silhouette with a real cooking grate.
-            SurvivorModels.building(node,entry.kind)
-            for child in node.get_children():
-                if child is MeshInstance3D:
-                    node.remove_child(child)
-                    child.free()
-            SurvivorRealWorldAssets.attach(node,"camp_fire_grill",1.05,73.0)
-            _camp_flames(node)
-        elif entry.kind == "chest":
-            if not SurvivorRealWorldAssets.attach(node,"storage_chest",1.15,70.0):
-                SurvivorModels.building(node,entry.kind)
-        elif entry.kind == "rain_collector":
-            SurvivorModels.building(node,entry.kind)
-            var bucket := Node3D.new()
-            bucket.position = Vector3(1.46,0.0,0.7)
-            node.add_child(bucket)
-            SurvivorRealWorldAssets.attach(bucket,"wooden_bucket",0.85,55.0)
-        elif entry.kind == "tool_rack":
-            SurvivorModels.building(node,entry.kind)
-            var supplies := Node3D.new()
-            supplies.position = Vector3(-1.2,0.0,1.45)
-            node.add_child(supplies)
-            SurvivorRealWorldAssets.attach(supplies,"wooden_crate",0.95,50.0)
-        elif entry.kind == "workbench":
-            if not SurvivorRealWorldAssets.attach(node,"workbench_carpenter",1.43,72.0):
-                SurvivorModels.building(node,entry.kind)
-        elif entry.kind == "house":
-            # Real timber prefab is decorative. Gameplay footprint, placement,
-            # doorway logic, save and progression stay owned by SurvivorWorld.
-            if not SurvivorRealWorldAssets.attach(node,"garden_shed",4.15,110.0):
-                SurvivorModels.building(node,entry.kind)
-            var ladder := Node3D.new()
-            ladder.name = "Nature_HouseLadder"
-            ladder.position = Vector3(2.45,0.0,1.55)
-            ladder.rotation.y = 0.2
-            node.add_child(ladder)
-            SurvivorRealWorldAssets.attach(ladder,"wooden_ladder_02",2.35,56.0)
-        else:
-            SurvivorModels.building(node,entry.kind)
+    build_structure_visual(node,str(entry.kind),int(entry.get("stage",5)))
     if entry.kind == "door_panel":
         var leaf: Node3D = node.get_node_or_null("DoorLeaf")
         if leaf != null:
             leaf.rotation.y = -PI * 0.5 if bool(entry.get("door_open", false)) else 0.0
-    if entry.kind not in ["campfire", "boat"]:
-        SurvivorModels.merge_static(node, "building_" + str(entry.kind))
+    var collider := node.get_meta("visual_bounds") as AABB
+    if entry.kind=="house":
+        var main_model := node.get_node_or_null("CC0_garden_shed") as Node3D
+        if main_model!=null:
+            collider = main_model.transform*SurvivorWorldAssetRenderer.collision_bounds("garden_shed")
+    node.set_meta("collision_bounds",collider)
     structures.append({"kind": entry.kind, "node": node, "position": node.position, "door_open": bool(entry.get("door_open", false)), "stage":int(entry.get("stage",5)) if entry.kind == "boat" else 0, "save_entry": entry})
     if scenery != null:
         scenery.clear_area(node.position, 5.0 if entry.kind == "house" else 2.8)
@@ -321,12 +289,14 @@ func _process(delta: float) -> void:
 func refresh_resources() -> void:
     for entry in resources:
         var ready_time := float(state.harvested.get(entry.id, -1.0))
-        entry.node.visible = ready_time < 0.0 or (entry.kind != "metal" and state.elapsed >= ready_time)
+        entry.node.visible = not bool(entry.get("cleared",false)) and (ready_time < 0.0 or (entry.kind != "metal" and state.elapsed >= ready_time))
+    if scenery != null:
+        scenery.sync_canopy()
 
 func harvest(entry: Dictionary) -> String:
     if str(entry.get("kind", "")) in ["crab", "boar"]:
         return fauna.harvest_prey(entry)
-    if not is_instance_valid(entry.get("node")) or not entry.node.visible:
+    if bool(entry.get("cleared",false)) or not is_instance_valid(entry.get("node")) or not entry.node.visible:
         return "Esse recurso já foi coletado."
     var error := state.harvest_error(str(entry.kind))
     if error != "":
@@ -335,14 +305,14 @@ func harvest(entry: Dictionary) -> String:
     match entry.kind:
         "palm":
             var wood_amount := 12 if state.is_equipped("reinforced_axe") else 8
-            state.add_item("wood", wood_amount)
+            _tree_wood_reward(entry,wood_amount)
             state.add_item("coconut", 3 if wood_amount == 12 else 2)
-            result = "+%d madeiras • cocos coletados" % wood_amount
+            result = "+%d madeiras no total • recolha o tronco no chão • cocos coletados" % wood_amount
         "tree":
             var wood_amount := 12 if state.is_equipped("reinforced_axe") else 8
-            state.add_item("wood",wood_amount)
+            _tree_wood_reward(entry,wood_amount)
             state.add_item("fiber",2)
-            result = "+%d madeiras • +2 fibras" % wood_amount
+            result = "+%d madeiras no total • recolha o tronco no chão • +2 fibras" % wood_amount
         "rock":
             var stones := 9 if state.is_equipped("reinforced_pickaxe") else 6
             state.add_item("stone", stones)
@@ -352,16 +322,27 @@ func harvest(entry: Dictionary) -> String:
             state.add_item("fiber", count)
             result = "+%d fibras" % count
         "loose_log":
-            state.add_item("wood",3)
-            result = "+3 madeiras • tronco recolhido à mão"
+            var amount := int(entry.get("pickup_amount",3))
+            state.add_item("wood",amount)
+            result = "+%d madeiras • tronco recolhido à mão" % amount
+            if bool(entry.get("drop",false)):
+                for index in range(state.wood_drops.size()-1,-1,-1):
+                    if state.wood_drops[index].id==entry.id:
+                        state.wood_drops.remove_at(index)
+                entry.cleared = true
         "loose_stone":
             state.add_item("stone",2)
             result = "+2 pedras • recolhidas à mão"
         "metal":
             state.add_item("metal", 4)
             result = "+4 metais recuperados"
-    state.harvested[entry.id] = state.elapsed + 600.0
+    if harvest_effects != null:
+        harvest_effects.collect(entry,terrain)
+    if not bool(entry.get("drop",false)):
+        state.harvested[entry.id] = state.elapsed + 600.0
     entry.node.visible = false
+    if scenery != null:
+        scenery.sync_canopy()
     return result
 
 func nearest_target(pos: Vector3, reach: float = 5.0) -> Dictionary:
@@ -428,17 +409,18 @@ func walkable(pos: Vector3, previous: Vector3) -> bool:
                 return false
     for entry in structures:
         var local: Vector3 = entry.node.to_local(Vector3(pos.x,entry.position.y,pos.z))
-        if entry.kind in ["chest", "rain_collector"] and Vector2(local.x,local.z).length() < 1.0:
-            return false
-        if entry.kind == "workbench" and absf(local.x) < 1.9 and absf(local.z) < 1.1:
-            return false
+        if entry.kind in ["chest","rain_collector","workbench","tool_rack","campfire","bed"]:
+            var box: AABB = entry.node.get_meta("collision_bounds")
+            if local.x>box.position.x-0.22 and local.x<box.end.x+0.22 and local.z>box.position.z-0.22 and local.z<box.end.z+0.22:
+                return false
         if entry.kind in SurvivalState.WALL_MODULES and absf(local.x) < 1.75 and absf(local.z) < 0.33:
             if entry.kind == "door_panel" and bool(entry.get("door_open", false)) and absf(local.x) < 1.10:
                 continue
             return false
         if entry.kind == "house":
-            if absf(local.x) < 3.2 and absf(local.z) < 3.2:
-                if absf(local.x) > 2.15 or local.z < -2.15 or local.z > 2.15 and absf(local.x) > 0.65:
+            var box: AABB = entry.node.get_meta("collision_bounds")
+            if local.x>box.position.x-0.2 and local.x<box.end.x+0.2 and local.z>box.position.z-0.2 and local.z<box.end.z+0.2:
+                if local.x<box.position.x+0.22 or local.x>box.end.x-0.22 or local.z<box.position.z+0.22 or local.z>box.end.z-0.22 and absf(local.x)>0.58:
                     return false
     return true
 
@@ -458,7 +440,7 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
     if kind == "dock" and not terrain.is_shore(pos.x, pos.z):
         return "O cais precisa ficar na faixa de areia junto ao mar."
     var modular := kind in SurvivalState.MODULES
-    var radius := 1.4 if modular else (4.5 if kind == "house" else 2.4)
+    var radius := footprint_radius(kind)
     if kind in SurvivalState.WALL_MODULES:
         var supported := false
         for entry in structures:
@@ -494,7 +476,7 @@ func placement_error(kind: String, pos: Vector3, player_pos: Vector3, ignore_kin
                 return "Esse espaço de parede já está ocupado."
             # Distinct modular sockets may share a foundation or adjoining edges.
             continue
-        if distance < radius + (1.4 if entry.kind in SurvivalState.MODULES else (4.5 if entry.kind == "house" else 2.4)):
+        if distance < radius + footprint_radius(entry.kind):
             return "Deixe espaço entre as construções."
     for entry in landmarks:
         if Vector2(pos.x - entry.position.x, pos.z - entry.position.z).length() < radius + 7.0:
@@ -662,3 +644,101 @@ func _camp_flames(parent: Node3D) -> void:
         node.material_override = material
         node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
         parent.add_child(node)
+
+func _tree_wood_reward(entry: Dictionary, amount: int) -> void:
+    # Total yield is conserved: most wood arrives at contact; three units are
+    # a physical pickup. Pending pickups are persisted and never paid twice.
+    if state.wood_drops.size()>=256:
+        state.add_item("wood",amount)
+        return
+    state.add_item("wood",amount-3)
+    var p: Vector3 = entry.position+Vector3(1.1,0,0.5)
+    var drop := {"id":"fallen_%s_%d" % [entry.id,int(state.elapsed*1000)],"amount":3,"x":p.x,"z":p.z,"rotation":fposmod(float(entry.node.rotation.y),TAU)}
+    state.wood_drops.append(drop)
+    _spawn_wood_drop(drop)
+
+func _spawn_wood_drop(drop: Dictionary) -> void:
+    var node := Node3D.new()
+    node.name = str(drop.id).validate_node_name()
+    node.position = Vector3(drop.x,terrain.height_at(drop.x,drop.z),drop.z)
+    node.rotation.y = float(drop.rotation)
+    add_child(node)
+    SurvivorRealWorldAssets.attach(node,"dead_tree_trunk_02",0.46,55.0)
+    resources.append({"kind":"loose_log","id":drop.id,"node":node,"position":node.position,"radius":0.0,"pickup_amount":drop.amount,"drop":true,"cleared":false})
+
+func build_structure_visual(node: Node3D,kind: String,stage: int=5,preview_mode: bool=false) -> void:
+    if kind == "boat":
+        _build_boat_model(node,stage)
+    else:
+        if kind == "campfire":
+            # Keep fire/glow/recipe state from original procedural fire, but
+            # replace its simple stone-only silhouette with a real cooking grate.
+            SurvivorModels.building(node,kind)
+            for child in node.get_children():
+                if child is MeshInstance3D:
+                    node.remove_child(child)
+                    child.free()
+            SurvivorRealWorldAssets.attach(node,"camp_fire_grill",1.05,73.0)
+            _camp_flames(node)
+        elif kind == "chest":
+            if not SurvivorRealWorldAssets.attach(node,"storage_chest",1.15,70.0):
+                SurvivorModels.building(node,kind)
+        elif kind == "rain_collector":
+            SurvivorModels.building(node,kind)
+            var bucket := Node3D.new()
+            bucket.position = Vector3(1.46,0.0,0.7)
+            node.add_child(bucket)
+            SurvivorRealWorldAssets.attach(bucket,"wooden_bucket",0.85,55.0)
+        elif kind == "tool_rack":
+            SurvivorModels.building(node,kind)
+            var supplies := Node3D.new()
+            supplies.position = Vector3(-1.2,0.0,1.45)
+            node.add_child(supplies)
+            SurvivorRealWorldAssets.attach(supplies,"wooden_crate",0.95,50.0)
+        elif kind == "workbench":
+            if not SurvivorRealWorldAssets.attach(node,"workbench_carpenter",1.43,72.0):
+                SurvivorModels.building(node,kind)
+        elif kind == "house":
+            # Real timber prefab is decorative. Gameplay footprint, placement,
+            # doorway logic, save and progression stay owned by SurvivorWorld.
+            if not SurvivorRealWorldAssets.attach(node,"garden_shed",4.15,110.0):
+                SurvivorModels.building(node,kind)
+            var ladder := Node3D.new()
+            ladder.name = "Nature_HouseLadder"
+            ladder.position = Vector3(2.45,0.0,1.55)
+            ladder.rotation.y = 0.2
+            node.add_child(ladder)
+            SurvivorRealWorldAssets.attach(ladder,"wooden_ladder_02",2.35,56.0)
+        else:
+            SurvivorModels.building(node,kind)
+    if kind not in ["campfire","boat"]:
+        SurvivorModels.merge_static(node,"building_"+kind)
+    node.set_meta("visual_bounds",structure_bounds(node))
+    footprint_cache[kind] = node.get_meta("visual_bounds")
+    if preview_mode:
+        for light in node.find_children("*","Light3D",true,false):
+            light.visible = false
+
+func structure_bounds(node: Node3D) -> AABB:
+    var first := true
+    var bounds := AABB()
+    for item in node.find_children("*","MeshInstance3D",true,false):
+        var mesh_node := item as MeshInstance3D
+        if mesh_node.mesh==null:
+            continue
+        var transform := SurvivorWorldAssetRenderer.relative_transform(mesh_node,node)
+        var current := transform*mesh_node.mesh.get_aabb()
+        bounds = current if first else bounds.merge(current)
+        first = false
+    return bounds
+
+func footprint_radius(kind: String) -> float:
+    if not footprint_cache.has(kind):
+        var probe := Node3D.new()
+        probe.visible = false
+        add_child(probe)
+        build_structure_visual(probe,kind,1,true)
+        remove_child(probe)
+        probe.free()
+    var bounds: AABB = footprint_cache[kind]
+    return maxf(bounds.size.x,bounds.size.z)*0.5+0.20

@@ -4,6 +4,7 @@ class_name SurvivorWorldAssetRenderer
 # Shared, normalized source geometry. Preserve authored UVs, normals and PBR
 # materials; never feed scanned meshes through the vertex-color placeholder merger.
 static var geometry: Dictionary = {}
+static var collision_boxes: Dictionary = {}
 
 static func relative_transform(node: Node3D, root: Node3D) -> Transform3D:
     var result := node.transform
@@ -20,6 +21,8 @@ static func parts(asset_id: String) -> Array:
     var baked_path := "res"+"://assets/optimized_world/"+asset_id+".scn"
     if ResourceLoader.exists(baked_path):
         var baked := (load(baked_path) as PackedScene).instantiate() as Node3D
+        if baked.has_meta("collision_bounds"):
+            collision_boxes[asset_id] = baked.get_meta("collision_bounds")
         var cached: Array = []
         for child in baked.get_children():
             if child is MeshInstance3D:
@@ -53,7 +56,30 @@ static func parts(asset_id: String) -> Array:
         if door != null:
             door.rotation.y += -PI*0.48
     var normalized := Transform3D(Basis.IDENTITY.scaled(Vector3.ONE/height),Vector3(-(low.x+high.x)*0.5,-low.y,-(low.z+high.z)*0.5)/height)
+    if asset_id=="garden_shed":
+        var body := AABB()
+        var first_board := true
+        for child in root.find_children("*","MeshInstance3D",true,false):
+            var node := child as MeshInstance3D
+            var label := String(node.name).to_lower()
+            if not ("enclosure" in label or "vertical" in label):
+                continue
+            var box := relative_transform(node,root)*node.mesh.get_aabb()
+            body = box if first_board else body.merge(box)
+            first_board = false
+        if not first_board:
+            collision_boxes[asset_id] = normalized*body
     var result := combined_parts(root,normalized)
+    if asset_id in ["palm_detailed","palm_light"]:
+        for part in result:
+            var original := part.material as StandardMaterial3D
+            if original!=null:
+                var graded := original.duplicate() as StandardMaterial3D
+                graded.albedo_color *= Color(0.68,0.77,0.61)
+                graded.roughness = 0.95
+                graded.metallic_specular = 0.16
+                part.material = graded
+                part.mesh.surface_set_material(0,graded)
     root.free()
     geometry[asset_id] = result
     return result
@@ -166,3 +192,14 @@ static func compact_aircraft(model: Node3D) -> void:
         node.mesh = component.mesh
         node.visibility_range_end = 130.0
         model.add_child(node)
+
+static func collision_bounds(asset_id: String) -> AABB:
+    var components := parts(asset_id)
+    if collision_boxes.has(asset_id):
+        return collision_boxes[asset_id]
+    var first := true
+    var bounds := AABB()
+    for part in components:
+        bounds = part.mesh.get_aabb() if first else bounds.merge(part.mesh.get_aabb())
+        first = false
+    return bounds

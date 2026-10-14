@@ -108,6 +108,14 @@ void fragment() {
         ground = mix(ground,organic_soil,0.62 * sand_to_vegetation * (1.0-rock_exposure));
         ground = mix(ground,scanned_rock,0.75 * rock_exposure);
     }
+    // Organic soil pockets break the lawn-like uniform fill. Low-frequency
+    // photographed detail remains continuous between beach and forest.
+    float soil_patch = smoothstep(0.34,0.72,broad.g*0.60+middle.r*0.40);
+    vec3 loamy_soil = mix(vec3(0.25,0.22,0.16),vec3(0.35,0.30,0.20),grain);
+    float patch_weight = soil_patch*sand_to_vegetation*(1.0-rock_exposure)*0.48;
+    ground = mix(ground,loamy_soil,patch_weight);
+    float litter = smoothstep(0.76,0.94,fine.g)*smoothstep(0.4,0.78,middle.b);
+    ground = mix(ground,vec3(0.39,0.30,0.17),litter*sand_to_vegetation*0.23);
     ground *= 0.967 + grain*0.066;
     float damp = rain_amount * (0.10 + macro * 0.085);
     ALBEDO = ground * (1.0-damp);

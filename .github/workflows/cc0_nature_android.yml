@@ -45,6 +45,8 @@ jobs:
       - name: Parse new CC0 glb assets and gameplay in Godot
         run: |
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/cc0-import.log
+          python3 tools/optimize_mobile_textures.py
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit
           if grep -E 'SCRIPT ERROR|Parse Error' /tmp/cc0-import.log; then exit 1; fi
       - name: Native CC0 world integration tests
         run: |
@@ -93,38 +95,28 @@ jobs:
           export/android/java_sdk_path = "$JAVA_HOME"
           export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
           EOF
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('export_presets.cfg')
-          s=p.read_text()
-          assert 'package/unique_name="com.sergiomrge.gptsurvivor"' in s
-          s=s.replace('package/unique_name="com.sergiomrge.gptsurvivor"','package/unique_name="com.sergiomrge.gptsurvivor.naturebeta"')
-          s=s.replace('package/name="GPT Survivor"','package/name="GPT Survivor Nature Test"')
-          s=s.replace('version/name="1.2.0"','version/name="2.2.0-nature-test"')
-          s=s.replace('version/code=1200','version/code=2200')
-          p.write_text(s)
-          PY
       - name: Export installable arm64 APK, align, sign and verify
         run: |
           export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/.android/debug.keystore"
           export GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey
           export GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tools/bake_world_assets.gd
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --export-debug Android /tmp/survivor-nature-original.apk
           python3 tools/android/fix_android_manifest.py /tmp/survivor-nature-original.apk /tmp/survivor-nature-fixed.apk
           "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -f -P 16 4 /tmp/survivor-nature-fixed.apk /tmp/survivor-nature-aligned.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk /tmp/survivor-nature-aligned.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" verify --verbose out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -c -P 16 4 out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/aapt" dump badging out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk | head -4
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out out/GPT_Survivor_v2_4_0_World_Beta.apk /tmp/survivor-nature-aligned.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" verify --verbose out/GPT_Survivor_v2_4_0_World_Beta.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -c -P 16 4 out/GPT_Survivor_v2_4_0_World_Beta.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/aapt" dump badging out/GPT_Survivor_v2_4_0_World_Beta.apk | head -4
           python3 - <<'PY'
           import zipfile
-          p='out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk'
+          p='out/GPT_Survivor_v2_4_0_World_Beta.apk'
           with zipfile.ZipFile(p) as z: assert z.testzip() is None
           print("NATIVE_ANDROID_APK_CRC_OK")
           PY
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: GPT-Survivor-v2.2-Nature-Realista-Android-APK
-          path: out/GPT_Survivor_v2_2_Nature_Realista_Teste.apk
+          name: GPT-Survivor-v2.4.0-Android-APK
+          path: out/GPT_Survivor_v2_4_0_World_Beta.apk
           retention-days: 30

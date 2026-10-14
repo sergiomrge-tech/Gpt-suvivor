@@ -1,4 +1,4 @@
-name: Build Android 1.0 Beta APK
+name: Build Android World Beta APK
 on:
   workflow_dispatch:
 permissions:
@@ -42,16 +42,6 @@ jobs:
           export/android/java_sdk_path = "$JAVA_HOME"
           export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
           EOF
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('export_presets.cfg')
-          s=p.read_text()
-          assert 'com.sergiomrge.gptsurvivor' in s
-          s=s.replace('package/unique_name="com.sergiomrge.gptsurvivor"', 'package/unique_name="com.sergiomrge.gptsurvivor.beta.v100"')
-          s=s.replace('version/name="1.0.0"', 'version/name="1.0.0-beta"')
-          s=s.replace('version/code=1000', 'version/code=1000')
-          p.write_text(s)
-          PY
       - name: Import and build Android ARM64 beta
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ github.workspace }}/.android/debug.keystore
@@ -60,22 +50,25 @@ jobs:
         run: |
           export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/.android/debug.keystore"
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit
+          python3 tools/optimize_mobile_textures.py
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tools/bake_world_assets.gd
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --export-debug Android /tmp/survivor-beta.apk
           python3 tools/android/fix_android_manifest.py /tmp/survivor-beta.apk /tmp/survivor-beta-fixed.apk
           "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -f -P 16 4 /tmp/survivor-beta-fixed.apk /tmp/survivor-beta-aligned.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out out/GPT_Survivor_v1_0_0_Beta.apk /tmp/survivor-beta-aligned.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" verify --verbose out/GPT_Survivor_v1_0_0_Beta.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -c -P 16 4 out/GPT_Survivor_v1_0_0_Beta.apk
-          "$ANDROID_SDK_ROOT/build-tools/35.0.1/aapt" dump badging out/GPT_Survivor_v1_0_0_Beta.apk | head -4
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" sign --ks "$HOME/.android/debug.keystore" --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out out/GPT_Survivor_v2_4_0_World_Beta.apk /tmp/survivor-beta-aligned.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/apksigner" verify --verbose out/GPT_Survivor_v2_4_0_World_Beta.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/zipalign" -c -P 16 4 out/GPT_Survivor_v2_4_0_World_Beta.apk
+          "$ANDROID_SDK_ROOT/build-tools/35.0.1/aapt" dump badging out/GPT_Survivor_v2_4_0_World_Beta.apk | head -4
           python3 - <<'PY'
           import zipfile
-          with zipfile.ZipFile('out/GPT_Survivor_v1_0_0_Beta.apk') as z:
+          with zipfile.ZipFile('out/GPT_Survivor_v2_4_0_World_Beta.apk') as z:
               assert z.testzip() is None
           print('APK ZIP CRC: OK')
           PY
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: GPT-Survivor-v1.0.0-Android-Beta-APK
-          path: out/GPT_Survivor_v1_0_0_Beta.apk
+          name: GPT-Survivor-v2.4.0-Android-Beta-APK
+          path: out/GPT_Survivor_v2_4_0_World_Beta.apk
           retention-days: 14

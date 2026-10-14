@@ -19,7 +19,7 @@ func run() -> void:
         if not ids.has(item.kind):
             continue
         var models: Array[Node] = item.node.find_children("CC0_*","Node3D",true,false)
-        check(not models.is_empty(),"Every harvestable nature resource uses a real source asset: "+item.id)
+        check(not models.is_empty() or bool(item.get("canopy",false)) and not item.batches.is_empty(),"Every harvestable nature resource uses a real source asset: "+item.id)
     var textured := 0
     for source in ["fern","calathea","pachira","island_tree_01","tree_stump_01","dead_tree_trunk_02","boulder_01","rock_07","wooden_ladder_02"]:
         var low := Vector3(INF,INF,INF)

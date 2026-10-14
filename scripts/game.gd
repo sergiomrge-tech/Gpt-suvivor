@@ -29,6 +29,7 @@ var voyage: SurvivorVoyage
 var running_mode := false
 var muted := false
 var capture_mode := false
+var performance_stats := SurvivorPerformanceMonitor.new()
 var pending_work: Dictionary = {}
 var approach_timer := 0.0
 var pending_discovery: Dictionary = {}
@@ -67,6 +68,7 @@ func _ready() -> void:
     hud.consume_requested.connect(consume)
     hud.save_requested.connect(save_game)
     hud.menu_requested.connect(pause_game)
+    hud.performance_requested.connect(show_performance)
     hud.start_requested.connect(start_game)
     hud.resume_requested.connect(resume_game)
     hud.quality_requested.connect(toggle_quality)
@@ -183,6 +185,8 @@ func paused() -> bool:
     return not playing or hud.modal_mode != ""
 
 func _process(delta: float) -> void:
+    if playing and not paused():
+        performance_stats.sample(delta)
     if player == null:
         return
     if voyage.active:
@@ -515,20 +519,15 @@ func _begin_placement(kind: String) -> void:
     preview_rotation = 0.0
     preview = Node3D.new()
     add_child(preview)
-    if kind == "boat":
-        SurvivorModels.boat_stage(preview,1)
-    else:
-        SurvivorModels.building(preview, kind)
-    if kind != "campfire":
-        SurvivorModels.merge_static(preview, "boat_preview_stage_1" if kind == "boat" else "building_" + kind)
+    world.build_structure_visual(preview,kind,1,true)
     # Area indicator marks the required footprint, not just the model geometry.
     var footprint := MeshInstance3D.new()
     footprint.name = "BuildFootprint"
-    var size := 9.0 if kind == "house" else (3.2 if kind in SurvivalState.MODULES else 4.8)
+    var bounds: AABB = preview.get_meta("visual_bounds")
     var pad := BoxMesh.new()
-    pad.size = Vector3(size,0.035,0.38 if kind in SurvivalState.WALL_MODULES else size)
+    pad.size = Vector3(maxf(0.3,bounds.size.x),0.035,maxf(0.3,bounds.size.z))
     footprint.mesh = pad
-    footprint.position.y = 0.09
+    footprint.position = Vector3(bounds.get_center().x,0.09,bounds.get_center().z)
     preview.add_child(footprint)
     for node in preview.get_children():
         if node is Light3D:
@@ -586,9 +585,9 @@ func _tint_preview(valid: bool) -> void:
     mat.albedo_color = Color(0.4, 0.95, 0.6, 0.46) if valid else Color(1.0, 0.3, 0.18, 0.46)
     mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
     mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-    for node in preview.get_children():
-        if node is MeshInstance3D:
-            node.material_override = mat
+    # Preserve model textures: validity is shown by the measured footprint.
+    var pad := preview.get_node("BuildFootprint") as MeshInstance3D
+    pad.material_override = mat
 
 func confirm_placement() -> void:
     var point := placement_point()
@@ -884,3 +883,8 @@ func toggle_sound() -> void:
     settings.load("user://visual.cfg")
     settings.set_value("audio","muted",muted)
     settings.save("user://visual.cfg")
+
+func show_performance() -> void:
+    pause_game()
+    performance_stats.save_report()
+    hud.show_performance_report(performance_stats.report())

@@ -22,6 +22,8 @@ jobs:
       - name: Import and parse
         run: |
           Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit 2>&1 | tee /tmp/import.log
+          python3 tools/optimize_mobile_textures.py
+          Godot_v4.6.1-stable_linux.x86_64 --headless --path . --editor --import --quit
           if grep -E 'SCRIPT ERROR|ERROR:' /tmp/import.log; then echo 'Import/parsing failed'; exit 1; fi
       - name: Bake normalized material batches and mobile distance LODs
         run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tools/bake_world_assets.gd
@@ -31,6 +33,8 @@ jobs:
         run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_hero_locomotion.gd
       - name: Test complete survival progression
         run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_survivor.gd
+      - name: Test harvest persistence, construction previews and action clips
+        run: Godot_v4.6.1-stable_linux.x86_64 --headless --path . --script res://tests/test_survival_polish_v24.gd
       - name: Audit references and files
         run: python3 tests/audit_project.py
       - name: Validate original PCM audio

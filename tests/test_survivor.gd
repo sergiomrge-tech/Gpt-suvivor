@@ -295,7 +295,7 @@ func run() -> void:
     decor.set_weather(0.68, 0.50)
     check(is_equal_approx(float(decor.biome_material.get_shader_parameter("rain_amount")), 0.50), "Biome materials darken in tropical showers")
     decor.set_weather(0.0, 0.0)
-    check(is_equal_approx(game.terrain.height_at(0.0,170.0),preserved_height) and SurvivalState.SAVE_VERSION == 3, "New visual habitats do not disturb persisted terrain elevations or save v3")
+    check(is_equal_approx(game.terrain.height_at(0.0,170.0),preserved_height) and SurvivalState.SAVE_VERSION == 4, "Visual habitats retain terrain; save v4 preserves migration from v3")
 
     var imported_foliage := SurvivorWorldAssetRenderer.parts("fern")
     check(not imported_foliage.is_empty() and imported_foliage[0].material is StandardMaterial3D,"Imported foliage preserves original PBR material instead of obsolete placeholder shader")
@@ -606,6 +606,7 @@ func run() -> void:
     var sample: Dictionary = game.world.resources[0]
     var wood_before: int = game.state.inventory.wood
     game.world.harvest(sample)
+    collect_pending_wood()
     check(game.state.inventory.wood == wood_before + 8 and not sample.node.visible, "Harvest updates inventory and visibility")
     game.world.harvest(sample)
     check(game.state.inventory.wood == wood_before + 8, "Harvest cannot be repeated on depleted node")
@@ -622,13 +623,20 @@ func run() -> void:
     check(game.state.inventory.wood==contact_wood,"Harvest grants nothing before tool contact")
     game.player._physics_process(0.55)
     check(game.soundscape.last_effect=="chop","Tool contact dispatches the corresponding positional sound")
-    check(game.state.inventory.wood==contact_wood+8 and not sample.node.visible,"Tool-contact marker grants harvested wood once")
+    check(game.state.inventory.wood==contact_wood+5 and not sample.node.visible and game.state.wood_drops.size()>=1,"Tool contact conserves yield: five wood now and three in a saved pickup")
+    collect_pending_wood()
     game.player._physics_process(0.6)
     check(game.state.inventory.wood==contact_wood+8 and not game.player.tools.axe.visible,"Animation finish hides tool and cannot grant wood again")
     game.player.perform_action("mine",1.0,sample.position)
-    var first_pose: float = game.player.right_arm.rotation.x
-    game.player.pose_action(0.5)
-    check(game.player.tools.pick.visible and not is_equal_approx(first_pose,game.player.right_arm.rotation.x),"Mining uses its own tool and changing skeletal pose")
+    game.player.rigged_hero._process(0.016)
+    game.player.rigged_hero.skeleton.force_update_all_bone_transforms()
+    var bone: int = game.player.rigged_hero.skeleton.find_bone("hand_r")
+    var first_pose: Vector3 = game.player.rigged_hero.skeleton.get_bone_global_pose(bone).origin
+    game.player.action_remaining = 0.5
+    game.player.rigged_hero._process(0.016)
+    game.player.rigged_hero.skeleton.force_update_all_bone_transforms()
+    var changed_pose: Vector3 = game.player.rigged_hero.skeleton.get_bone_global_pose(bone).origin
+    check(game.player.tools.pick.visible and first_pose.distance_to(changed_pose)>0.02,"Mining uses pickaxe and changes the actual skinned hand pose")
     game.player.cancel_action()
     check(not game.player.is_busy() and not game.player.tools.pick.visible,"Cancelled action clears pose and tool")
     game.state.elapsed = 2000
@@ -1073,3 +1081,8 @@ func run() -> void:
             DirAccess.remove_absolute(pair[0])
     print("SURVIVOR TESTS: %d/%d passed" % [checks - failures, checks])
     quit(0 if failures == 0 else 1)
+
+func collect_pending_wood() -> void:
+    for entry in game.world.resources:
+        if bool(entry.get("drop",false)) and entry.node.visible:
+            game.world.harvest(entry)

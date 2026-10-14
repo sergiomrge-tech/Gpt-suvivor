@@ -15,6 +15,7 @@ signal fishing_requested
 signal consume_requested
 signal save_requested
 signal menu_requested
+signal performance_requested
 signal start_requested(load_save: bool)
 signal sound_requested
 signal audio_level_requested(bus_name: String,level: float)
@@ -505,7 +506,7 @@ func close_modal() -> void:
     joystick.active = is_playing
 
 func show_menu(saved: bool, paused: bool = false) -> void:
-    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nGodot 3D • v1.3 (cavernas com ciclos de gás e navegação orientada)")
+    _new_modal("pause" if paused else "menu", "ILHA • ÚLTIMO VOO", "Um sobrevivente. Uma ilha desconhecida. Construa seu caminho de volta.\nSobrevivência • v2.4")
     if paused:
         panel_content.add_child(_button("Voltar ao jogo", func(): close_modal(); resume_requested.emit()))
         panel_content.add_child(_button("Salvar progresso", func(): save_requested.emit()))
@@ -516,6 +517,7 @@ func show_menu(saved: bool, paused: bool = false) -> void:
     panel_content.add_child(sound_button)
     quality_button = _button("Visual: Leve" if light_visuals else "Visual: Completo", func(): quality_requested.emit())
     panel_content.add_child(quality_button)
+    panel_content.add_child(_button("Desempenho do aparelho",func(): performance_requested.emit()))
     var sound_header := _bag_heading("MIXAGEM DE ÁUDIO",18)
     panel_content.add_child(sound_header)
     for item in [["Ambiente","Mundo, mar, chuva e natureza"],["Efeitos","Ferramentas e interações"],["Passos","Pisadas suaves"]]:
@@ -1220,3 +1222,7 @@ func show_journal() -> void:
     if count == 0:
         panel_content.add_child(_label("Procure objetos junto aos destroços e às cavernas.",18))
     panel_content.add_child(_button("Voltar ao jogo",func(): close_modal()))
+
+func show_performance_report(report: String) -> void:
+    _new_modal("performance","DESEMPENHO",report)
+    panel_content.add_child(_button("Voltar ao jogo",func(): close_modal(); resume_requested.emit()))
