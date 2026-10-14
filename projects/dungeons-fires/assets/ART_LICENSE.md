@@ -1,0 +1,1 @@
+Dungeons Fires: pixel art, animações e efeitos sonoros originais produzidos por código neste projeto. Nenhum sprite ou áudio extraído de Golden Axe. A fonte DejaVu Sans segue a licença anexada. Arte v0.1: padrão inicial sujeito a refinamento visual.

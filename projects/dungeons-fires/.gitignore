@@ -1,0 +1,9 @@
+.godot/
+__pycache__/
+*.apk
+*.aab
+*.idsig
+*.keystore
+*.jks
+*.password
+*.tmp
